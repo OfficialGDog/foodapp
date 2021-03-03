@@ -1,16 +1,16 @@
-import React, { useRef, useState } from 'react'
-import { Form, Card, Button, Alert } from 'react-bootstrap'
-import { useAuth } from "../contexts/AuthContext"
-import { Link, useHistory } from "react-router-dom"
+import React, { useRef, useState } from 'react';
+import { Form, Card, Button, Alert } from 'react-bootstrap';
+import { useAuth } from "../contexts/AuthContext";
+import { Link, useHistory } from "react-router-dom";
 
 export default function UpdateProfile() {
-    const emailRef = useRef()
-    const passwordRef = useRef()
-    const passwordConfirmRef = useRef()
-    const { currentUser, updatePassword, updateEmail } = useAuth()
-    const [error, setError] = useState()
-    const [isLoading, setLoading] = useState(false)
-    const history = useHistory()
+    const emailRef = useRef();
+    const passwordRef = useRef();
+    const passwordConfirmRef = useRef();
+    const auth = useAuth();
+    const [error, setError] = useState();
+    const [isLoading, setLoading] = useState(false);
+    const history = useHistory();
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -24,8 +24,8 @@ export default function UpdateProfile() {
             setLoading(true)
             await signup(emailRef.current.value, passwordRef.current.value)
             history.push("/")
-        } catch {
-            setError('Failed to update account')
+        } catch (error) {
+            setError(error.message);
         }
 
         setLoading(false)

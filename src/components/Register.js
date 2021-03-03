@@ -1,16 +1,16 @@
-import React, { useRef, useState } from 'react'
-import { Form, Card, Button, Alert } from 'react-bootstrap'
-import { useAuth } from "../contexts/AuthContext"
-import { Link, useHistory } from "react-router-dom"
+import React, { useContext, useRef, useState } from 'react';
+import { Form, Card, Button, Alert } from 'react-bootstrap';
+import { useAuth } from "../context/AuthContext";
+import { Link, useHistory } from "react-router-dom";
 
 export default function Register() {
-    const emailRef = useRef()
-    const passwordRef = useRef()
-    const passwordConfirmRef = useRef()
-    const { signup } = useAuth()
-    const [error, setError] = useState()
-    const [isLoading, setLoading] = useState(false)
-    const history = useHistory()
+    const emailRef = useRef();
+    const passwordRef = useRef();
+    const passwordConfirmRef = useRef();
+    const [error, setError] = useState();
+    const [isLoading, setLoading] = useState(false);
+    const auth = useAuth();
+    const history = useHistory();
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -21,15 +21,16 @@ export default function Register() {
         }
 
         try {
-            setLoading(true)
-            await signup(emailRef.current.value, passwordRef.current.value)
-            history.push("/")
-        } catch {
-            setError('Failed to create an account')
+            setLoading(true);
+            console.log(emailRef.current.value + passwordRef.current.value);
+            await auth.register({email: emailRef.current.value, password: passwordRef.current.value});
+            history.push("/login");
+            console.log("Register Successfull!");
+        } catch (error) {
+            setError(error.message);
         }
 
-        setLoading(false)
-        
+        setLoading(false);        
     }
 
     return (

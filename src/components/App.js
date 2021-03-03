@@ -1,13 +1,11 @@
-import React, { Component } from "react";
+import React from "react";
 import Home from "./Home";
 import Register from "./Register";
 import Login from "./Login";
 import ForgotPassword from "./ForgotPassword";
 import PrivateRoute from "./PrivateRoute";
 import { Container } from "react-bootstrap";
-import { AuthProvider } from "../contexts/AuthContext";
-import { BrowserRouter as Router, Switch, Route, Redirect } from "react-router-dom";
-
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
 function App() {
   return (
@@ -16,7 +14,6 @@ function App() {
         style={{ minHeight: "100vh" }}>
         <div className="w-100" style={{ maxWidth: "400px" }}>
           <Router>
-            <AuthProvider>
               <Switch>
                 <PrivateRoute exact path="/">
                   <Home/>
@@ -25,7 +22,6 @@ function App() {
                 <Route path="/register" component={Register}/>
                 <Route path="/reset/password" component={ForgotPassword}/>
               </Switch>
-            </AuthProvider>
           </Router>
         </div>
       </Container>

@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from "react"
-import useLongPress from "../useLongPress"
-import { useAuth } from "../contexts/AuthContext"
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import useLongPress from "../useLongPress";
 import {
   GoogleMap,
   useLoadScript,
@@ -65,7 +64,6 @@ export default function App() {
   const [markers, setMarkers] = useState([]);
   const [location, setLocation] = useState(null);
   const initLoad = useRef(false);
-  const { currentUser } = useAuth();
 /*  const getMarkers = async () => { 
      try {
       const promise1 = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.lat},${location.lng}&radius=${location.radius}&type=restaurant&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`);

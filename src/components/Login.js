@@ -1,25 +1,26 @@
-import React, { useRef, useState } from 'react'
-import { Form, Card, Button, Alert } from 'react-bootstrap'
-import { useAuth } from "../contexts/AuthContext"
-import { Link, useHistory } from "react-router-dom"
+import React, { useRef, useState } from 'react';
+import { Form, Card, Button, Alert } from 'react-bootstrap';
+import { useAuth } from "../context/AuthContext";
+import { Link, useHistory } from "react-router-dom";
 
 export default function Login() {
-    const emailRef = useRef()
-    const passwordRef = useRef()
-    const { login } = useAuth()
-    const [error, setError] = useState()
-    const [isLoading, setLoading] = useState(false)
-    const history = useHistory()
+    const emailRef = useRef();
+    const passwordRef = useRef();
+    const auth = useAuth();
+    const [error, setError] = useState();
+    const [isLoading, setLoading] = useState(false);
+    const history = useHistory();
 
     async function handleSubmit(e) {
         e.preventDefault();
         // Validation check
         try {
-            setLoading(true)
-            await login(emailRef.current.value, passwordRef.current.value)
-            history.push("/")
-        } catch {
-            setError('Failed to log in')
+            setLoading(true);
+            await auth.login({email: emailRef.current.value, password: passwordRef.current.value});
+            history.push("/");
+            console.log("Login Successfull!");
+        } catch (error) {
+            setError(error.message);
         }
 
         setLoading(false)

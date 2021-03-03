@@ -1,28 +1,27 @@
-import React, { useRef, useState } from 'react'
-import { Form, Card, Button, Alert } from 'react-bootstrap'
-import { useAuth } from "../contexts/AuthContext"
-import { Link } from "react-router-dom"
+import React, { useRef, useState } from 'react';
+import { Form, Card, Button, Alert } from 'react-bootstrap';
+import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 
 export default function ForgotPassword() {
-    const emailRef = useRef()
-    const { resetPassword } = useAuth()
-    const [error, setError] = useState()
-    const [message, setMessage] = useState()
-    const [isLoading, setLoading] = useState(false)
+    const emailRef = useRef();
+    const auth = useAuth();
+    const [error, setError] = useState();
+    const [message, setMessage] = useState();
+    const [isLoading, setLoading] = useState(false);
 
     async function handleSubmit(e) {
         e.preventDefault();
         // Validation check
         try {
-            setLoading(true)
-            await resetPassword(emailRef.current.value)
-            setMessage("Email has been sent")
-        } catch {
-            setError('Failed to reset password')
+            setLoading(true);
+            await auth.resetPassword(emailRef.current.value);
+            setMessage("Email has been sent");
+        }  catch (error) {
+            setError(error.message);
         }
 
         setLoading(false)
-        
     }
 
     return (

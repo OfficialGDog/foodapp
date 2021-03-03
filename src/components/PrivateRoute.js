@@ -1,14 +1,14 @@
-import Rect from 'react'
-import { Redirect, Route } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-import { LOGIN as loginroute } from "./routes"
+import React from 'react';
+import { Redirect, Route } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { LOGIN as loginroute } from "./routes";
 
 const PrivateRoute = ({ children, ...rest}) => {
-    const { currentUser } = useAuth();
+    const auth = useAuth();
     return (
         <Route
             {...rest}
-            render={({location}) => currentUser ? (children) : (<Redirect to={{pathname: loginroute, state: {location}}}/>) }/>
+            render={({location}) => auth.user ? (children) : (<Redirect to={{pathname: loginroute, state: { location }}}/>) }/>
     );
 };
 
