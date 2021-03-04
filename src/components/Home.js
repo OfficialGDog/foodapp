@@ -64,16 +64,6 @@ export default function App() {
   const [markers, setMarkers] = useState([]);
   const [location, setLocation] = useState(null);
   const initLoad = useRef(false);
-/*  const getMarkers = async () => { 
-     try {
-      const promise1 = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.lat},${location.lng}&radius=${location.radius}&type=restaurant&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`);
-      const promise2 = await fetch("http://localhost:3001/api/v1/location/list");
-      let [data1, data2] = await Promise.all([promise1.json(), promise2.json()]);
-      return [...data1.results, ...data2.sightings.map(marker => { return { geometry: { location: { lat: marker.location.coordinates[1], lng: marker.location.coordinates[0] }}, id: marker._id }})];
-    } catch (error) {
-      throw(error);
-    }
-  } */
 
   const onMapClick = useCallback((event) => {
     setMarkers((current) => [
@@ -100,24 +90,41 @@ export default function App() {
     setLocation(center);
   }, []);
 
+  const getLocationMarkers = async () => { 
+
+      let service = new window.google.maps.places.PlacesService(mapRef.current);
+
+      let data1 = await new Promise((resolve, reject) => {
+        service.nearbySearch({ type: "restaurant",  location: {lat: location.lat, lng: location.lng}, radius: location.radius }, (results, status) => { 
+          if(status === window.google.maps.places.PlacesServiceStatus.OK) {
+            resolve(results);
+          } else {
+            reject([]);
+          }
+        });
+      });
+
+      let data2 = await fetch(`http://localhost:3001/api/v1/location/get?lat=${location.lat}&lng=${location.lng}&radius=10000`)
+      .then(response => response.json())
+      .then(data => data.map(sighting => { 
+        return { lat: sighting.location.coordinates[1], lng: sighting.location.coordinates[0] }
+      })) 
+      .catch(() => []);
+
+      return [...data1, ...data2]
+  
+ }
+
   useEffect(() => {
     if(!initLoad.current) {
       initLoad.current = true;
       return
     }
 
-    try {
-      const service = new window.google.maps.places.PlacesService(mapRef.current);
-      service.nearbySearch({ type: "restaurant",  location: {lat: location.lat, lng: location.lng}, radius: location.radius }, (results, status) => { 
-        if(status === window.google.maps.places.PlacesServiceStatus.OK) {
-          setMarkers(results);
-        } else {
-          throw Error(status);
-        }
-      });
-    } catch (error) {
-      console.error(error);
-    }
+    getLocationMarkers().then(response => (
+      setMarkers(response)
+    )).catch(error => console.log(error));
+
   }, [location]);
 
   const panTo = useCallback(({ lat, lng }) => {

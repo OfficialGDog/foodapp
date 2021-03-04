@@ -53,14 +53,17 @@ function useProvideAuth() {
     */
    
     useEffect(() => {
-        return firebase.auth().onAuthStateChanged((user) => {
+        const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
             if (user) {
                 setUser(user);
             } else {
                 setUser(false);
             }
         });
-    }, [])
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+    }, []);
 
 
     // Return the user object and auth methods
