@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 
 const PrivateRoute = ({ component: RouteComponent, ...rest}) => {
     const auth = useAuth();
-    setTimeout(() => console.log(auth.user), 5000);
     return (
         <Route
             {...rest}

@@ -34,6 +34,10 @@ function useProvideAuth() {
         });
     };
 
+    const verifyEmail = (currentUser) => {
+        return currentUser.sendEmailVerification();   
+    }
+
     const logout = () => {
         return firebase.auth().signOut().then(() => { setUser(false); });
     };
@@ -70,6 +74,7 @@ function useProvideAuth() {
         user,
         login,
         register,
+        verifyEmail,
         logout,
         resetPassword
     };

@@ -10,6 +10,7 @@ export default function Login() {
     const auth = useAuth();
     const [error, setError] = useState();
     const [isLoading, setLoading] = useState(false);
+    const [isValidEmail, setValidEmail] = useState(true);
     const history = useHistory();
 
     async function handleSubmit(e) {
@@ -17,15 +18,21 @@ export default function Login() {
         // Validation check
         try {
             setLoading(true);
-            await auth.login({email: emailRef.current.value, password: passwordRef.current.value});
+            const user = await auth.login({email: emailRef.current.value, password: passwordRef.current.value});
+            if(!(user.emailVerified)) {
+                setLoading(false);
+                setValidEmail(false);
+                return
+            }
+
             history.push("/");
             console.log("Login Successfull!");
+
         } catch (error) {
             setError(error.message);
         }
-
-        setLoading(false)
         
+        setLoading(false);
     }
 
     return (
@@ -34,6 +41,7 @@ export default function Login() {
             <Card.Body>
                 <h2 className="text-center mb-4">Log In</h2>
                 {error && <Alert variant="danger">{error}</Alert>}
+                {!isValidEmail && <Alert variant="danger">Email address is not verified <Alert.Link>Resend verification code</Alert.Link></Alert>}
                 <Form onSubmit={handleSubmit}>
                     <Form.Group id="email">
                         <Form.Label>Email</Form.Label>

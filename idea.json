@@ -1,0 +1,13 @@
+[{
+    name: "Vegan",
+    foods: {
+        Meat
+    }
+
+    Vegan: { 
+        Meat: false, 
+        Cheese: true,
+
+    }
+
+}]
