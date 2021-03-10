@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Form, Card, Button, Alert } from 'react-bootstrap';
 import { useAuth } from "../context/AuthContext";
 import { Link, useHistory } from "react-router-dom";
+import Navbar from "./Navbar";
 
 export default function Login() {
     const emailRef = useRef();

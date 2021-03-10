@@ -1,24 +1,22 @@
 import React from "react";
-import Home from "./Home";
-import Register from "./Register";
-import Login from "./Login";
-import ForgotPassword from "./ForgotPassword";
-import PrivateRoute from "./PrivateRoute";
-import { Container } from "react-bootstrap";
+import Home from "../components/Home";
+import Register from "../components/Register";
+import Login from "../components/Login";
+import ForgotPassword from "../components/ForgotPassword";
+import PrivateRoute from "../components/PrivateRoute";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
 function App() {
+
   return (
-          <Router>
-              <Switch>
-                <PrivateRoute exact path="/">
-                  <Home/>
-                </PrivateRoute>
-                <Route path="/login" component={Login}/>
-                <Route path="/register" component={Register}/>
-                <Route path="/reset/password" component={ForgotPassword}/>
-              </Switch>
-          </Router>
+      <Router>
+        <Switch>
+          <Route path="/login" component={Login} />
+          <Route path="/register" component={Register} />
+          <Route path="/reset/password" component={ForgotPassword} />
+          <PrivateRoute exact path="/" component={Home}/>
+        </Switch>
+      </Router>
   );
 }
 

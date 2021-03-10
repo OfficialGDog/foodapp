@@ -1,0 +1,68 @@
+/* API USED: https://maps.googleapis.com/maps/api/place/details/json?place_id=
+ChIJr5x8_vBufkgR-fVETTwDOhU
+&fields=name,address_components,photos,rating,formatted_phone_number,website&key=AIzaSyCnsGjAU3uBniiHFJ-rhgXTZGNHXWKl0BA */
+
+{
+    "html_attributions": [],
+    "result": {
+      "address_components": [
+        {
+          "long_name": "62",
+          "short_name": "62",
+          "types": [
+            "street_number"
+          ]
+        },
+        {
+          "long_name": "Church Way",
+          "short_name": "Church Way",
+          "types": [
+            "route"
+          ]
+        },
+        {
+          "long_name": "North Shields",
+          "short_name": "North Shields",
+          "types": [
+            "postal_town"
+          ]
+        },
+        {
+          "long_name": "Tyne and Wear",
+          "short_name": "Tyne and Wear",
+          "types": [
+            "administrative_area_level_2",
+            "political"
+          ]
+        },
+        {
+          "long_name": "England",
+          "short_name": "England",
+          "types": [
+            "administrative_area_level_1",
+            "political"
+          ]
+        },
+        {
+          "long_name": "United Kingdom",
+          "short_name": "GB",
+          "types": [
+            "country",
+            "political"
+          ]
+        },
+        {
+          "long_name": "NE29 0AE",
+          "short_name": "NE29 0AE",
+          "types": [
+            "postal_code"
+          ]
+        }
+      ],
+      "formatted_phone_number": "0191 296 5544",
+      "name": "Pizza Addict",
+      "rating": 3.8,
+      "website": "http://www.pizzaaddict.co.uk/"
+    },
+    "status": "OK"
+  }

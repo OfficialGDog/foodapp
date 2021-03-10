@@ -90,11 +90,11 @@ export default function App() {
     setLocation(center);
   }, []);
 
-  const getLocationMarkers = async () => { 
+  const fetchGoogleMarkers = async () => { 
 
       let service = new window.google.maps.places.PlacesService(mapRef.current);
 
-      let data1 = await new Promise((resolve, reject) => {
+      return await new Promise((resolve, reject) => {
         service.nearbySearch({ type: "restaurant",  location: {lat: location.lat, lng: location.lng}, radius: location.radius }, (results, status) => { 
           if(status === window.google.maps.places.PlacesServiceStatus.OK) {
             resolve(results);
@@ -104,15 +104,12 @@ export default function App() {
         });
       });
 
-      let data2 = await fetch(`http://localhost:3001/api/v1/location/get?lat=${location.lat}&lng=${location.lng}&radius=10000`)
-      .then(response => response.json())
-      .then(data => data.map(sighting => { 
-        return { lat: sighting.location.coordinates[1], lng: sighting.location.coordinates[0] }
-      })) 
-      .catch(() => []);
+ }
 
-      return [...data1, ...data2]
-  
+ const fetchDatabaseMarkers = async () => {
+  let response = await fetch(`http://localhost:3001/api/v1/location/get?lat=${location.lat}&lng=${location.lng}&radius=10000`);
+  let data = response.json();
+  return [...data.map(sighting => { return { lat: sighting.location.coordinates[1], lng: sighting.location.coordinates[0] } })]
  }
 
   useEffect(() => {
@@ -121,7 +118,11 @@ export default function App() {
       return
     }
 
-    getLocationMarkers().then(response => (
+    fetchGoogleMarkers().then(response => (
+      setMarkers(response)
+    )).catch(error => console.log(error));
+
+    fetchDatabaseMarkers().then(response => (
       setMarkers(response)
     )).catch(error => console.log(error));
 
@@ -185,8 +186,14 @@ export default function App() {
             }}
           >
             <div>
-              <h2>{selected.name ?? "Title"}</h2>
-              <p>{selected.vicinity ?? "description"}</p>
+              <h5>{selected.name ?? "Title"}</h5>
+              <span>{selected.vicinity ?? "description"}</span>
+              <ul>
+                <li>Vegeterian</li>
+                <li>Vegan</li>
+                <li>Hindu</li>
+              </ul>
+              <button>Add</button>
             </div>
           </InfoWindow>
         ) : null}
