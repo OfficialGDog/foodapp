@@ -17,6 +17,7 @@ export default function Login() {
         e.preventDefault();
         // Validation check
         try {
+            setError(false);
             setLoading(true);
             const user = await auth.login({email: emailRef.current.value, password: passwordRef.current.value});
             if(!(user.emailVerified)) {

@@ -16,16 +16,18 @@ export default function Register() {
         e.preventDefault();
         // Validation checks
 
-        if(passwordRef.current.value !== passwordConfirmRef.current.value) {
-            return setError('Passwords do not match')
-        }
-
         try {
+            setError(false);
+            setMessage(false);
             setLoading(true);
-            console.log(emailRef.current.value + passwordRef.current.value);
-            const user = await auth.register({email: emailRef.current.value, password: passwordRef.current.value});
-            await auth.verifyEmail(user);
-            setMessage(`An Email has been sent to: ${user.email}`);
+
+            if(passwordRef.current.value !== passwordConfirmRef.current.value) {
+                return setError('Passwords do not match')
+            }
+
+            await auth.register({email: emailRef.current.value, password: passwordRef.current.value});
+            await auth.verifyEmail();
+            setMessage(`An Email has been sent to: ${emailRef.current.value}`);
         } catch (error) {
             setError(error.message);
         }

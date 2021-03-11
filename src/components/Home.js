@@ -16,6 +16,8 @@ import {
 
 import mapStyles from "../mapStyles";
 
+import EditProfile from "./EditProfile";
+
 import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
@@ -153,6 +155,7 @@ export default function App() {
       <Search panTo={panTo} />
       <Locate panTo={panTo} />
 
+      <EditProfile/>
       <GoogleMap
         {...interact}
         mapContainerStyle={mapContainerStyle}

@@ -8,7 +8,7 @@ const PrivateRoute = ({ component: RouteComponent, ...rest}) => {
     return (
         <Route
             {...rest}
-            render={ routeProps => auth.user ? (<RouteComponent {...routeProps}/>) : (<Redirect to={{pathname: "/login"}}/>) }/>
+            render={ routeProps => auth.user && auth.user.emailVerified ? (<RouteComponent {...routeProps}/>) : (<Redirect to={{pathname: "/login"}}/>) }/>
     );
 };
 

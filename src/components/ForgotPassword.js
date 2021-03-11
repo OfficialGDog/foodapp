@@ -14,9 +14,10 @@ export default function ForgotPassword() {
         e.preventDefault();
         // Validation check
         try {
+            setMessage(false);
             setLoading(true);
             await auth.resetPassword(emailRef.current.value);
-            setMessage("Email has been sent");
+            setMessage(`Instructions sent to: ${emailRef.current.value}`);
         }  catch (error) {
             setError(error.message);
         }
