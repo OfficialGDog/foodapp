@@ -1,10 +1,10 @@
 import React from "react";
-import Home from "../components/Home";
-import Register from "../components/Register";
-import Login from "../components/Login";
-import ForgotPassword from "../components/ForgotPassword";
-import PrivateRoute from "../components/PrivateRoute";
-import NotFound from "../components/NotFound"
+import Home from "./Home";
+import Register from "./authentication/Register";
+import Login from "./authentication/Login";
+import ForgotPassword from "./authentication/ForgotPassword";
+import PrivateRoute from "./authentication/PrivateRoute";
+import NotFound from "./NotFound"
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
 function App() {

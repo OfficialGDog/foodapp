@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import useLongPress from "../useLongPress";
+import Navbar from "./Navbar";
 import {
   GoogleMap,
   useLoadScript,
@@ -14,9 +15,11 @@ import {
   ComboboxOption,
 } from "@reach/combobox";
 
+import { Container  } from "react-bootstrap";
+
 import mapStyles from "../mapStyles";
 
-import EditProfile from "./EditProfile";
+import EditProfile from "./authentication/EditProfile";
 
 import usePlacesAutocomplete, {
   getGeocode,
@@ -145,7 +148,8 @@ export default function App() {
   if (!isLoaded) return "Loading Maps";
 
   return (
-    <div>
+    <>
+    <Container fluid>
       <h1>
         Food{" "}
         <span role="img" aria-label="bacon">
@@ -201,7 +205,9 @@ export default function App() {
           </InfoWindow>
         ) : null}
       </GoogleMap>
-    </div>
+      <Navbar/>
+    </Container>
+    </>
   );
 }
 
