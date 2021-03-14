@@ -3,6 +3,7 @@ import { Form, Card, Button, Alert } from "react-bootstrap";
 import Wrapper from "./Wrapper";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useHistory } from "react-router-dom";
+import Navbar from "../main/Navbar";
 
 export default function Login() {
   const emailRef = useRef();
@@ -39,6 +40,7 @@ export default function Login() {
   }
 
   return (
+    <>
     <Wrapper>
       <Card>
         <Card.Body>
@@ -77,5 +79,7 @@ export default function Login() {
         Need an account? <Link to="/register">Create an account</Link>
       </div>
     </Wrapper>
+    <Navbar/>
+    </>
   );
 }

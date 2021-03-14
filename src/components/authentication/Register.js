@@ -23,6 +23,7 @@ export default function Register() {
       setLoading(true);
 
       if (passwordRef.current.value !== passwordConfirmRef.current.value) {
+        setLoading(false);
         return setError("Passwords do not match");
       }
 

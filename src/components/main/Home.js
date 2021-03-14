@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import useLongPress from "../useLongPress";
+import useLongPress from "../../useLongPress";
 import Navbar from "./Navbar";
 import {
   GoogleMap,
@@ -17,9 +17,7 @@ import {
 
 import { Container  } from "react-bootstrap";
 
-import mapStyles from "../mapStyles";
-
-import EditProfile from "./authentication/EditProfile";
+import mapStyles from "../../mapStyles";
 
 import usePlacesAutocomplete, {
   getGeocode,
@@ -159,7 +157,6 @@ export default function App() {
       <Search panTo={panTo} />
       <Locate panTo={panTo} />
 
-      <EditProfile/>
       <GoogleMap
         {...interact}
         mapContainerStyle={mapContainerStyle}
@@ -205,8 +202,8 @@ export default function App() {
           </InfoWindow>
         ) : null}
       </GoogleMap>
-      <Navbar/>
     </Container>
+    <Navbar/>
     </>
   );
 }
