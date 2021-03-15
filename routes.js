@@ -4,7 +4,7 @@ const router = express.Router();
 var latregex = new RegExp(/^(-?[1-8]?\d(?:\.\d{1,18})?|90(?:\.0{1,18})?)$/);
 var lngregex = new RegExp(/^(-?(?:1[0-7]|[1-9])?\d(?:\.\d{1,18})?|180(?:\.0{1,18})?)$/);
 
-router.get("/location/get", async (req, res) => {
+router.get("/get/location", async (req, res) => {
   try {
     let { 
       lat,
@@ -37,7 +37,7 @@ router.get("/location/get", async (req, res) => {
   }
 });
 
-router.post("/location/new", async (req, res) => {
+router.post("/new/location", async (req, res) => {
   try {
     const {
       location: { lat, lng },

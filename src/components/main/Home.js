@@ -1,6 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useContext } from "react";
+import {database, geoPoint} from "../../firebase/config"
 import useLongPress from "../../useLongPress";
 import Navbar from "./Navbar";
+
 import {
   GoogleMap,
   useLoadScript,
@@ -43,20 +45,6 @@ const options = {
   zoomControl: true,
 };
 
-async function newMarkerRequest(locationData) {
-
-  const response = await fetch("http://localhost:3001/api/v1/location/new", {
-    method: "POST",
-    headers:{
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({location: locationData }),
-  });
-
-  const { location } = await response.json();
-  return location;
-}
-
 export default function App() {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
@@ -76,11 +64,6 @@ export default function App() {
          lng: event.latLng.lng(),
       },
      ]);
-
- //   newMarkerRequest( {
-  //    lat: event.latLng.lat(),
-  //    lng: event.latLng.lng(),
- //   });
   }, []);
 
   
@@ -110,9 +93,13 @@ export default function App() {
  }
 
  const fetchDatabaseMarkers = async () => {
-  let response = await fetch(`http://localhost:3001/api/v1/location/get?lat=${location.lat}&lng=${location.lng}&radius=10000`);
+   // Create a GeoQuery based on a location
+   const data = await database.restaurants.near({ center: geoPoint(40.7589, -73.9851), radius: 10000 }).get();
+   return data;
+
+/*   let response = await fetch(`http://localhost:3001/api/v1/location/get?lat=${location.lat}&lng=${location.lng}&radius=10000`);
   let data = response.json();
-  return [...data.map(sighting => { return { lat: sighting.location.coordinates[1], lng: sighting.location.coordinates[0] } })]
+  return [...data.map(sighting => { return { lat: sighting.location.coordinates[1], lng: sighting.location.coordinates[0] } })] */
  }
 
   useEffect(() => {
@@ -121,13 +108,13 @@ export default function App() {
       return
     }
 
-    fetchGoogleMarkers().then(response => (
-      setMarkers(response)
-    )).catch(error => console.log(error));
+    fetchGoogleMarkers().then((response) => {
+      setMarkers(response);
+    }).catch(error => console.log(error));
 
-    fetchDatabaseMarkers().then(response => (
-      setMarkers(response)
-    )).catch(error => console.log(error));
+    fetchDatabaseMarkers().then((response) => {
+      console.log(response.docs);
+    }).catch(error => console.log(error));
 
   }, [location]);
 
@@ -141,6 +128,22 @@ export default function App() {
     onLongPress: (ev) => onMapClick(ev),
     onClick: () => setSelected(null)
   });
+
+  // Refernece https://www.xspdf.com/help/50658711.html
+
+  // Call when a user creates a new map marker
+  const newMarker = useCallback(() => {
+    const coordinates = geoPoint(40.7589, -73.9851); // Temporary Lat,Lng
+    // Add a GeoDocument to a GeoCollection
+    database.restaurants.add({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], coordinates });
+    // Update a specific GeoDocument 
+    // database.restaurants.doc(id).set(queryString)
+  }, []);
+
+  // Call when a user updates an exisiting marker
+  const updateMarker = useCallback(() => {
+    //database.restaurants.doc(id).set({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], place_id: '', coordinates });
+  }, []);
 
   if (loadError) return "Error loading maps";
   if (!isLoaded) return "Loading Maps";
@@ -190,14 +193,14 @@ export default function App() {
             }}
           >
             <div>
-              <h5>{selected.name ?? "Title"}</h5>
-              <span>{selected.vicinity ?? "description"}</span>
+              <h5>{selected.name ?? "Name"}</h5>
+              <span>{selected.vicinity ?? "Address"}</span>
               <ul>
                 <li>Vegeterian</li>
                 <li>Vegan</li>
                 <li>Hindu</li>
               </ul>
-              <button>Add</button>
+              <button onClick={newMarker}>Save</button>
             </div>
           </InfoWindow>
         ) : null}
