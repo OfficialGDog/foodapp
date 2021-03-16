@@ -89,32 +89,36 @@ export default function App() {
           }
         });
       });
-
  }
 
- const fetchDatabaseMarkers = async () => {
-   // Create a GeoQuery based on a location
-   const data = await database.restaurants.near({ center: geoPoint(40.7589, -73.9851), radius: 10000 }).get();
-   return data;
-
-/*   let response = await fetch(`http://localhost:3001/api/v1/location/get?lat=${location.lat}&lng=${location.lng}&radius=10000`);
-  let data = response.json();
-  return [...data.map(sighting => { return { lat: sighting.location.coordinates[1], lng: sighting.location.coordinates[0] } })] */
+ const fetchDatabaseMarkers = ({lat,lng,radius}) => {
+  return database.restaurants.limit(25).near({ center: geoPoint(lat,lng), radius: ((radius / 1000) * 1.6)}).get();
  }
 
+ // Listens to any changes made in the database and returns an array
+  useEffect(() => {
+    let unsubscribe = database.restaurants.limit(25).onSnapshot(snapshot => {
+    const updated = snapshot.docChanges().map((change) => change.doc.data());
+    console.log(updated)
+  }, (error) => console.log(error));
+      // Cleanup subscription on unmount
+      return () => unsubscribe();
+  }, []);
+
+// Returns an array of map markers for the users current location
   useEffect(() => {
     if(!initLoad.current) {
       initLoad.current = true;
       return
     }
 
-    fetchGoogleMarkers().then((response) => {
-      setMarkers(response);
+    fetchDatabaseMarkers({lat: location.lat, lng: location.lng, radius: location.radius}).then((response) => {
+      console.log(response.docs.map(docSnapshot => docSnapshot.data()));
     }).catch(error => console.log(error));
 
-    fetchDatabaseMarkers().then((response) => {
-      console.log(response.docs);
-    }).catch(error => console.log(error));
+ /*   fetchGoogleMarkers().then((response) => {
+      setMarkers(response);
+    }).catch(error => console.log(error)); */
 
   }, [location]);
 
@@ -133,11 +137,9 @@ export default function App() {
 
   // Call when a user creates a new map marker
   const newMarker = useCallback(() => {
-    const coordinates = geoPoint(40.7589, -73.9851); // Temporary Lat,Lng
+    const coordinates = geoPoint(center.lat, center.lng); // Temporary Lat,Lng
     // Add a GeoDocument to a GeoCollection
     database.restaurants.add({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], coordinates });
-    // Update a specific GeoDocument 
-    // database.restaurants.doc(id).set(queryString)
   }, []);
 
   // Call when a user updates an exisiting marker
