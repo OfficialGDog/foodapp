@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useContext } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {database, geoPoint} from "../../firebase/config"
 import useLongPress from "../../useLongPress";
 import Navbar from "./Navbar";
@@ -59,9 +59,13 @@ export default function App() {
   const onMapClick = useCallback((event) => {
     setMarkers((current) => [
       ...current,
-     {
-      lat: event.latLng.lat(),
-         lng: event.latLng.lng(),
+      { 
+        geometry: {
+          location: {
+            lat: () => event.latLng.lat(),
+            lng: () => event.latLng.lng(),
+          }
+        }
       },
      ]);
   }, []);
@@ -76,11 +80,11 @@ export default function App() {
     setLocation(center);
   }, []);
 
-  const fetchGoogleMarkers = async () => { 
+  const fetchGoogleMarkers = () => { 
 
       let service = new window.google.maps.places.PlacesService(mapRef.current);
 
-      return await new Promise((resolve, reject) => {
+      return new Promise((resolve, reject) => {
         service.nearbySearch({ type: "restaurant",  location: {lat: location.lat, lng: location.lng}, radius: location.radius }, (results, status) => { 
           if(status === window.google.maps.places.PlacesServiceStatus.OK) {
             resolve(results);
@@ -92,34 +96,40 @@ export default function App() {
  }
 
  const fetchDatabaseMarkers = ({lat,lng,radius}) => {
-  return database.restaurants.limit(25).near({ center: geoPoint(lat,lng), radius: ((radius / 1000) * 1.6)}).get();
+  return database
+  .restaurants
+  .near({ center: geoPoint(lat,lng), radius: ((radius / 1000) * 1.6)})
+  .limit(25);
  }
-
- // Listens to any changes made in the database and returns an array
-  useEffect(() => {
-    let unsubscribe = database.restaurants.limit(25).onSnapshot(snapshot => {
-    const updated = snapshot.docChanges().map((change) => change.doc.data());
-    console.log(updated)
-  }, (error) => console.log(error));
-      // Cleanup subscription on unmount
-      return () => unsubscribe();
-  }, []);
 
 // Returns an array of map markers for the users current location
   useEffect(() => {
     if(!initLoad.current) {
-      initLoad.current = true;
-      return
+      initLoad.current = true
+    } else {
+      fetchGoogleMarkers().then((response) => {
+        setMarkers((current) => [
+          ...current,
+          ...response
+        ]);
+      }).catch(error => console.log(error));
+  
+      let unsubscribe = fetchDatabaseMarkers({lat: location.lat, lng: location.lng, radius: location.radius})
+      .onSnapshot(snapshot => {
+        const updatedMarkers = snapshot.docChanges().map((change) => change.doc.data());
+        setMarkers((current) => [
+          ...current,
+          ...updatedMarkers.map((marker) => { return {"geometry": {"location": { 
+            lat: () => marker.coordinates.latitude, 
+            lng: () => marker.coordinates.longitude
+          }}, ...marker }})
+        ]);
+      }, (error) => console.log(error));
+      
+      // Cleanup subscription on unmount
+      return () => unsubscribe(); 
+
     }
-
-    fetchDatabaseMarkers({lat: location.lat, lng: location.lng, radius: location.radius}).then((response) => {
-      console.log(response.docs.map(docSnapshot => docSnapshot.data()));
-    }).catch(error => console.log(error));
-
- /*   fetchGoogleMarkers().then((response) => {
-      setMarkers(response);
-    }).catch(error => console.log(error)); */
-
   }, [location]);
 
   const panTo = useCallback(({ lat, lng }) => {
@@ -133,17 +143,18 @@ export default function App() {
     onClick: () => setSelected(null)
   });
 
-  // Refernece https://www.xspdf.com/help/50658711.html
+ // Reference https://www.xspdf.com/help/50658711.html
 
   // Call when a user creates a new map marker
-  const newMarker = useCallback(() => {
-    const coordinates = geoPoint(center.lat, center.lng); // Temporary Lat,Lng
+  const newMarker = useCallback(({lat,lng}) => {
+    // Create a reference to the geolocation so it can be added to firestore
+    const coordinates = geoPoint(lat, lng); 
     // Add a GeoDocument to a GeoCollection
     database.restaurants.add({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], coordinates });
   }, []);
 
   // Call when a user updates an exisiting marker
-  const updateMarker = useCallback(() => {
+  const editMarker = useCallback(() => {
     //database.restaurants.doc(id).set({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], place_id: '', coordinates });
   }, []);
 
@@ -174,7 +185,7 @@ export default function App() {
           <Marker
             key={index}
             animation={window.google.maps.Animation.Wp}
-            position={{ lat: marker.geometry?.location?.lat() || marker.lat, lng: marker.geometry?.location?.lng() || marker.lng }}
+            position={{ lat: marker.geometry.location.lat(), lng: marker.geometry.location.lng()}}
             icon={{
               url: "/marker.svg",
               scaledSize: new window.google.maps.Size(30, 30),
@@ -189,7 +200,7 @@ export default function App() {
 
         {selected ? (
           <InfoWindow
-            position={{ lat: selected.geometry?.location?.lat() || selected.lat, lng: selected.geometry?.location?.lng() || selected.lng }}
+            position={{ lat: selected.geometry.location.lat(), lng: selected.geometry.location.lng()}}
             onCloseClick={() => {
               setSelected(null);
             }}
@@ -202,7 +213,8 @@ export default function App() {
                 <li>Vegan</li>
                 <li>Hindu</li>
               </ul>
-              <button onClick={newMarker}>Save</button>
+              <button onClick={() => {
+                newMarker(({lat: selected.geometry.location.lat(), lng: selected.geometry.location.lng()}))}}>Save</button>
             </div>
           </InfoWindow>
         ) : null}
