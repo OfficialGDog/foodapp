@@ -54,7 +54,6 @@ export default function App() {
 
   const [markers, setMarkers] = useState([]);
   const [location, setLocation] = useState(null);
-  const initLoad = useRef(false);
 
   const onMapClick = useCallback((event) => {
     setMarkers((current) => [
@@ -80,12 +79,12 @@ export default function App() {
     setLocation(center);
   }, []);
 
-  const fetchGoogleMarkers = () => { 
+  const fetchGoogleMarkers = ({lat,lng,radius}) => { 
 
       let service = new window.google.maps.places.PlacesService(mapRef.current);
 
       return new Promise((resolve, reject) => {
-        service.nearbySearch({ type: "restaurant",  location: {lat: location.lat, lng: location.lng}, radius: location.radius }, (results, status) => { 
+        service.nearbySearch({ type: "restaurant",  location: {lat, lng}, radius}, (results, status) => { 
           if(status === window.google.maps.places.PlacesServiceStatus.OK) {
             resolve(results);
           } else {
@@ -104,17 +103,26 @@ export default function App() {
 
 // Returns an array of map markers for the users current location
   useEffect(() => {
-    if(!initLoad.current) {
-      initLoad.current = true
-    } else {
-      fetchGoogleMarkers().then((response) => {
+    if(!location) return
+    console.log("Fetching Map Markers ...");
+
+    const obj =
+    { lat: location.lat, 
+      lng: location.lng, 
+      radius: location.radius
+    };
+
+    // Reset markers when the user changes location
+    setMarkers([]);
+
+    fetchGoogleMarkers(obj).then((response) => {
         setMarkers((current) => [
           ...current,
           ...response
         ]);
       }).catch(error => console.log(error));
   
-      let unsubscribe = fetchDatabaseMarkers({lat: location.lat, lng: location.lng, radius: location.radius})
+    let unsubscribe = fetchDatabaseMarkers(obj)
       .onSnapshot(snapshot => {
         const updatedMarkers = snapshot.docChanges().map((change) => change.doc.data());
         setMarkers((current) => [
@@ -129,7 +137,6 @@ export default function App() {
       // Cleanup subscription on unmount
       return () => unsubscribe(); 
 
-    }
   }, [location]);
 
   const panTo = useCallback(({ lat, lng }) => {
@@ -212,6 +219,7 @@ export default function App() {
                 <li>Vegeterian</li>
                 <li>Vegan</li>
                 <li>Hindu</li>
+                <li><a href="#">New tag</a></li>
               </ul>
               <button onClick={() => {
                 newMarker(({lat: selected.geometry.location.lat(), lng: selected.geometry.location.lng()}))}}>Save</button>
