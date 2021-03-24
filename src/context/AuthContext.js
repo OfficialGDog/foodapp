@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext, createContext } from "react";
 import { FirebaseContext } from "./FirebaseContext";
+import Firebase from "firebase/app";
 
 const AuthContext = createContext();
 
@@ -21,6 +22,22 @@ export function ProvideAuth({ children }) {
 function useProvideAuth() {
   const [user, setUser] = useState(null);
   const { firebase } = useContext(FirebaseContext);
+
+  const uiConfig = {
+    // Popup signin flow rather than redirect flow.
+    signInFlow: 'popup',
+    // Redirect to /signedIn after sign in is successful. Alternatively you can provide a callbacks.signInSuccess function.
+    signInSuccessUrl: '/',
+    // We will display Google and Facebook as auth providers.
+    signInOptions: [
+      Firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+      Firebase.auth.FacebookAuthProvider.PROVIDER_ID
+    ]
+  };
+
+  const signIn = () => {
+    return firebase.auth()
+  };
 
   const login = ({ email, password }) => {
     return firebase
@@ -102,5 +119,7 @@ function useProvideAuth() {
     resetPassword,
     updateEmail,
     updatePassword,
+    signIn,
+    uiConfig
   };
 }

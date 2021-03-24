@@ -1,0 +1,12 @@
+.card {
+    border: none !important;
+}
+
+.swiper-wrapper {
+    height: 100vh;
+}
+
+.card-body {
+    width: 100%;
+    margin: auto;
+}

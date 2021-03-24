@@ -35,18 +35,18 @@ export default function ForgotPassword() {
           {message && <Alert variant="success">{message}</Alert>}
           <Form onSubmit={handleSubmit}>
             <Form.Group id="email">
-              <Form.Label>Email</Form.Label>
+              <Form.Label className="d-none d-sm-block">Email</Form.Label>
               <Form.Control type="email" ref={emailRef} required />
             </Form.Group>
-            <Button disabled={isLoading} className="w-100" type="submit">
+            <Button disabled={isLoading} variant="success" className="w-100" type="submit">
               Reset Password
             </Button>
           </Form>
+          <div className="text-center mt-3">
+          Already have an account? <Link to="/login">Log In</Link>
+          </div>
         </Card.Body>
       </Card>
-      <div className="w-100 text-center mt-2">
-        Already have an account? <Link to="/login">Log In</Link>
-      </div>
     </Wrapper>
   );
 }

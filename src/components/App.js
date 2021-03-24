@@ -5,7 +5,7 @@ import Login from "./authentication/Login";
 import ForgotPassword from "./authentication/ForgotPassword";
 import EditProfile from "./authentication/EditProfile";
 import PrivateRoute from "./authentication/PrivateRoute";
-import NotFound from "./NotFound"
+import Welcome from "./main/Welcome";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
 function App() {
@@ -16,7 +16,8 @@ function App() {
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
           <Route path="/reset/password" component={ForgotPassword} />
-          <PrivateRoute exact path="/" component={Home}/>
+          <PrivateRoute exact path="/" component={Welcome}/>
+          <PrivateRoute path="/home" component={Home}/>
           <PrivateRoute path="/update/profile" component={EditProfile}/>
           {/* <Route component={NotFound} /> */}
         </Switch>

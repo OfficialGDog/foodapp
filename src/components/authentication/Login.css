@@ -1,0 +1,16 @@
+@media (min-width: 560px) and (min-height: 520px) {
+    .col-sm-6 {
+         max-width: 100% !important;
+    }
+
+}
+
+.btn-group {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+}
+
+.firebaseui-container {
+    margin-right: 0px !important;
+}
