@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Card, Button, Alert } from "react-bootstrap";
 import Swiper, { Navigation, Pagination } from 'swiper';
+import { Link, useHistory } from "react-router-dom";
 import 'swiper/swiper-bundle.css';
 import mainLogo from '../../breakfast.png';
 import mainLogo2 from '../../pizza_share.jpg';
 import "./Welcome.css";
 
 export default function Welcome() {
-    let [mySwiper, setMySwiper] = useState(null)
+    let [mySwiper, setMySwiper] = useState(null);
+    const history = useHistory();
 
     Swiper.use([Navigation, Pagination]);
 
@@ -30,6 +32,57 @@ export default function Welcome() {
         setMySwiper(swiper);
 
     }, []);
+
+    const data = [
+        "Vegetarian",	
+        "Vegan",	
+        "Islam",	
+        "Sikh",	
+        "Hindu",	
+        "Jewish",	
+        "Pregnancy",	
+        "Elderly",
+        "Breastfeeding",	
+        "6-12 Months",	
+        "12-24 months",	
+        "5-12 years",	
+        "Teenagers (12+)",	
+        "Coeliac disease",
+        "Peanut allergy",	
+        "Lactose intolerant",	
+        "Caffeine intolerant",	
+        "Celery allergy",	
+        "Fish allergy",
+        "Shellfish allergy",	
+        "Egg allergy",	
+        "Milk allergy",	
+        "Lupin allergy", 
+        "Sesame allergy",
+        "Mustard allergy",	
+        "Soya allergy",	
+        "Sulphur dioxide (sulphites) allergy",	
+        "Diabetes",	
+        "Cardiovascular Disease (CVD)"
+    ]
+
+    const data2 = [
+        "Celery",
+        "Crustaceans / shellfish",
+        "Eggs",
+        "Fish",
+        "Gluten",
+        "Lupin",
+        "Cow's Milk",
+        "Molluscs",
+        "Mustard",
+        "Peanuts",
+        "Sesame",
+        "Soya",
+        "Sulphites",
+        "Tree nuts",
+        "Halal meat",
+        "Alcohol"
+    ]    
 
     return (
 
@@ -61,11 +114,17 @@ export default function Welcome() {
                 </div>
                 <div className="swiper-slide">
                     <h1 className="text-center">Dietary Conditions</h1>
+                    <Form className="row">
+                        {data.map((item) => <Form.Group className="col-md-6"><Form.Check type="checkbox" label={item}/></Form.Group>)}
+                    </Form>
                     <Button size="lg" type="button" variant="success" onClick={() => mySwiper.slideNext()}>Next</Button>
                 </div>
                 <div className="swiper-slide">
                     <h1 className="text-center">My Food Profile</h1>
-                    <Button size="lg" type="button" variant="success">Finish</Button>
+                    <Form className="row">
+                        {data2.map((item) => <Form.Group className="col-md-6"><Form.Check type="checkbox" label={item}/></Form.Group>)}
+                    </Form>
+                    <Button onClick={() => history.push("/home")} size="lg" type="button" variant="success">Finish</Button>
                 </div>
             </div>
             <div className="swiper-pagination"></div>

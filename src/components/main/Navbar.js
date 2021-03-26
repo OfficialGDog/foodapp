@@ -20,7 +20,7 @@ export default function Navbar() {
           </Nav.Link>
         </Nav.Item>
         <Nav.Item className="flex-grow-1" style={{ flexBasis: "0" }}>
-          <Nav.Link className="d-flex flex-column text-reset">
+          <Nav.Link href="/update/profile" className="d-flex flex-column text-reset">
             <BsPersonFill className="w-auto" />
             Profile
           </Nav.Link>

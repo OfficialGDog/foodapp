@@ -4,13 +4,13 @@ import {
   Card,
   Button,
   Alert,
-  ButtonGroup,
-  InputGroup,
+  ButtonGroup
 } from "react-bootstrap";
 import Wrapper from "./Wrapper";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useHistory } from "react-router-dom";
 import StyledFirebaseAuth from "react-firebaseui/StyledFirebaseAuth";
+import ReCAPTCHA from "react-google-recaptcha";
 import "./Login.css";
 
 export default function Login() {
@@ -20,6 +20,7 @@ export default function Login() {
   const [error, setError] = useState(false);
   const [isLoading, setLoading] = useState(false);
   const [isValidEmail, setValidEmail] = useState(true);
+  const [isHuman, setHuman] = useState(false);
   const history = useHistory();
 
   async function handleSubmit(e) {
@@ -28,10 +29,18 @@ export default function Login() {
     try {
       setError(false);
       setLoading(true);
+
+      if(!isHuman) {
+        setLoading(false);
+        setError(`Are you Human?`);
+        return;
+      }
+
       const user = await auth.login({
         email: emailRef.current.value,
         password: passwordRef.current.value,
       });
+
       if (!user.emailVerified) {
         setLoading(false);
         setValidEmail(false);
@@ -39,7 +48,9 @@ export default function Login() {
       }
 
       history.push("/");
+      
       console.log("Login Successfull!");
+
     } catch (error) {
       setError(error.message);
     }
@@ -78,13 +89,15 @@ export default function Login() {
                   type="email"
                   ref={emailRef}
                   defaultValue={auth.user.email ?? ""}
+                  placeholder="name@example.com"
                   required
                 />
               </Form.Group>
               <Form.Group id="password">
                 <Form.Label className="d-none d-sm-block">Password</Form.Label>
-                <Form.Control type="password" ref={passwordRef} required />
+                <Form.Control type="password" ref={passwordRef} required placeholder="••••••••"/>
               </Form.Group>
+              <ReCAPTCHA sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY} size="normal" onExpired={() => setHuman(false)} onChange={() => setHuman(true)}/>
               <ButtonGroup>
                 <div className="text-center p-2">
                   <Button

@@ -28,12 +28,12 @@ export default function ForgotPassword() {
 
   return (
     <Wrapper>
-      <Card>
+      <Card className="shadow-sm rounded" style={{ height: "inherit" }}>
         <Card.Body>
-          <h2 className="text-center mb-4">Reset Password</h2>
+          <h2 className="text-center mb-4" style={{ margin: "40px 20px 0" }}>Reset Password</h2>
           {error && <Alert variant="danger">{error}</Alert>}
           {message && <Alert variant="success">{message}</Alert>}
-          <Form onSubmit={handleSubmit}>
+          <Form onSubmit={handleSubmit} style={{padding: "10px"}}>
             <Form.Group id="email">
               <Form.Label className="d-none d-sm-block">Email</Form.Label>
               <Form.Control type="email" ref={emailRef} required />
