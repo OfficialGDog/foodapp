@@ -1,0 +1,13 @@
+.list-group-item {
+    padding: .25rem .75rem !important;
+    border-radius: .65rem !important;
+}
+
+.venuetag {
+    border-left-width: thin !important;
+    margin: 5px 5px 0px 0px;
+    text-overflow: ellipsis;
+    max-width: max-content !important;
+    overflow: hidden;
+    white-space: nowrap;
+}

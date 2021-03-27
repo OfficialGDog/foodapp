@@ -1,8 +1,8 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Form, Card, Button, Alert } from "react-bootstrap";
 import Wrapper from "./Wrapper";
 import { useAuth } from "../../context/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 
 export default function ForgotPassword() {
   const emailRef = useRef();
@@ -10,6 +10,13 @@ export default function ForgotPassword() {
   const [error, setError] = useState();
   const [message, setMessage] = useState();
   const [isLoading, setLoading] = useState(false);
+  const history = useHistory();
+
+  useEffect(() => {
+    if(auth.user) {
+      history.push("/");
+    }
+  },[]);
 
   async function handleSubmit(e) {
     e.preventDefault();

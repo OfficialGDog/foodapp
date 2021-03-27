@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import {database, geoPoint} from "../../firebase/config"
 import useLongPress from "../../useLongPress";
 import Navbar from "./Navbar";
+import { FaMapMarkerAlt } from "react-icons/fa";
+import "./Home.css";
 
 import {
   GoogleMap,
@@ -17,7 +19,7 @@ import {
   ComboboxOption,
 } from "@reach/combobox";
 
-import { Container  } from "react-bootstrap";
+import { Container, Card, ListGroup, Row } from "react-bootstrap";
 
 import mapStyles from "../../mapStyles";
 
@@ -54,6 +56,10 @@ export default function App() {
 
   const [markers, setMarkers] = useState([]);
   const [location, setLocation] = useState(null);
+  const [view, setView] = useState({
+    mapView: true,
+    cardView: false
+   });
 
   const onMapClick = useCallback((event) => {
     setMarkers((current) => [
@@ -165,6 +171,12 @@ export default function App() {
     //database.restaurants.doc(id).set({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], place_id: '', coordinates });
   }, []);
 
+  const toggleView = useCallback(() => {
+    if (!view) return 
+    setView((prevState) => ({ mapView: !(prevState.mapView), cardView: !(prevState.cardView)}));
+    setSelected(null);
+  }, [view]);   
+
   if (loadError) return "Error loading maps";
   if (!isLoaded) return "Loading Maps";
 
@@ -177,56 +189,87 @@ export default function App() {
           🥓
         </span>
       </h1>
+      <button type="button" onClick={toggleView}>{!view.mapView ? "Map view" : "Card view" }</button>
       <Search panTo={panTo} />
       <Locate panTo={panTo} />
 
+      <div id="mapview" style={{display: view.mapView ? 'block' : 'none'}}>
       <GoogleMap
-        {...interact}
-        mapContainerStyle={mapContainerStyle}
-        zoom={14}
-        center={center}
-        options={options}
-        onLoad={onMapLoad}
-      >
-        {markers.map((marker, index) => (
-          <Marker
-            key={index}
-            animation={window.google.maps.Animation.Wp}
-            position={{ lat: marker.geometry.location.lat(), lng: marker.geometry.location.lng()}}
-            icon={{
-              url: "/marker.svg",
-              scaledSize: new window.google.maps.Size(30, 30),
-              origin: new window.google.maps.Point(0, 0),
-              anchor: new window.google.maps.Point(15, 15),
-            }}
-            onClick={() => {
-              setSelected(marker);
-            }}
-          />
-        ))}
-
-        {selected ? (
-          <InfoWindow
-            position={{ lat: selected.geometry.location.lat(), lng: selected.geometry.location.lng()}}
-            onCloseClick={() => {
-              setSelected(null);
-            }}
+            {...interact}
+            mapContainerStyle={mapContainerStyle}
+            zoom={14}
+            center={center}
+            options={options}
+            onLoad={onMapLoad}
           >
-            <div>
-              <h5>{selected.name ?? "Name"}</h5>
-              <span>{selected.vicinity ?? "Address"}</span>
-              <ul>
-                <li>Vegeterian</li>
-                <li>Vegan</li>
-                <li>Hindu</li>
-                <li><a href="#">New tag</a></li>
-              </ul>
-              <button onClick={() => {
-                newMarker(({lat: selected.geometry.location.lat(), lng: selected.geometry.location.lng()}))}}>Save</button>
-            </div>
-          </InfoWindow>
-        ) : null}
-      </GoogleMap>
+            {markers.map((marker, index) => (
+              <Marker
+                key={index}
+                animation={window.google.maps.Animation.Wp}
+                position={{ lat: marker.geometry.location.lat(), lng: marker.geometry.location.lng()}}
+                icon={{
+                  url: "/marker.svg",
+                  scaledSize: new window.google.maps.Size(30, 30),
+                  origin: new window.google.maps.Point(0, 0),
+                  anchor: new window.google.maps.Point(15, 15),
+                }}
+                onClick={() => {
+                  setSelected(marker);
+                }}
+              />
+            ))}
+    
+            {selected ? (
+              <InfoWindow
+                position={{ lat: selected.geometry.location.lat(), lng: selected.geometry.location.lng()}}
+                onCloseClick={() => {
+                  setSelected(null);
+                }}
+              >
+                <div>
+                  <h5>{selected.name ?? "Name"}</h5>
+                  <p>{selected.vicinity ?? "Address"}</p>
+                  {selected.tags && (
+                    <Container fluid>
+                      <Row>
+                        <ListGroup horizontal style={{display: "contents"}}>
+                          {selected.tags.map((tag, i) => (
+                            <ListGroup.Item key={i} variant="success" className="col-4 col-sm-auto col-md-auto col-lg-auto venuetag">{tag}</ListGroup.Item>
+                            ))}
+                      </ListGroup>
+                      </Row>
+                    </Container>
+                  )}
+                  <button className="mt-2" onClick={() => {
+                    newMarker(({lat: selected.geometry.location.lat(), lng: selected.geometry.location.lng()}))}}>Save</button>
+                </div>
+              </InfoWindow>
+            ) : null}
+          </GoogleMap>      
+      </div>
+      <div id="cardview" style={{display: view.cardView ? 'block' : 'none'}}>
+        {markers.map((marker, index) => (
+          <Card key={index} bg="light">
+            <Card.Body>
+              <Card.Title as="h3">{marker.name ?? "Name"}</Card.Title>
+                <Card.Text>
+                <FaMapMarkerAlt color="#3083ff"/> {marker.vicinity ?? "Address"}
+                </Card.Text>
+                {marker.tags && (
+                  <Container fluid>
+                  <Row>
+                  <ListGroup horizontal style={{display: "contents"}}>
+                    {marker.tags.map((tag, i) => (
+                    <ListGroup.Item key={i} variant="success" className="col-4 col-sm-auto col-md-auto col-lg-auto venuetag">{tag}</ListGroup.Item>
+                    ))}
+                  </ListGroup>
+                  </Row>
+                  </Container>
+                )}
+            </Card.Body>
+          </Card>
+        ))}
+      </div>
     </Container>
     <Navbar/>
     </>

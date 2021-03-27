@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   Form,
   Card,
@@ -22,6 +22,12 @@ export default function Login() {
   const [isValidEmail, setValidEmail] = useState(true);
   const [isHuman, setHuman] = useState(false);
   const history = useHistory();
+
+  useEffect(() => {
+    if(auth.user) {
+      history.push("/");
+    }
+  },[]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -48,7 +54,7 @@ export default function Login() {
       }
 
       history.push("/");
-      
+
       console.log("Login Successfull!");
 
     } catch (error) {

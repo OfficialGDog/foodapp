@@ -1,8 +1,8 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Form, Card, Button, Alert } from "react-bootstrap";
 import Wrapper from "./Wrapper";
 import { useAuth } from "../../context/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
 
 export default function Register() {
@@ -15,6 +15,13 @@ export default function Register() {
   const [isHuman, setHuman] = useState(false);
   const recapRef = useRef();
   const auth = useAuth();
+  const history = useHistory();
+
+  useEffect(() => {
+    if(auth.user) {
+      history.push("/");
+    }
+  },[]);
 
   async function handleSubmit(e) {
     e.preventDefault();
