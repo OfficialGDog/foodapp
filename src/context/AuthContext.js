@@ -44,9 +44,10 @@ function useProvideAuth() {
     return firebase
       .auth()
       .signInWithEmailAndPassword(email, password)
-      .then((response) => {
-        setUser(response.user);
-        return response.user;
+      .then(({user}) => {
+        user = {...user, isNew: isNewUser(user).then(v => v)};
+        setUser(user);
+        return user;
       });
   };
 
@@ -90,7 +91,7 @@ function useProvideAuth() {
     return firebase.auth().currentUser.updatePassword(password);
   };
 
-  const createUserDocument = async (user) => {
+  const isNewUser = async (user) => {
 
     const userRef = firestore.doc(`users/${user.uid}`);
 
@@ -103,7 +104,7 @@ function useProvideAuth() {
       isNew: snapshot.exists ? false : true
     });
     
-    return snapshot
+    return !(snapshot.exists)
   };
 
   /* 
@@ -117,11 +118,11 @@ function useProvideAuth() {
     const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
       // Is the user logged in?
       if (user) {
-        createUserDocument(user)
-        .then(snapshot => { 
+        isNewUser(user)
+        .then(value => { 
           user = 
           {...user, 
-            isNew: !snapshot.exists // Here we add the 'isNew' property to the currently logged in user.
+            isNew: value // Here we add the 'isNew' property to the currently logged in user.
           }
         })
         .catch(error => console.log(error))
