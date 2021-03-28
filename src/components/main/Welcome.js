@@ -212,7 +212,7 @@ export default function Welcome() {
             ))}
           </Form>
           <Button
-            onClick={() => history.push("/home")}
+            onClick={() => history.push("/")}
             size="lg"
             type="button"
             variant="success"

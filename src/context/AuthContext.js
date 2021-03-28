@@ -22,6 +22,7 @@ export function ProvideAuth({ children }) {
 
 function useProvideAuth() {
   const [user, setUser] = useState(null);
+  const [isNewUser, setNewUser] = useState(true);
   const { firebase } = useContext(FirebaseContext);
 
   const uiConfig = {
@@ -45,10 +46,11 @@ function useProvideAuth() {
       .auth()
       .signInWithEmailAndPassword(email, password)
       .then(({user}) => {
-        user = {...user, isNew: isNewUser(user).then(v => v)};
-        setUser(user);
-        return user;
-      });
+        if(!user.emailVerified) return user // Safe guard to prevent unverified users from logging in 
+          user = {...user, isNew: isUserNew(user).then(v => v)};
+          setUser(user);
+        }
+      );
   };
 
   const register = ({ email, password }) => {
@@ -91,7 +93,8 @@ function useProvideAuth() {
     return firebase.auth().currentUser.updatePassword(password);
   };
 
-  const isNewUser = async (user) => {
+  const isUserNew = async (user) => 
+    if(!isNewUser) return false // * Safeguard to prevent too many requests going to firestore. * isNewUser is set to false as soon as there is a user record in the database.  
 
     const userRef = firestore.doc(`users/${user.uid}`);
 
@@ -101,10 +104,12 @@ function useProvideAuth() {
 
     userRef.set({
       email,
-      isNew: snapshot.exists ? false : true
+      isNew: !snapshot.exists
     });
+
+    setNewUser(!snapshot.exists);
     
-    return !(snapshot.exists)
+    return !snapshot.exists
   };
 
   /* 
@@ -118,7 +123,7 @@ function useProvideAuth() {
     const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
       // Is the user logged in?
       if (user) {
-        isNewUser(user)
+        isUserNew(user)
         .then(value => { 
           user = 
           {...user, 
