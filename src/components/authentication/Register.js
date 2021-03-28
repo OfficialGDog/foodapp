@@ -18,10 +18,9 @@ export default function Register() {
   const history = useHistory();
 
   useEffect(() => {
-    if(auth.user) {
-      history.push("/");
-    }
-  },[]);
+    if(!auth.user.emailVerified) return
+    history.push("/"); 
+  }, [auth.user]);
 
   async function handleSubmit(e) {
     e.preventDefault();

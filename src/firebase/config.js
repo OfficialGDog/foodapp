@@ -12,16 +12,18 @@ const firebase = Firebase.initializeApp({
     appId: process.env.REACT_APP_FIREBASE_APP_ID
 });
 
-const instance = geofirestore.initializeApp(firebase.firestore());
+const firestore = firebase.firestore();
+
+const instance = geofirestore.initializeApp(firestore);
 
 const geoPoint = (lat,lng) => { return new Firebase.firestore.GeoPoint(lat,lng)};
 
-const database = {
+const geodatabase = {
     instance,
     restaurants: instance.collection('restaurants'),
 }
 
-export { firebase, database, geoPoint };
+export { firebase, firestore, geodatabase, geoPoint };
 
 
  

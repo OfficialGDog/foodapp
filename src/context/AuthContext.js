@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, createContext } from "react";
 import { FirebaseContext } from "./FirebaseContext";
 import Firebase from "firebase/app";
+import { firestore } from "../firebase/config";
 
 const AuthContext = createContext();
 
@@ -35,7 +36,7 @@ function useProvideAuth() {
     ]
   };
 
-  const signIn = () => {
+  const singleSignIn = () => {
     return firebase.auth()
   };
 
@@ -89,6 +90,22 @@ function useProvideAuth() {
     return firebase.auth().currentUser.updatePassword(password);
   };
 
+  const createUserDocument = async (user) => {
+
+    const userRef = firestore.doc(`users/${user.uid}`);
+
+    const snapshot = await userRef.get();
+
+    const { email } = user;
+
+    userRef.set({
+      email,
+      isNew: snapshot.exists ? false : true
+    });
+    
+    return snapshot
+  };
+
   /* 
         Subscribe to user on mount
         Because this sets state in the callback it will cause any
@@ -98,8 +115,17 @@ function useProvideAuth() {
 
   useEffect(() => {
     const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+      // Is the user logged in?
       if (user) {
-        setUser(user);
+        createUserDocument(user)
+        .then(snapshot => { 
+          user = 
+          {...user, 
+            isNew: !snapshot.exists // Here we add the 'isNew' property to the currently logged in user.
+          }
+        })
+        .catch(error => console.log(error))
+        .finally(() => setUser(user));
       } else {
         setUser(false);
       }
@@ -119,7 +145,7 @@ function useProvideAuth() {
     resetPassword,
     updateEmail,
     updatePassword,
-    signIn,
+    singleSignIn,
     uiConfig
   };
 }

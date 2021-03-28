@@ -24,10 +24,9 @@ export default function Login() {
   const history = useHistory();
 
   useEffect(() => {
-    if(auth.user) {
-      history.push("/");
-    }
-  },[]);
+    if(!auth.user.emailVerified) return
+    history.push("/"); 
+  }, [auth.user]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -137,7 +136,7 @@ export default function Login() {
             <div id="social" className="col-sm-6 col-lg-12 text-center">
               <StyledFirebaseAuth
                 uiConfig={auth.uiConfig}
-                firebaseAuth={auth.signIn()}
+                firebaseAuth={auth.singleSignIn()}
               />
             </div>
           </Card.Body>

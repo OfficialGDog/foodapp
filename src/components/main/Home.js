@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import {database, geoPoint} from "../../firebase/config"
+import {geodatabase, geoPoint} from "../../firebase/config"
 import useLongPress from "../../useLongPress";
 import Navbar from "./Navbar";
 import { FaMapMarkerAlt } from "react-icons/fa";
@@ -101,7 +101,7 @@ export default function App() {
  }
 
  const fetchDatabaseMarkers = ({lat,lng,radius}) => {
-  return database
+  return geodatabase
   .restaurants
   .near({ center: geoPoint(lat,lng), radius: ((radius / 1000) * 1.6)})
   .limit(25);
@@ -163,12 +163,12 @@ export default function App() {
     // Create a reference to the geolocation so it can be added to firestore
     const coordinates = geoPoint(lat, lng); 
     // Add a GeoDocument to a GeoCollection
-    database.restaurants.add({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], coordinates });
+    geodatabase.restaurants.add({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], coordinates });
   }, []);
 
   // Call when a user updates an exisiting marker
   const editMarker = useCallback(() => {
-    //database.restaurants.doc(id).set({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], place_id: '', coordinates });
+    //geodatabase.restaurants.doc(id).set({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], place_id: '', coordinates });
   }, []);
 
   const toggleView = useCallback(() => {

@@ -6,10 +6,12 @@ import "swiper/swiper-bundle.css";
 import mainLogo from "../../breakfast.png";
 import mainLogo2 from "../../pizza_share.jpg";
 import "./Welcome.css";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Welcome() {
   let [mySwiper, setMySwiper] = useState(null);
   const history = useHistory();
+  const auth = useAuth();
 
   Swiper.use([Navigation, Pagination]);
 
@@ -114,6 +116,7 @@ export default function Welcome() {
               </Button>
             </Card.Body>
           </Card>
+          {auth.user.isNew ? (<span>New user</span>) : (<span>Existing User</span>)}
         </div>
         <div className="swiper-slide">
           <Card>
@@ -205,8 +208,8 @@ export default function Welcome() {
           <h2 className="text-center">My Food Profile</h2>
           <p>Tell us about which foods you can't eat.</p>
           <Form className="row">
-            {data2.map((item) => (
-              <Form.Group className="col-6 col-lg-4">
+            {data2.map((item, index) => (
+              <Form.Group key={index} className="col-6 col-lg-4">
                 <Form.Check type="checkbox" label={item} />
               </Form.Group>
             ))}
