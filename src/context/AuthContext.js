@@ -93,7 +93,7 @@ function useProvideAuth() {
     return firebase.auth().currentUser.updatePassword(password);
   };
 
-  const isUserNew = async (user) => 
+  const isUserNew = async (user) => {
     if(!isNewUser) return false // * Safeguard to prevent too many requests going to firestore. * isNewUser is set to false as soon as there is a user record in the database.  
 
     const userRef = firestore.doc(`users/${user.uid}`);
