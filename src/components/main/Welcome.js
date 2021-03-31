@@ -99,27 +99,55 @@ export default function Welcome() {
     };
   }, []);
 
-
   const updateState = (obj) => {
 
     const { categories, foods, dietaryconditions} = obj;
 
     if(categories) setCategories((prevState) => [ ...reducer(prevState, categories)]);
-    if(foods) setFoods((prevState) => [ ...reducer(prevState, foods)]);
+
     if(dietaryconditions) setDietaryConditions((prevState) => [ ...reducer(prevState, dietaryconditions)]);
+
+    if(foods) {
+
+      let {name, intolerance, category } = foods.data[0];
+
+      if(!name) return
+
+      try {
+
+        let conditions = [], categories = [];
+
+        // VALIDATION of intolerance and category keys.
+  
+        if(typeof intolerance === 'object') intolerance.forEach((condition) => condition.path && conditions.push(condition.path))
+  
+        if(typeof intolerance === 'string') conditions[0] = intolerance;
+  
+        if(typeof category === 'object') category.path && categories.push(category.path);
+  
+        if(typeof category === 'string') categories[0] = category;
+  
+        const newArray = { data: [{ name, intolerance: conditions, category: categories, path: foods.data[0].path }]};
+  
+        setFoods((prevState) => [ ...reducer(prevState, newArray)]);
  
+      } catch (error) {
+        console.error(error);
+      }
+    }
   }
 
   const reducer = (prevState, array) => {
 
     let newArray = array.data.filter((condition) => condition.name);
 
-    return [...prevState.map((item) => !!newArray.length ? 
-      item.path === newArray[0].path ? 
-        newArray[0]
-      : item
-    : item
-    ), ...newArray];
+    let temp = prevState.map((item) => newArray.length > 0 ? item.path === newArray[0].path ? newArray[0] : item : item)
+
+    if(prevState.length > 0 && newArray.length > 0) {
+        if(prevState.some((item) => item.path === newArray[0].path)) newArray = [];
+    }
+    
+    return [...temp, ...newArray];
   }
 
   return (
@@ -202,16 +230,17 @@ export default function Welcome() {
                 Tell us about which foods you can't eat.
                 <Form className="m-sm-4">
                   <Form.Row className="checkboxgroup">
+
+                  <Accordion>
                     
-                  <Accordion defaultActiveKey="0">
-                    {categories.map((item, index) => (
-                        <Card>
-                          <Accordion.Toggle as={Card.Header} eventKey={index}>
+                  {categories.map((item, index) => (
+                       <Card key={index}>
+                          <Accordion.Toggle as={Card.Header} eventKey={(index + 1)}>
                           {item.name}
                           </Accordion.Toggle>
-                            <Accordion.Collapse eventKey={index}>
+                            <Accordion.Collapse eventKey={(index + 1)}>
                           <Card.Body>
-                            {foods.map((item2, index2) => item2.name === "Celery" && (
+                            {foods.map((item2, index2) => (item2.category[0] === item.path || item2.category[0] === item.name) && (
                               <Col key={index2} xs={6} sm={6} md={6} lg={4}>
                                 <Form.Group style={{ marginBottom: ".75rem" }}>
                                 <Form.Check type="checkbox" label={item2.name} />
@@ -221,7 +250,8 @@ export default function Welcome() {
                           </Card.Body>
                         </Accordion.Collapse>
                      </Card> 
-                    ))}
+                ))}   
+
                   </Accordion>
                       
 
