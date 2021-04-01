@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Form,
   Card,
@@ -22,6 +22,7 @@ export default function Welcome() {
   const [dietaryConditions, setDietaryConditions] = useState([]);
   const [foods, setFoods] = useState([]);
   const history = useHistory();
+  const listeners = useRef([]);
 
   Swiper.use([Navigation, Pagination]);
 
@@ -46,58 +47,68 @@ export default function Welcome() {
     setDietaryConditions([]);
     setFoods([]);
 
-    let unsubscribe1 = firestore.collection("foods").onSnapshot(
+    const unsubscribe1 = firestore.collection("foods").orderBy("name").onSnapshot(
       (snapshot) => {
-        snapshot.docChanges().forEach((change) =>
-          updateState({
-            foods: {
-              data: [{ ...change.doc.data(), path: change.doc.ref.path }],
-            },
-          })
-        );
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === "removed") return
+            updateState({
+              foods: {
+                data: [{ ...change.doc.data(), path: change.doc.ref.path }],
+              },
+            });
+          });
       },
       (error) => {
         console.error(error);
       }
     );
 
-    let unsubscribe2 = firestore.collection("categories").onSnapshot(
+    attachListener(unsubscribe1);
+
+    const unsubscribe2 = firestore.collection("categories").orderBy("name").onSnapshot(
       (snapshot) => {
-        snapshot.docChanges().forEach((change) =>
+        snapshot.docChanges().forEach((change) => {
+        if (change.type === "removed") return
           updateState({
             categories: {
               data: [{ ...change.doc.data(), path: change.doc.ref.path }],
             },
-          })
-        );
+          });
+        });
       },
       (error) => {
         console.error(error);
       }
     );
 
-    let unsubscribe3 = firestore.collection("dietaryconditions").onSnapshot(
+    attachListener(unsubscribe2);
+
+    const unsubscribe3 = firestore.collection("dietaryconditions").orderBy("name").onSnapshot(
       (snapshot) => {
-        snapshot.docChanges().forEach((change) =>
-          updateState({
-            dietaryconditions: {
-              data: [{ ...change.doc.data(), path: change.doc.ref.path }],
-            },
-          })
-        );
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === "removed") return
+            updateState({
+              dietaryconditions: {
+                data: [{ ...change.doc.data(), path: change.doc.ref.path }],
+              },
+            });
+          });
       },
       (error) => {
         console.error(error);
       }
     );
+
+    attachListener(unsubscribe3);
 
     // Cleanup subscription on unmount
-    return () => {
-      unsubscribe1();
-      unsubscribe2();
-      unsubscribe3();
-    };
+    return () => dettachListeners(); 
+
   }, []);
+
+  const attachListener = (listener) => listeners.current.push(listener);
+
+  const dettachListeners = () => listeners.current.forEach(listener => listener());
 
   const updateState = (obj) => {
 
@@ -109,11 +120,11 @@ export default function Welcome() {
 
     if(foods) {
 
-      let {name, intolerance, category } = foods.data[0];
-
-      if(!name) return
-
       try {
+
+        let {name, intolerance, category } = foods.data[0];
+
+        if(!name) return
 
         let conditions = [], categories = [];
 
@@ -136,18 +147,14 @@ export default function Welcome() {
       }
     }
   }
-
+  
   const reducer = (prevState, array) => {
-
     let newArray = array.data.filter((condition) => condition.name);
-
-    let temp = prevState.map((item) => newArray.length > 0 ? item.path === newArray[0].path ? newArray[0] : item : item)
-
+    let updated = prevState.map((item) => newArray.length > 0 ? item.path === newArray[0].path ? newArray[0] : item : item);
     if(prevState.length > 0 && newArray.length > 0) {
         if(prevState.some((item) => item.path === newArray[0].path)) newArray = [];
     }
-    
-    return [...temp, ...newArray];
+    return [...updated, ...newArray];
   }
 
   return (
@@ -230,9 +237,7 @@ export default function Welcome() {
                 Tell us about which foods you can't eat.
                 <Form className="m-sm-4">
                   <Form.Row className="checkboxgroup">
-
-                  <Accordion>
-                    
+                  <Accordion className="w-100">
                   {categories.map((item, index) => (
                        <Card key={index}>
                           <Accordion.Toggle as={Card.Header} eventKey={(index + 1)}>
@@ -250,11 +255,8 @@ export default function Welcome() {
                           </Card.Body>
                         </Accordion.Collapse>
                      </Card> 
-                ))}   
-
+                  ))}
                   </Accordion>
-                      
-
                   </Form.Row>
                 </Form>
               </Card.Body>
