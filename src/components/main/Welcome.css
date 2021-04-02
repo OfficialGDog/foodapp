@@ -17,14 +17,12 @@
 }
 
 label {
-    width: 125px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
+    width: 20vw;
+    min-width: 65px;
+    max-width: 125px;
 }
 
 .checkboxgroup {
-    height: 48vh;
     overflow: auto;
 }
 

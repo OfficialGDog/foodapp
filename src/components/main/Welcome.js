@@ -1,28 +1,21 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
-  Form,
   Card,
   Button,
-  Accordion,
-  Container,
-  Col,
-  Row,
+  Container
 } from "react-bootstrap";
 import Swiper, { Navigation, Pagination } from "swiper";
-import { Link, useHistory } from "react-router-dom";
-import { firestore } from "../../firebase/config";
 import "swiper/swiper-bundle.css";
+import { useHistory } from "react-router-dom";
+import { useFood } from "../../context/FoodContext";
 import mainLogo from "../../breakfast.png";
 import mainLogo2 from "../../pizza_share.jpg";
 import "./Welcome.css";
 
 export default function Welcome() {
   let [mySwiper, setMySwiper] = useState(null);
-  const [categories, setCategories] = useState([]);
-  const [dietaryConditions, setDietaryConditions] = useState([]);
-  const [foods, setFoods] = useState([]);
   const history = useHistory();
-  const listeners = useRef([]);
+  const food = useFood();
 
   Swiper.use([Navigation, Pagination]);
 
@@ -43,119 +36,23 @@ export default function Welcome() {
     });
 
     setMySwiper(swiper);
-    setCategories([]);
-    setDietaryConditions([]);
-    setFoods([]);
-
-    const unsubscribe1 = firestore.collection("foods").orderBy("name").onSnapshot(
-      (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-          if (change.type === "removed") return
-            updateState({
-              foods: {
-                data: [{ ...change.doc.data(), path: change.doc.ref.path }],
-              },
-            });
-          });
-      },
-      (error) => {
-        console.error(error);
-      }
-    );
-
-    attachListener(unsubscribe1);
-
-    const unsubscribe2 = firestore.collection("categories").orderBy("name").onSnapshot(
-      (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-        if (change.type === "removed") return
-          updateState({
-            categories: {
-              data: [{ ...change.doc.data(), path: change.doc.ref.path }],
-            },
-          });
-        });
-      },
-      (error) => {
-        console.error(error);
-      }
-    );
-
-    attachListener(unsubscribe2);
-
-    const unsubscribe3 = firestore.collection("dietaryconditions").orderBy("name").onSnapshot(
-      (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-          if (change.type === "removed") return
-            updateState({
-              dietaryconditions: {
-                data: [{ ...change.doc.data(), path: change.doc.ref.path }],
-              },
-            });
-          });
-      },
-      (error) => {
-        console.error(error);
-      }
-    );
-
-    attachListener(unsubscribe3);
-
-    // Cleanup subscription on unmount
-    return () => dettachListeners(); 
 
   }, []);
 
-  const attachListener = (listener) => listeners.current.push(listener);
+/*   const handleCheck = useCallback((event) => {
 
-  const dettachListeners = () => listeners.current.forEach(listener => listener());
+    const { intolerance } = foods[parseInt(event.target.value)];
 
-  const updateState = (obj) => {
+    if(intolerance.length) intolerance.forEach((condition) => { 
+      const found = dietaryConditions.find((item) => item.path === condition); 
+      if(found) setDietaryConditions((prevState) => 
+        [...prevState.map(item => item === found ? 
+          {...item, isChecked: event.target.checked} 
+        : item)]
+      );
+    }); 
 
-    const { categories, foods, dietaryconditions} = obj;
-
-    if(categories) setCategories((prevState) => [ ...reducer(prevState, categories)]);
-
-    if(dietaryconditions) setDietaryConditions((prevState) => [ ...reducer(prevState, dietaryconditions)]);
-
-    if(foods) {
-
-      try {
-
-        let {name, intolerance, category } = foods.data[0];
-
-        if(!name) return
-
-        let conditions = [], categories = [];
-
-        // VALIDATION of intolerance and category keys.
-  
-        if(typeof intolerance === 'object') intolerance.forEach((condition) => condition.path && conditions.push(condition.path))
-  
-        if(typeof intolerance === 'string') conditions[0] = intolerance;
-  
-        if(typeof category === 'object') category.path && categories.push(category.path);
-  
-        if(typeof category === 'string') categories[0] = category;
-  
-        const newArray = { data: [{ name, intolerance: conditions, category: categories, path: foods.data[0].path }]};
-  
-        setFoods((prevState) => [ ...reducer(prevState, newArray)]);
- 
-      } catch (error) {
-        console.error(error);
-      }
-    }
-  }
-  
-  const reducer = (prevState, array) => {
-    let newArray = array.data.filter((condition) => condition.name);
-    let updated = prevState.map((item) => newArray.length > 0 ? item.path === newArray[0].path ? newArray[0] : item : item);
-    if(prevState.length > 0 && newArray.length > 0) {
-        if(prevState.some((item) => item.path === newArray[0].path)) newArray = [];
-    }
-    return [...updated, ...newArray];
-  }
+  }, [foods, dietaryConditions]); */
 
   return (
     <div className="swiper-container">
@@ -222,51 +119,7 @@ export default function Welcome() {
         </div>
         <div className="swiper-slide">
           <Container fluid style={{ padding: "20px" }}>
-            <Card>
-              <Card.Header
-                as="h2"
-                className="text-center"
-                style={{ backgroundColor: "rgba(0,0,0,0)", border: "none" }}
-              >
-                My Food Profile
-              </Card.Header>
-              <Card.Body
-                className="text-center"
-                style={{ paddingBottom: "0px", maxWidth: "800px" }}
-              >
-                Tell us about which foods you can't eat.
-                <Form className="m-sm-4">
-                  <Form.Row className="checkboxgroup">
-                  <Accordion className="w-100">
-                  {categories.map((item, index) => (
-                       <Card key={index}>
-                          <Accordion.Toggle as={Card.Header} eventKey={(index + 1)}>
-                          {item.name}
-                          </Accordion.Toggle>
-                            <Accordion.Collapse eventKey={(index + 1)}>
-                          <Card.Body>
-                            {foods.map((item2, index2) => (item2.category[0] === item.path || item2.category[0] === item.name) && (
-                              <Col key={index2} xs={6} sm={6} md={6} lg={4}>
-                                <Form.Group style={{ marginBottom: ".75rem" }}>
-                                <Form.Check type="checkbox" label={item2.name} />
-                                </Form.Group>
-                              </Col>
-                            ))}
-                          </Card.Body>
-                        </Accordion.Collapse>
-                     </Card> 
-                  ))}
-                  </Accordion>
-                  </Form.Row>
-                </Form>
-              </Card.Body>
-              <Card.Footer
-                style={{
-                  backgroundColor: "rgba(0,0,0,0)",
-                  border: "none",
-                  padding: "0px",
-                }}
-              >
+              <food.FoodCategories/>
                 <Container
                   className="text-center"
                   style={{ maxWidth: "400px" }}
@@ -286,49 +139,11 @@ export default function Welcome() {
                     Next
                   </Button>
                 </Container>
-              </Card.Footer>
-            </Card>
-            <br />
           </Container>
         </div>
         <div className="swiper-slide">
           <Container fluid style={{ padding: "20px" }}>
-            <Card>
-              <Card.Header
-                as="h2"
-                className="text-center"
-                style={{ backgroundColor: "rgba(0,0,0,0)", border: "none" }}
-              >
-                Dietary Conditions
-              </Card.Header>
-              <Card.Body
-                className="text-center"
-                style={{ paddingBottom: "0px", maxWidth: "800px" }}
-              >
-                Tell us about your dietary conditions.
-                <Form className="m-sm-4">
-                  <Form.Row className="checkboxgroup">
-                  {dietaryConditions.map((item, index) => (
-                    <Col key={index} xs={6} sm={6} md={6} lg={4}>
-                      <Form.Group
-                        style={{ marginBottom: ".75rem" }}
-                      >
-                        <Form.Check
-                          type="checkbox" label={item.name}
-                        />
-                      </Form.Group>
-                    </Col>
-                   ))}
-                  </Form.Row>
-                </Form>
-              </Card.Body>
-              <Card.Footer
-                style={{
-                  backgroundColor: "rgba(0,0,0,0)",
-                  border: "none",
-                  padding: "0px",
-                }}
-              >
+              <food.DietaryConditions/>
                 <Container
                   className="text-center"
                   style={{ maxWidth: "400px" }}
@@ -348,9 +163,6 @@ export default function Welcome() {
                     Finish
                   </Button>
                 </Container>
-              </Card.Footer>
-            </Card>
-            <br />
           </Container>
         </div>
       </div>
