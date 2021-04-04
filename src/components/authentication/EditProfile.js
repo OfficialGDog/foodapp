@@ -4,7 +4,7 @@ import Wrapper from "./Wrapper";
 import { useHistory } from "react-router";
 import { useFood } from "../../context/FoodContext";
 import { useAuth } from "../../context/AuthContext";
-
+import Navbar from "../main/Navbar";
 
 export default function EditProfile() {
   const emailRef = useRef();
@@ -58,6 +58,7 @@ export default function EditProfile() {
   }
 
   return (
+    <>
     <Wrapper>
       <Card>
         <Card.Body>
@@ -112,5 +113,7 @@ export default function EditProfile() {
       <food.DietaryConditions/>
       </Container>
     </Wrapper>
+    <Navbar/>
+    </>
   );
 }
