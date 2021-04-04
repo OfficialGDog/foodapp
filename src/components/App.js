@@ -16,7 +16,7 @@ function App() {
           <Route path="/register" component={Register} />
           <Route path="/reset/password" component={ForgotPassword} />
           <PrivateRoute exact path="/" component={Home}/>
-          <PrivateRoute path="/update/profile" component={EditProfile}/>
+          <PrivateRoute path="/profile" component={EditProfile}/>
           {/* <Route component={NotFound} /> */}
         </Switch>
       </Router>

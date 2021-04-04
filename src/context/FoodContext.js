@@ -22,15 +22,35 @@ export function ProvideFood({ children }) {
 }
 
 function useProvideFood() {
-  const [categories, setCategories] = useState([]);
-  const [foods, setFoods] = useState([]);
-  const [dietaryConditions, setDietaryConditions] = useState([]);
+  const [categories, setCategories] = useState(null);
+  const [foods, setFoods] = useState(null);
+  const [dietaryConditions, setDietaryConditions] = useState(null);
+  const [isLoading, setLoading] = useState(true);
   const listeners = useRef([]);
 
-  const attachListener = (listener) => listeners.current.push(listener);
+  const getDataFromCache = () => {
+      try {
+          const foods = localStorage.getItem("LOCAL_FOOD");
+          const dietary = localStorage.getItem("LOCAL_DIETARY");
+          const category = localStorage.getItem("LOCAL_CATEGORY");
+          let lastupdated = undefined;
 
-  const dettachListeners = () =>
-    listeners.current.forEach((listener) => listener());
+          if(foods) {
+            setFoods([...JSON.parse(foods)]);
+            lastupdated = new Date(JSON.parse(foods)[0].updated);
+          }
+
+          if(dietary) setDietaryConditions([...JSON.parse(dietary)]);
+
+          if(category) setCategories([...JSON.parse(category)]);
+
+          return {updated: lastupdated, isCached: (foods && dietary && category) ? true : false };
+        }
+
+      catch(error){
+          console.log(error)
+      }
+  }
 
   const updateState = ({ categories, foods, dietaryconditions }) => {
     if (categories)
@@ -43,12 +63,9 @@ function useProvideFood() {
 
     if (foods) {
       try {
-        let { name, intolerance, category } = foods.data[0];
+        let { intolerance, category } = foods.data[0];
 
-        if (!name) return;
-
-        let conditions = [],
-          categories = [];
+        let conditions = [], categories = [];
 
         // VALIDATION of intolerance and category keys.
 
@@ -64,34 +81,28 @@ function useProvideFood() {
 
         if (typeof category === "string") categories[0] = category;
 
-        const newArray = {
-          data: [
-            {
-              name,
-              intolerance: conditions,
-              category: categories,
-              path: foods.data[0].path,
-            },
-          ],
-        };
+        const newArray = { data: [{ ...foods.data[0], intolerance: conditions, category: categories }]};
 
         setFoods((prevState) => [...reducer(prevState, newArray)]);
+
       } catch (error) {
-        console.error(error);
+        console.log(error);
       }
     }
   };
 
   const reducer = (prevState, array) => {
     let newArray = array.data.filter((condition) => condition.name);
-    let updated = prevState.map((item) =>
+    let updated = [];
+    if(prevState) updated = prevState.map((item) =>
       newArray.length > 0
         ? item.path === newArray[0].path
           ? newArray[0]
           : item
         : item
     );
-    if (prevState.length > 0 && newArray.length > 0) {
+
+    if (prevState && newArray) {
       if (prevState.some((item) => item.path === newArray[0].path))
         newArray = [];
     }
@@ -99,6 +110,7 @@ function useProvideFood() {
   };
 
   function DietaryConditions() {
+    if(isLoading) return "Loading Data..."
     return (
       <Card>
         <Card.Header
@@ -135,6 +147,7 @@ function useProvideFood() {
   }
 
   function FoodCategories() {
+    if(isLoading) return "Loading Data..."
     return (
       <Card>
         <Card.Header
@@ -187,19 +200,42 @@ function useProvideFood() {
     );
   }
 
+  const isDateLessThanSixHoursAgo = (date) => {
+    const HOUR = 1000 * 60 * 60;
+    const sixHoursAgo = Date.now() - (HOUR * 6);
+    return date > sixHoursAgo
+  } 
+  
+  const attachListener = (listener) => listeners.current.push(listener);
+
+  const dettachListeners = () => listeners.current.forEach((listener) => listener());
+
   useEffect(() => {
-    console.log("ONLY RUN ONCE!");
+
+    let currentDateTime = new Date(0);
+
+    const { isCached, updated } = getDataFromCache();
+
+    // Get data from cache if available
+    if(isCached && updated) {
+      // Optional clean local data after 6 hours
+      isDateLessThanSixHoursAgo(updated) ? currentDateTime = updated : localStorage.clear();
+    }
+
+    // Fetch from database
 
     const unsubscribe1 = firestore
       .collection("foods")
-      .orderBy("name")
+      .where('updated', '>=', currentDateTime)
+      .limit(50) // This means the user can view upto 50 changes 
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
+            console.log("FETCHING DOCUMENT");
             if (change.type === "removed") return;
             updateState({
               foods: {
-                data: [{ ...change.doc.data(), path: change.doc.ref.path }],
+                data: [{ ...change.doc.data(), path: change.doc.ref.path, updated: new Date() }],
               },
             });
           });
@@ -208,40 +244,42 @@ function useProvideFood() {
           console.error(error);
         }
       );
-
-    attachListener(unsubscribe1);
 
     const unsubscribe2 = firestore
       .collection("categories")
-      .orderBy("name")
+      .where('updated', '>=', currentDateTime)
+      .limit(50) // This means the user can view upto 50 changes 
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
+            console.log("FETCHING DOCUMENT");
+            // Each document read costs 1 read
             if (change.type === "removed") return;
-            updateState({
-              categories: {
-                data: [{ ...change.doc.data(), path: change.doc.ref.path }],
-              },
-            });
+              updateState({
+                categories: {
+                  data: [{ ...change.doc.data(), path: change.doc.ref.path, updated: new Date() }],
+                },
+              });
           });
         },
         (error) => {
           console.error(error);
         }
       );
-
-    attachListener(unsubscribe2);
 
     const unsubscribe3 = firestore
       .collection("dietaryconditions")
-      .orderBy("name")
+      .where('updated', '>=', currentDateTime)  // new Date should be date Object from local storage?
+      .limit(50) // This means the user can view upto 50 changes 
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
+            console.log("FETCHING DOCUMENT");
+            // Each document read costs 1 read
             if (change.type === "removed") return;
-            updateState({
+             updateState({
               dietaryconditions: {
-                data: [{ ...change.doc.data(), path: change.doc.ref.path }],
+                data: [{ ...change.doc.data(), path: change.doc.ref.path, updated: new Date() }],
               },
             });
           });
@@ -251,11 +289,49 @@ function useProvideFood() {
         }
       );
 
+
+    attachListener(unsubscribe1);
+    attachListener(unsubscribe2);
     attachListener(unsubscribe3);
 
     // Cleanup subscription on unmount
     return () => dettachListeners();
+
   }, []);
+
+  useEffect(() => {
+    try{
+      if(!foods) return
+      localStorage.setItem('LOCAL_FOOD', JSON.stringify(foods))
+    } catch (error) {
+      console.log(error)
+    }
+  },[foods]);
+
+  useEffect(() => {
+    try{
+      if(!categories) return
+      localStorage.setItem('LOCAL_CATEGORY', JSON.stringify(categories))
+    } catch (error) {
+      console.log(error)
+    }
+  },[categories]);
+
+  useEffect(() => {
+    try{
+      if(!dietaryConditions) return
+      localStorage.setItem('LOCAL_DIETARY', JSON.stringify(dietaryConditions))
+    } catch (error) {
+      console.log(error)
+    }
+  },[dietaryConditions]);
+
+  useEffect(() => {
+    if(!foods) return
+    if(!categories) return
+    if(!dietaryConditions) return
+    setLoading(false);
+  }, [foods, categories, dietaryConditions]);
 
   // Return the user object and auth methods
   return {

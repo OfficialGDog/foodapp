@@ -14,3 +14,9 @@
 .firebaseui-container {
     margin-right: 0px !important;
 }
+
+.rc-anchor-pt {
+    position: relative !important;
+    left: 16px;
+    width: 100%;
+}

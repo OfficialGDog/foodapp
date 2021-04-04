@@ -31,15 +31,15 @@ export default function Register() {
       setMessage(false);
       setLoading(true);
 
-      if(!isHuman) {
-        setLoading(false);
-        setError(`Are you Human?`);
-        return;
-      }
-
       if (passwordRef.current.value !== passwordConfirmRef.current.value) {
         setLoading(false);
         return setError("Passwords do not match");
+      }
+
+      if(!isHuman) {
+        setLoading(false);
+        setError(`Please tick I'm not a robot.`);
+        return;
       }
 
       await auth.register({

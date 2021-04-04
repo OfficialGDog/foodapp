@@ -1,8 +1,10 @@
 import React, { useRef, useState } from "react";
-import { Form, Card, Button, Alert } from "react-bootstrap";
+import { Form, Card, Button, Alert, Container } from "react-bootstrap";
 import Wrapper from "./Wrapper";
 import { useHistory } from "react-router";
+import { useFood } from "../../context/FoodContext";
 import { useAuth } from "../../context/AuthContext";
+
 
 export default function EditProfile() {
   const emailRef = useRef();
@@ -13,6 +15,8 @@ export default function EditProfile() {
   const [message, setMessage] = useState();
   const [isLoading, setLoading] = useState(false);
   const history = useHistory();
+  const food = useFood();
+
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -101,6 +105,12 @@ export default function EditProfile() {
           </Button>
         </Card.Body>
       </Card>
+      <Container fluid style={{ padding: "20px" }}>
+      <food.FoodCategories/>
+      </Container>
+      <Container fluid style={{ padding: "20px" }}>
+      <food.DietaryConditions/>
+      </Container>
     </Wrapper>
   );
 }
