@@ -30,8 +30,9 @@ function useProvideFood() {
   const [isLoading, setLoading] = useState(true);
   const [isSaved, setSaved] = useState(false);
   const [selected, setSelected] = useState([]);
-  const listeners = useRef([]);
   const { user, setUserData } = useAuth();
+  const listeners = useRef([]);
+  const userDietaryProfile = useRef(null);
 
   const getDataFromCache = () => {
       try {
@@ -146,6 +147,7 @@ function useProvideFood() {
           foods.find((item2) => 
             item2.path === item.path || item2.name === item 
           ));
+
     } catch (error) {
       console.error(error);
     }
@@ -439,7 +441,7 @@ function useProvideFood() {
 
   // the useEffect() below runs whenever the user selects / unselects a checkbox 
   useEffect(() => {
-    console.log(selected);
+    userDietaryProfile.current = selected.filter((item) => item.path.split("/")[0] === "dietaryconditions");
     setSaved(false); // Enable the save button if the user makes a change
   }, [selected])
 
@@ -448,6 +450,6 @@ function useProvideFood() {
     DietaryConditions,
     FoodCategories,
     updateProfileButton,
-    getUserFoodProfile
+    userDietaryProfile
   };
 }

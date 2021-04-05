@@ -59,8 +59,7 @@ export default function Home() {
   const [location, setLocation] = useState(null);
   const [selected, setSelected] = useState(null);
   const [view, setView] = useState({ mapView: true });
-  const [dietaryConditions, setDietaryConditions] = useState(null);
-  const { getUserFoodProfile } = useFood();
+  const { userDietaryProfile } = useFood();
   const mapRef = useRef();
 
   const onMapClick = useCallback((event) => {
@@ -141,21 +140,10 @@ export default function Home() {
 
   }, [location]);
 
-/*   useEffect((() => {
-
-    const { conditionlist } = getUserFoodProfile();
-
-    setDietaryConditions(conditionlist);
-
+   useEffect((() => {
+     if(!userDietaryProfile) return
+        console.log(userDietaryProfile.current); // An array of objects containing dietary conditions of the user
   }),[]);
-
-  useEffect((() => {
-    console.log(dietaryConditions)
-  }),[dietaryConditions]); */
-
-  useEffect(() => {
-    console.log(markers);
-  }, [markers])
 
   const panTo = useCallback(({ lat, lng }) => {
     mapRef.current.panTo({ lat, lng });
