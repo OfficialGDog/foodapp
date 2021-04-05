@@ -47,7 +47,7 @@ const options = {
   zoomControl: true,
 };
 
-export default function App() {
+export default function Home() {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
     googleMaps: process.env.GOOGLE_MAPS_NEARBY_SEARCH,
@@ -56,10 +56,9 @@ export default function App() {
 
   const [markers, setMarkers] = useState([]);
   const [location, setLocation] = useState(null);
-  const [view, setView] = useState({
-    mapView: true,
-    cardView: false
-   });
+  const [selected, setSelected] = useState(null);
+  const [view, setView] = useState({ mapView: true });
+  const mapRef = useRef();
 
   const onMapClick = useCallback((event) => {
     setMarkers((current) => [
@@ -74,11 +73,6 @@ export default function App() {
       },
      ]);
   }, []);
-
-  
-  const [selected, setSelected] = useState(null);
-
-  const mapRef = useRef();
 
   const onMapLoad = useCallback((map) => {
     mapRef.current = map;
@@ -139,7 +133,7 @@ export default function App() {
           }}, ...marker }})
         ]);
       }, (error) => console.log(error));
-      
+
       // Cleanup subscription on unmount
       return () => unsubscribe(); 
 
@@ -173,7 +167,7 @@ export default function App() {
 
   const toggleView = useCallback(() => {
     if (!view) return 
-    setView((prevState) => ({ mapView: !(prevState.mapView), cardView: !(prevState.cardView)}));
+    setView((prevState) => ({ mapView: !(prevState.mapView)}));
     setSelected(null);
   }, [view]);   
 
@@ -189,7 +183,7 @@ export default function App() {
           🥓
         </span>
       </h1>
-      <button type="button" onClick={toggleView}>{!view.mapView ? "Map view" : "Card view" }</button>
+      <button type="button" onClick={toggleView}>{view.mapView ? "Map view" : "Card view" }</button>
       <Search panTo={panTo} />
       <Locate panTo={panTo} />
 
@@ -247,7 +241,7 @@ export default function App() {
             ) : null}
           </GoogleMap>      
       </div>
-      <div id="cardview" style={{display: view.cardView ? 'block' : 'none'}}>
+      <div id="cardview" style={{display: view.mapView ? 'none' : 'block'}}>
         {markers.map((marker, index) => (
           <Card key={index} bg="light">
             <Card.Body>

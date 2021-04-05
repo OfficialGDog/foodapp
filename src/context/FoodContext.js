@@ -4,9 +4,11 @@ import React, {
   useContext,
   createContext,
   useRef,
+  useCallback
 } from "react";
 import { Form, Col, Card, Accordion } from "react-bootstrap";
 import { firestore } from "../firebase/config";
+import { useAuth } from "./AuthContext";
 
 const FoodContext = createContext();
 
@@ -26,14 +28,16 @@ function useProvideFood() {
   const [foods, setFoods] = useState(null);
   const [dietaryConditions, setDietaryConditions] = useState(null);
   const [isLoading, setLoading] = useState(true);
+  const [selected, setSelected] = useState([]);
   const listeners = useRef([]);
+  const { user } = useAuth();
 
   const getDataFromCache = () => {
       try {
           const foods = localStorage.getItem("LOCAL_FOOD");
           const dietary = localStorage.getItem("LOCAL_DIETARY");
           const category = localStorage.getItem("LOCAL_CATEGORY");
-          let lastupdated = undefined;
+          let lastupdated = new Date(0);
 
           if(foods) {
             setFoods([...JSON.parse(foods)]);
@@ -44,7 +48,7 @@ function useProvideFood() {
 
           if(category) setCategories([...JSON.parse(category)]);
 
-          return {updated: lastupdated, isCached: (foods && dietary && category) ? true : false };
+          return {updated: lastupdated, isCache: (foods && dietary && category) ? true : false };
         }
 
       catch(error){
@@ -109,6 +113,56 @@ function useProvideFood() {
     return [...updated, ...newArray];
   };
 
+  const isDateLessThanSixHoursAgo = (date) => {
+    const HOUR = 1000 * 60 * 60;
+    const sixHoursAgo = Date.now() - (HOUR * 6);
+    return date > sixHoursAgo
+  }
+
+  const getUserProfile = () => {
+    try {
+      const data = [];
+      if(user.intolerance) user.intolerance.forEach((item) => item &&
+       data.push({
+         ...dietaryConditions.find((condition) => condition.path === item.path || condition.name === item )
+        })
+      );
+      if(user.foods) user.foods.forEach((item) => item && 
+      data.push({
+        ...foods.find((foo) => foo.path === item.path || foo.name === item )
+        })
+      );
+      return data
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const handleCheck = useCallback((e) => {
+    try {
+      let { food, condition } = JSON.parse(e.target.value);
+
+      food = foods.find((item) => item.path === food); 
+
+      condition = dietaryConditions.find((item) => item.path === condition);
+
+      if(!food && !condition) return
+
+      let obj = {};
+
+      if(food) obj = food;
+
+      if(condition) obj = condition;
+
+      if(e.target.checked) return setSelected((prevState) => [...reducer(prevState, { data: [ obj ] }) ]);
+
+      return setSelected(selected.filter(item => item.path !== obj.path));
+
+    } catch (error) {
+      console.error(error.message);
+    }
+  }, [foods, dietaryConditions, selected]);
+
   function DietaryConditions() {
     if(isLoading) return "Loading Data..."
     return (
@@ -127,14 +181,16 @@ function useProvideFood() {
           Tell us about your dietary conditions.
           <Form className="m-sm-4">
             <Form.Row className="checkboxgroup">
-              {dietaryConditions.map((item, index) => (
+              {dietaryConditions.map((condition, index) => (
                 <Col key={index} xs={6} sm={6} md={6} lg={4}>
                   <Form.Group style={{ marginBottom: ".75rem" }}>
                     <Form.Check
                       inline
                       type="checkbox"
-                      value={item.name}
-                      label={item.name}
+                      value={JSON.stringify({condition: condition.path})}
+                      label={condition.name}
+                      onChange={handleCheck}
+                      checked={selected.some((checked) => checked.path === condition.path)}
                     />
                   </Form.Group>
                 </Col>
@@ -165,24 +221,26 @@ function useProvideFood() {
           <Form className="m-sm-4">
             <Form.Row className="checkboxgroup">
               <Accordion className="w-100">
-                {categories.map((item, index) => (
+                {categories.map((category, index) => (
                   <Card key={index}>
                     <Accordion.Toggle as={Card.Header} eventKey={index + 1}>
-                      {item.name}
+                      {category.name}
                     </Accordion.Toggle>
                     <Accordion.Collapse eventKey={index + 1}>
                       <Card.Body>
                         {foods.map(
-                          (item2, index2) =>
-                            (item2.category[0] === item.path ||
-                              item2.category[0] === item.name) && (
+                          (food, index2) =>
+                            (food.category[0] === category.path ||
+                              food.category[0] === category.name) && (
                               <Col key={index2} xs={6} sm={6} md={6} lg={4}>
                                 <Form.Group style={{ marginBottom: ".75rem" }}>
                                   <Form.Check
                                     inline
                                     type="checkbox"
-                                    value={index2}
-                                    label={item2.name}
+                                    value={JSON.stringify({food: food.path})}
+                                    label={food.name}
+                                    onChange={handleCheck}
+                                    checked={selected.some((checked) => checked.path === food.path)}
                                   />
                                 </Form.Group>
                               </Col>
@@ -199,12 +257,6 @@ function useProvideFood() {
       </Card>
     );
   }
-
-  const isDateLessThanSixHoursAgo = (date) => {
-    const HOUR = 1000 * 60 * 60;
-    const sixHoursAgo = Date.now() - (HOUR * 6);
-    return date > sixHoursAgo
-  } 
   
   const attachListener = (listener) => listeners.current.push(listener);
 
@@ -212,14 +264,18 @@ function useProvideFood() {
 
   useEffect(() => {
 
-    let currentDateTime = new Date(0);
+    let currentDateTime = new Date(0); // Initialise the date to January 1st 1970 to view all records
 
-    const { isCached, updated } = getDataFromCache();
+    const { isCache, updated } = getDataFromCache();
 
     // Get data from cache if available
-    if(isCached && updated) {
-      // Optional clean local data after 6 hours
-      isDateLessThanSixHoursAgo(updated) ? currentDateTime = updated : localStorage.clear();
+    if(isCache) {
+      // Optional clean up local storage after 6 hours
+      if(!isDateLessThanSixHoursAgo(updated)) {
+        localStorage.clear();
+      } else {
+        currentDateTime = updated;
+      }
     }
 
     // Fetch from database
@@ -227,7 +283,7 @@ function useProvideFood() {
     const unsubscribe1 = firestore
       .collection("foods")
       .where('updated', '>=', currentDateTime)
-      .limit(50) // This means the user can view upto 50 changes 
+      .limit(40) // This means the user can view up to 40 changes 
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
@@ -248,7 +304,7 @@ function useProvideFood() {
     const unsubscribe2 = firestore
       .collection("categories")
       .where('updated', '>=', currentDateTime)
-      .limit(50) // This means the user can view upto 50 changes 
+      .limit(40) // This means the user can view up to 40 changes 
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
@@ -270,7 +326,7 @@ function useProvideFood() {
     const unsubscribe3 = firestore
       .collection("dietaryconditions")
       .where('updated', '>=', currentDateTime)  // new Date should be date Object from local storage?
-      .limit(50) // This means the user can view upto 50 changes 
+      .limit(40) // This means the user can view up to 40 changes 
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
@@ -302,7 +358,7 @@ function useProvideFood() {
   useEffect(() => {
     try{
       if(!foods) return
-      localStorage.setItem('LOCAL_FOOD', JSON.stringify(foods))
+      localStorage.setItem('LOCAL_FOOD', JSON.stringify(foods));
     } catch (error) {
       console.log(error)
     }
@@ -311,7 +367,7 @@ function useProvideFood() {
   useEffect(() => {
     try{
       if(!categories) return
-      localStorage.setItem('LOCAL_CATEGORY', JSON.stringify(categories))
+      localStorage.setItem('LOCAL_CATEGORY', JSON.stringify(categories));
     } catch (error) {
       console.log(error)
     }
@@ -320,7 +376,7 @@ function useProvideFood() {
   useEffect(() => {
     try{
       if(!dietaryConditions) return
-      localStorage.setItem('LOCAL_DIETARY', JSON.stringify(dietaryConditions))
+      localStorage.setItem('LOCAL_DIETARY', JSON.stringify(dietaryConditions));
     } catch (error) {
       console.log(error)
     }
@@ -330,8 +386,18 @@ function useProvideFood() {
     if(!foods) return
     if(!categories) return
     if(!dietaryConditions) return
+    if(!user) return
+
     setLoading(false);
+
+    // Definitions loaded now get user settings and set into state
+    setSelected(getUserProfile());
+
   }, [foods, categories, dietaryConditions]);
+
+  useEffect(() => {
+    console.log(selected)
+  }, [selected]);
 
   // Return the user object and auth methods
   return {

@@ -39,21 +39,6 @@ export default function Welcome() {
 
   }, []);
 
-/*   const handleCheck = useCallback((event) => {
-
-    const { intolerance } = foods[parseInt(event.target.value)];
-
-    if(intolerance.length) intolerance.forEach((condition) => { 
-      const found = dietaryConditions.find((item) => item.path === condition); 
-      if(found) setDietaryConditions((prevState) => 
-        [...prevState.map(item => item === found ? 
-          {...item, isChecked: event.target.checked} 
-        : item)]
-      );
-    }); 
-
-  }, [foods, dietaryConditions]); */
-
   return (
     <div className="swiper-container">
       <div className="swiper-wrapper">

@@ -22,7 +22,6 @@ export function ProvideAuth({ children }) {
 
 function useProvideAuth() {
   const [user, setUser] = useState(null);
-  const [isNewUser, setNewUser] = useState(true);
   const { firebase } = useContext(FirebaseContext);
 
   const uiConfig = {
@@ -47,7 +46,7 @@ function useProvideAuth() {
       .signInWithEmailAndPassword(email, password)
       .then(({user}) => {
         if(!user.emailVerified) return user // Safe guard to prevent unverified users from logging in 
-          user = {...user, isNew: isUserNew(user).then(v => v)};
+          user = {...user, ...getUserData(user).then(v => v)};
           setUser(user);
         }
       );
@@ -93,8 +92,9 @@ function useProvideAuth() {
     return firebase.auth().currentUser.updatePassword(password);
   };
 
-  const isUserNew = async (user) => {
-    if(!isNewUser) return false // * Safeguard to prevent too many requests going to firestore. * isNewUser is set to false as soon as there is a user record in the database.  
+  const getUserData = async (user) => {
+    try {
+    if(!user) return {isNew: null, data: []}
 
     const userRef = firestore.doc(`users/${user.uid}`);
 
@@ -102,14 +102,17 @@ function useProvideAuth() {
 
     const { email } = user;
 
-    userRef.set({
-      email,
-      isNew: !snapshot.exists
-    });
+    let data = {};
+  
+    if(snapshot.exists) data = snapshot.data();
 
-    setNewUser(!snapshot.exists);
-    
-    return !snapshot.exists
+    userRef.set({...data, email, isNew: !snapshot.exists});
+
+    return { ...data, isNew: !snapshot.exists }
+
+  } catch (error) {
+    console.error(error);
+  }
   };
 
   /* 
@@ -123,15 +126,15 @@ function useProvideAuth() {
     const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
       // Is the user logged in?
       if (user) {
-        isUserNew(user)
-        .then(value => { 
+        getUserData(user)
+        .then(data => {
           user = 
           {...user, 
-            isNew: value // Here we add the 'isNew' property to the currently logged in user.
+            ...data // Here we add the 'isNew' property and snapshot data to the currently logged in user.
           }
         })
         .catch(error => console.log(error))
-        .finally(() => setUser(user));
+        .finally(() => setUser(user))
       } else {
         setUser(false);
       }
