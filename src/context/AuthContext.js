@@ -46,7 +46,7 @@ function useProvideAuth() {
       .signInWithEmailAndPassword(email, password)
       .then(({user}) => {
         if(!user.emailVerified) return user // Safe guard to prevent unverified users from logging in 
-          user = {...user, ...getUserData(user).then(v => v)};
+          user = {...user, ...setUserData(user).then(v => v)};
           setUser(user);
         }
       );
@@ -92,9 +92,10 @@ function useProvideAuth() {
     return firebase.auth().currentUser.updatePassword(password);
   };
 
-  const getUserData = async (user) => {
+  const setUserData = async (user, newData) => {
     try {
-    if(!user) return {isNew: null, data: []}
+    if(!user) return {isNew: true}
+    if(!(typeof newData === "object")) newData = {};
 
     const userRef = firestore.doc(`users/${user.uid}`);
 
@@ -102,13 +103,13 @@ function useProvideAuth() {
 
     const { email } = user;
 
-    let data = {};
+    let data = { email, isNew: !snapshot.exists, ...newData };
   
-    if(snapshot.exists) data = snapshot.data();
+    if(snapshot.exists) data = {...snapshot.data(), ...data };
 
-    userRef.set({...data, email, isNew: !snapshot.exists});
+    userRef.set({...data});
 
-    return { ...data, isNew: !snapshot.exists }
+    return { ...data }
 
   } catch (error) {
     console.error(error);
@@ -126,7 +127,7 @@ function useProvideAuth() {
     const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
       // Is the user logged in?
       if (user) {
-        getUserData(user)
+        setUserData(user)
         .then(data => {
           user = 
           {...user, 
@@ -155,6 +156,7 @@ function useProvideAuth() {
     updateEmail,
     updatePassword,
     singleSignIn,
+    setUserData,
     uiConfig
   };
 }

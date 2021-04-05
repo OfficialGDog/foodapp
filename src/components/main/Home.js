@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {geodatabase, geoPoint} from "../../firebase/config"
 import useLongPress from "../../useLongPress";
+import { useFood } from "../../context/FoodContext";
 import Navbar from "./Navbar";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import "./Home.css";
@@ -58,6 +59,8 @@ export default function Home() {
   const [location, setLocation] = useState(null);
   const [selected, setSelected] = useState(null);
   const [view, setView] = useState({ mapView: true });
+  const { getUserFoodProfile } = useFood();
+  const userDietaryConditions = ['Halal']
   const mapRef = useRef();
 
   const onMapClick = useCallback((event) => {
@@ -139,6 +142,10 @@ export default function Home() {
 
   }, [location]);
 
+  useEffect(() => {
+    console.log(markers);
+  }, [markers])
+
   const panTo = useCallback(({ lat, lng }) => {
     mapRef.current.panTo({ lat, lng });
     mapRef.current.setZoom(14);
@@ -196,7 +203,7 @@ export default function Home() {
             options={options}
             onLoad={onMapLoad}
           >
-            {markers.map((marker, index) => (
+            {markers.map((marker, index) => userDietaryConditions.some((item) => marker.tags.find((item2) => item2 === item )) && (
               <Marker
                 key={index}
                 animation={window.google.maps.Animation.Wp}
@@ -242,7 +249,7 @@ export default function Home() {
           </GoogleMap>      
       </div>
       <div id="cardview" style={{display: view.mapView ? 'none' : 'block'}}>
-        {markers.map((marker, index) => (
+        {markers.map((marker, index) => userDietaryConditions.some((item) => marker.tags.find((item2) => item2 === item )) && ( 
           <Card key={index} bg="light">
             <Card.Body>
               <Card.Title as="h3">{marker.name ?? "Name"}</Card.Title>

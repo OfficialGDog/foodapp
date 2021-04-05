@@ -133,20 +133,7 @@ export default function Welcome() {
                   className="text-center"
                   style={{ maxWidth: "400px" }}
                 >
-                  <Button
-                    onClick={() => history.go(0)}
-                    size="lg"
-                    type="button"
-                    variant="success"
-                    className="btn btn-success btn-lg"
-                    style={{
-                      width: "25%",
-                      minWidth: "140px",
-                      maxHeight: "65px",
-                    }}
-                  >
-                    Finish
-                  </Button>
+                  <food.updateProfileButton/>
                 </Container>
           </Container>
         </div>

@@ -6,7 +6,7 @@ import React, {
   useRef,
   useCallback
 } from "react";
-import { Form, Col, Card, Accordion } from "react-bootstrap";
+import { Form, Col, Card, Accordion, Button } from "react-bootstrap";
 import { firestore } from "../firebase/config";
 import { useAuth } from "./AuthContext";
 
@@ -28,25 +28,25 @@ function useProvideFood() {
   const [foods, setFoods] = useState(null);
   const [dietaryConditions, setDietaryConditions] = useState(null);
   const [isLoading, setLoading] = useState(true);
+  const [isSaved, setSaved] = useState(false);
   const [selected, setSelected] = useState([]);
   const listeners = useRef([]);
-  const { user } = useAuth();
+  const { user, setUserData } = useAuth();
 
   const getDataFromCache = () => {
       try {
           const foods = localStorage.getItem("LOCAL_FOOD");
           const dietary = localStorage.getItem("LOCAL_DIETARY");
           const category = localStorage.getItem("LOCAL_CATEGORY");
-          let lastupdated = new Date(0);
+          let lastupdated = localStorage.getItem("LAST_UPDATED");
 
-          if(foods) {
-            setFoods([...JSON.parse(foods)]);
-            lastupdated = new Date(JSON.parse(foods)[0].updated);
-          }
+          if(foods) setFoods([...JSON.parse(foods)]);
 
           if(dietary) setDietaryConditions([...JSON.parse(dietary)]);
 
           if(category) setCategories([...JSON.parse(category)]);
+
+          if(lastupdated) lastupdated = new Date(lastupdated);
 
           return {updated: lastupdated, isCache: (foods && dietary && category) ? true : false };
         }
@@ -98,18 +98,23 @@ function useProvideFood() {
   const reducer = (prevState, array) => {
     let newArray = array.data.filter((condition) => condition.name);
     let updated = [];
-    if(prevState) updated = prevState.map((item) =>
-      newArray.length > 0
-        ? item.path === newArray[0].path
-          ? newArray[0]
+
+    if(prevState) {
+      updated = prevState.map((item) =>
+      newArray.length > 0 ?
+          item.path === newArray[0].path ?
+              newArray[0] 
           : item
         : item
-    );
+      );
 
-    if (prevState && newArray) {
-      if (prevState.some((item) => item.path === newArray[0].path))
-        newArray = [];
-    }
+      // IF the document has been deleted, remove it from the front-end in real-time
+      if(newArray.length && newArray[0].isDeleted) updated = updated.filter((item) => item.path !== newArray[0].path);
+
+      if(prevState.some((item) => item.path === newArray[0].path)) newArray = [];
+
+    } 
+
     return [...updated, ...newArray];
   };
 
@@ -119,24 +124,31 @@ function useProvideFood() {
     return date > sixHoursAgo
   }
 
-  const getUserProfile = () => {
+  const updateLastUpdated = () => {
     try {
-      const data = [];
-      if(user.intolerance) user.intolerance.forEach((item) => item &&
-       data.push({
-         ...dietaryConditions.find((condition) => condition.path === item.path || condition.name === item )
-        })
-      );
-      if(user.foods) user.foods.forEach((item) => item && 
-      data.push({
-        ...foods.find((foo) => foo.path === item.path || foo.name === item )
-        })
-      );
-      return data
-    } catch (error) {
-      console.error(error)
+      localStorage.setItem("LAST_UPDATED", new Date());
+    } catch( error ) { 
+      console.error(error); 
     }
   }
+
+  const getUserFoodProfile = useCallback(() => {
+
+    const data = [];
+
+    if(user.intolerance) user.intolerance.forEach((item) => {
+        const found = dietaryConditions.find((condition) => condition.path === item.path || condition.name === item );
+        if(found) data.push(found); 
+      });
+        
+    if(user.foods) user.foods.forEach((item) => {
+        const found = foods.find((food) => food.path === item.path || food.name === item );
+        if(found) data.push(found);
+      });
+      
+    return data
+
+  }, [user,  foods, dietaryConditions]);
 
   const handleCheck = useCallback((e) => {
     try {
@@ -146,25 +158,52 @@ function useProvideFood() {
 
       condition = dietaryConditions.find((item) => item.path === condition);
 
-      if(!food && !condition) return
-
       let obj = {};
 
       if(food) obj = food;
 
       if(condition) obj = condition;
 
-      if(e.target.checked) return setSelected((prevState) => [...reducer(prevState, { data: [ obj ] }) ]);
-
-      return setSelected(selected.filter(item => item.path !== obj.path));
+      if(!e.target.checked) return setSelected(selected.filter(item => item.path !== obj.path));
+      
+      return setSelected((prevState) => [...reducer(prevState, { data: [ obj ] }) ]);
 
     } catch (error) {
       console.error(error.message);
     }
   }, [foods, dietaryConditions, selected]);
 
+  
+  const handleSave = useCallback(() => {
+    try {
+      if(!selected.length) return
+      const selectedFoods = selected.filter((item) => item.path.split("/")[0] === "foods").map((item) => item.path ? firestore.doc(item.path) : item.name);
+      const selectedConditions = selected.filter((item) => item.path.split("/")[0] === "dietaryconditions").map((item) => item.path ? firestore.doc(item.path) : item.name);
+      setUserData(user, {foods: selectedFoods, intolerance: selectedConditions });
+      setSaved(true);
+    } catch (error) {
+      console.error(error);
+    }
+
+  }, [user, selected, setUserData ])
+
+  function updateProfileButton() {
+    return (
+      <>
+        <Button
+          variant="success"
+          disabled={isSaved}
+          size="lg"
+          type="button"
+          onClick={handleSave}>
+          {!isSaved ? "Save" : "Saved"}
+        </Button>
+      </>
+    )
+  }
+
   function DietaryConditions() {
-    if(isLoading) return "Loading Data..."
+    if(isLoading) return "Loading..."
     return (
       <Card>
         <Card.Header
@@ -191,6 +230,7 @@ function useProvideFood() {
                       label={condition.name}
                       onChange={handleCheck}
                       checked={selected.some((checked) => checked.path === condition.path)}
+                      disabled={isLoading}
                     />
                   </Form.Group>
                 </Col>
@@ -203,7 +243,7 @@ function useProvideFood() {
   }
 
   function FoodCategories() {
-    if(isLoading) return "Loading Data..."
+    if(isLoading) return "Loading..."
     return (
       <Card>
         <Card.Header
@@ -241,6 +281,7 @@ function useProvideFood() {
                                     label={food.name}
                                     onChange={handleCheck}
                                     checked={selected.some((checked) => checked.path === food.path)}
+                                    disabled={isLoading}
                                   />
                                 </Form.Group>
                               </Col>
@@ -287,11 +328,10 @@ function useProvideFood() {
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
-            console.log("FETCHING DOCUMENT");
-            if (change.type === "removed") return;
+            updateLastUpdated();
             updateState({
               foods: {
-                data: [{ ...change.doc.data(), path: change.doc.ref.path, updated: new Date() }],
+                data: [{ ...change.doc.data(), path: change.doc.ref.path, isDeleted: change.type === "removed" ? true : false }],
               },
             });
           });
@@ -308,12 +348,10 @@ function useProvideFood() {
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
-            console.log("FETCHING DOCUMENT");
-            // Each document read costs 1 read
-            if (change.type === "removed") return;
+            updateLastUpdated();
               updateState({
                 categories: {
-                  data: [{ ...change.doc.data(), path: change.doc.ref.path, updated: new Date() }],
+                  data: [{ ...change.doc.data(), path: change.doc.ref.path, isDeleted: change.type === "removed" ? true : false }],
                 },
               });
           });
@@ -330,12 +368,10 @@ function useProvideFood() {
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
-            console.log("FETCHING DOCUMENT");
-            // Each document read costs 1 read
-            if (change.type === "removed") return;
+            updateLastUpdated();
              updateState({
               dietaryconditions: {
-                data: [{ ...change.doc.data(), path: change.doc.ref.path, updated: new Date() }],
+                data: [{ ...change.doc.data(), path: change.doc.ref.path, isDeleted: change.type === "removed" ? true : false }],
               },
             });
           });
@@ -386,22 +422,25 @@ function useProvideFood() {
     if(!foods) return
     if(!categories) return
     if(!dietaryConditions) return
-    if(!user) return
 
     setLoading(false);
 
     // Definitions loaded now get user settings and set into state
-    setSelected(getUserProfile());
+    setSelected(getUserFoodProfile());
 
   }, [foods, categories, dietaryConditions]);
 
+  // the useEffect() below runs whenever the user selects / unselects a checkbox 
   useEffect(() => {
-    console.log(selected)
-  }, [selected]);
+    console.log(selected);
+    setSaved(false); // Enable the save button if the user makes a change
+  }, [selected])
 
   // Return the user object and auth methods
   return {
     DietaryConditions,
-    FoodCategories
+    FoodCategories,
+    updateProfileButton,
+    getUserFoodProfile
   };
 }

@@ -112,6 +112,8 @@ export default function EditProfile() {
       <Container fluid style={{ padding: "20px" }}>
       <food.DietaryConditions/>
       </Container>
+      <food.updateProfileButton/>
+      <br/><br/><br/><br/>
     </Wrapper>
     <Navbar/>
     </>
