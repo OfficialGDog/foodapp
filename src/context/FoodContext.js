@@ -134,21 +134,25 @@ function useProvideFood() {
 
   const getUserFoodProfile = useCallback(() => {
 
-    const data = [];
+    let data = { foodlist: [], conditionlist: []};
 
-    if(user.intolerance) user.intolerance.forEach((item) => {
-        const found = dietaryConditions.find((condition) => condition.path === item.path || condition.name === item );
-        if(found) data.push(found); 
-      });
-        
-    if(user.foods) user.foods.forEach((item) => {
-        const found = foods.find((food) => food.path === item.path || food.name === item );
-        if(found) data.push(found);
-      });
-      
-    return data
+    try {
+      const { intolerance, foods } = user;
+      if(intolerance.length) data.conditionlist = intolerance.map((item) => 
+          dietaryConditions.find((item2) => 
+            item2.path === item.path || item2.name === item 
+          ));
+      if(foods.length) data.foodlist = foods.map((item) => 
+          foods.find((item2) => 
+            item2.path === item.path || item2.name === item 
+          ));
+    } catch (error) {
+      console.error(error);
+    }
 
-  }, [user,  foods, dietaryConditions]);
+    return data;
+
+  }, [user, foods, dietaryConditions]);
 
   const handleCheck = useCallback((e) => {
     try {
@@ -177,8 +181,8 @@ function useProvideFood() {
   const handleSave = useCallback(() => {
     try {
       if(!selected.length) return
-      const selectedFoods = selected.filter((item) => item.path.split("/")[0] === "foods").map((item) => item.path ? firestore.doc(item.path) : item.name);
-      const selectedConditions = selected.filter((item) => item.path.split("/")[0] === "dietaryconditions").map((item) => item.path ? firestore.doc(item.path) : item.name);
+      const selectedFoods = selected.filter((item) => item.path.split("/")[0] === "foods");
+      const selectedConditions = selected.filter((item) => item.path.split("/")[0] === "dietaryconditions");
       setUserData(user, {foods: selectedFoods, intolerance: selectedConditions });
       setSaved(true);
     } catch (error) {
@@ -423,10 +427,13 @@ function useProvideFood() {
     if(!categories) return
     if(!dietaryConditions) return
 
-    setLoading(false);
-
     // Definitions loaded now get user settings and set into state
-    setSelected(getUserFoodProfile());
+
+    const { foodlist, conditionlist } = getUserFoodProfile();
+    
+    setSelected([...foodlist, ...conditionlist]);
+
+    setLoading(false);
 
   }, [foods, categories, dietaryConditions]);
 

@@ -59,8 +59,8 @@ export default function Home() {
   const [location, setLocation] = useState(null);
   const [selected, setSelected] = useState(null);
   const [view, setView] = useState({ mapView: true });
+  const [dietaryConditions, setDietaryConditions] = useState(null);
   const { getUserFoodProfile } = useFood();
-  const userDietaryConditions = ['Halal']
   const mapRef = useRef();
 
   const onMapClick = useCallback((event) => {
@@ -114,7 +114,6 @@ export default function Home() {
       lng: location.lng, 
       radius: location.radius
     };
-
     // Reset markers when the user changes location
     setMarkers([]);
 
@@ -141,6 +140,18 @@ export default function Home() {
       return () => unsubscribe(); 
 
   }, [location]);
+
+/*   useEffect((() => {
+
+    const { conditionlist } = getUserFoodProfile();
+
+    setDietaryConditions(conditionlist);
+
+  }),[]);
+
+  useEffect((() => {
+    console.log(dietaryConditions)
+  }),[dietaryConditions]); */
 
   useEffect(() => {
     console.log(markers);
@@ -203,7 +214,7 @@ export default function Home() {
             options={options}
             onLoad={onMapLoad}
           >
-            {markers.map((marker, index) => userDietaryConditions.some((item) => marker.tags.find((item2) => item2 === item )) && (
+            {markers.map((marker, index) => (
               <Marker
                 key={index}
                 animation={window.google.maps.Animation.Wp}
@@ -249,7 +260,7 @@ export default function Home() {
           </GoogleMap>      
       </div>
       <div id="cardview" style={{display: view.mapView ? 'none' : 'block'}}>
-        {markers.map((marker, index) => userDietaryConditions.some((item) => marker.tags.find((item2) => item2 === item )) && ( 
+        {markers.map((marker, index) => ( 
           <Card key={index} bg="light">
             <Card.Body>
               <Card.Title as="h3">{marker.name ?? "Name"}</Card.Title>
