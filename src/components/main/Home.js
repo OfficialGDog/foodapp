@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import {geodatabase, geoPoint} from "../../firebase/config"
+import React, { useState, useRef, useEffect, useCallback, useReducer } from "react";
+import { geodatabase, geoPoint } from "../../firebase/config"
 import useLongPress from "../../useLongPress";
 import { useFood } from "../../context/FoodContext";
 import Navbar from "./Navbar";
@@ -100,6 +100,7 @@ export default function Home() {
   return geodatabase
   .restaurants
   .near({ center: geoPoint(lat,lng), radius: ((radius / 1000) * 1.6)})
+  .where("g_place_id", "==", null)
   .limit(25);
  }
 
@@ -107,25 +108,19 @@ export default function Home() {
   useEffect(() => {
     if(!location) return
     console.log("Fetching Map Markers ...");
+    // Reset markers when the user changes location
+    setMarkers([]);
 
     const obj =
     { lat: location.lat, 
       lng: location.lng, 
       radius: location.radius
     };
-    // Reset markers when the user changes location
-    setMarkers([]);
 
-    fetchGoogleMarkers(obj).then((response) => {
-        setMarkers((current) => [
-          ...current,
-          ...response
-        ]);
-      }).catch(error => console.log(error));
-  
     let unsubscribe = fetchDatabaseMarkers(obj)
       .onSnapshot(snapshot => {
         const updatedMarkers = snapshot.docChanges().map((change) => change.doc.data());
+        console.log(updatedMarkers);
         setMarkers((current) => [
           ...current,
           ...updatedMarkers.map((marker) => { return {"geometry": {"location": { 
@@ -134,6 +129,36 @@ export default function Home() {
           }}, ...marker }})
         ]);
       }, (error) => console.log(error));
+
+       
+    fetchGoogleMarkers(obj).then((response) => {
+
+      // Add Dietary Tags to Google Markers
+
+      const dbRefs = response.map((loc) => loc.place_id); 
+
+      dbRefs.forEach((id) => {
+        if(id) geodatabase.restaurants.doc(id).onSnapshot((doc) => {
+          if(doc.exists) {
+            const data = doc.data();
+            const newData = [{ geometry: { location: { lat: () => data.coordinates.latitude, lng: () => data.coordinates.longitude }}, ...data }];
+            return setMarkers((current) => [
+              ...current.map((item) => item.g_place_id === data.g_place_id ? newData[0] : item ),
+              ...newData
+            ]);
+          }
+
+          console.log(`Creating restaurant with ID: ${doc.id}`);
+  
+          const googleData = response.find((item) => item.place_id === doc.id );
+              
+          if(googleData) geodatabase.restaurants.doc(doc.id).set({ coordinates: geoPoint(googleData.geometry.location.lat(), googleData.geometry.location.lng()), g_place_id: doc.id, tags: [], name: googleData.name, vicinity: googleData.vicinity }, {merge: true});
+
+        })
+      });
+
+    }).catch(error => console.log(error));
+
 
       // Cleanup subscription on unmount
       return () => unsubscribe(); 
@@ -144,6 +169,8 @@ export default function Home() {
      if(!userDietaryProfile) return
         console.log(userDietaryProfile.current); // An array of objects containing dietary conditions of the user
   }),[]);
+
+  useEffect((() => { console.log(`selected: `, selected)}),[selected])
 
   const panTo = useCallback(({ lat, lng }) => {
     mapRef.current.panTo({ lat, lng });
@@ -168,7 +195,7 @@ export default function Home() {
 
   // Call when a user updates an exisiting marker
   const editMarker = useCallback(() => {
-    //geodatabase.restaurants.doc(id).set({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], place_id: '', coordinates });
+    //geodatabase.restaurants.doc(id).set({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], g_place_id: null, coordinates });
   }, []);
 
   const toggleView = useCallback(() => {
