@@ -71,7 +71,7 @@ export default function Home() {
             lat: () => event.latLng.lat(),
             lng: () => event.latLng.lng(),
           }
-        }
+        },
       },
      ]);
   }, []);
@@ -82,9 +82,7 @@ export default function Home() {
   }, []);
 
   const fetchGoogleMarkers = ({lat,lng,radius}) => { 
-
       let service = new window.google.maps.places.PlacesService(mapRef.current);
-
       return new Promise((resolve, reject) => {
         service.nearbySearch({ type: "restaurant",  location: {lat, lng}, radius}, (results, status) => { 
           if(status === window.google.maps.places.PlacesServiceStatus.OK) {
@@ -94,20 +92,20 @@ export default function Home() {
           }
         });
       });
- }
+  }
 
  const fetchDatabaseMarkers = ({lat,lng,radius}) => {
   return geodatabase
   .restaurants
   .near({ center: geoPoint(lat,lng), radius: ((radius / 1000) * 1.6)})
-  .where("g_place_id", "==", null)
   .limit(25);
  }
 
 // Returns an array of map markers for the users current location
   useEffect(() => {
     if(!location) return
-    console.log("Fetching Map Markers ...");
+    console.log("Fetching Map Markers ...", location);
+
     // Reset markers when the user changes location
     setMarkers([]);
 
@@ -117,58 +115,72 @@ export default function Home() {
       radius: location.radius
     };
 
-    let unsubscribe = fetchDatabaseMarkers(obj)
-      .onSnapshot(snapshot => {
-        const updatedMarkers = snapshot.docChanges().map((change) => change.doc.data());
-        console.log(updatedMarkers);
-        setMarkers((current) => [
-          ...current,
-          ...updatedMarkers.map((marker) => { return {"geometry": {"location": { 
-            lat: () => marker.coordinates.latitude, 
-            lng: () => marker.coordinates.longitude
-          }}, ...marker }})
-        ]);
-      }, (error) => console.log(error));
+    // On inital load get Firestore Map Markers near the users location
+    fetchDatabaseMarkers(obj).get().then((querySnapshot) => {
+      
+      let data = [];
 
-       
-    fetchGoogleMarkers(obj).then((response) => {
-
-      // Add Dietary Tags to Google Markers
-
-      const dbRefs = response.map((loc) => loc.place_id); 
-
-      dbRefs.forEach((id) => {
-        if(id) geodatabase.restaurants.doc(id).onSnapshot((doc) => {
-          if(doc.exists) {
-            const data = doc.data();
-            const newData = [{ geometry: { location: { lat: () => data.coordinates.latitude, lng: () => data.coordinates.longitude }}, ...data }];
-            return setMarkers((current) => [
-              ...current.map((item) => item.g_place_id === data.g_place_id ? newData[0] : item ),
-              ...newData
-            ]);
-          }
-
-          console.log(`Creating restaurant with ID: ${doc.id}`);
-  
-          const googleData = response.find((item) => item.place_id === doc.id );
-              
-          if(googleData) geodatabase.restaurants.doc(doc.id).set({ coordinates: geoPoint(googleData.geometry.location.lat(), googleData.geometry.location.lng()), g_place_id: doc.id, tags: [], name: googleData.name, vicinity: googleData.vicinity }, {merge: true});
-
-        })
+      querySnapshot.forEach((doc) => {
+         console.log(`Fetching Marker ${doc.id} from the database`);
+        // doc.data() is never undefined for query doc snapshots
+         data.push({...doc.data(), distance: parseFloat(doc.distance / 1.6).toFixed(1), id: doc.id});
       });
 
-    }).catch(error => console.log(error));
+      setMarkers((current) => [...current,
+        ...data.map((marker) => { return {"geometry": {"location": { 
+          lat: () => marker.coordinates.latitude, 
+          lng: () => marker.coordinates.longitude
+        }}, ...marker }})]);
 
+        console.log(`Fetching Google Markers`);
+      // Get the rest of the map marker data from Google
+      fetchGoogleMarkers(obj).then((response) => { 
+           
+        // Filter Google Map Markers not in the database
+        const newMarkers = response.filter((location) => !data.some((item) => item.g_place_id === location.place_id));
 
-      // Cleanup subscription on unmount
-      return () => unsubscribe(); 
+        // Are there any new map markers? If so add them to the database.
+        if(newMarkers.length) newMarkers.forEach((marker) => {
+            console.warn(`Adding Google Marker with id: ${marker.place_id} to the database`);
+            geodatabase.restaurants.doc(marker.place_id).set({
+              coordinates: geoPoint(marker.geometry.location.lat(), marker.geometry.location.lng()),
+              g_place_id: marker.place_id,
+              name: marker.name,
+              tags: [],
+              vicinity: marker.vicinity});
+          }); 
+      }).catch(error => console.error(error));
+
+      fetchDatabaseMarkers(obj).onSnapshot(snapshot => {
+
+        snapshot.docChanges().forEach((change) => {
+  
+          const changedata = {...change.doc.data(), distance: parseFloat(change.doc.distance / 1.6).toFixed(1), id: change.doc.id };
+
+          const found = data.find((item) => item.id === changedata.id);
+          
+          if(!found) return setMarkers((current) => [
+            ...current,
+            { geometry: { location: { lat: () => changedata.coordinates.latitude,  lng: () => changedata.coordinates.longitude }}, ...changedata }
+          ]);
+
+          // Only update if dietary tags change
+          if(changedata.tags.filter(arr => !found.tags.includes(arr)).length) return setMarkers((current) => [
+            ...current,
+            { geometry: { location: { lat: () => changedata.coordinates.latitude,  lng: () => changedata.coordinates.longitude }}, ...changedata }
+          ]);
+        });
+
+      }, (error) => console.log(error));
+
+    }).catch(error => console.error(error));
 
   }, [location]);
 
    useEffect((() => {
      if(!userDietaryProfile) return
         console.log(userDietaryProfile.current); // An array of objects containing dietary conditions of the user
-  }),[]);
+    }),[]);
 
   useEffect((() => { console.log(`selected: `, selected)}),[selected])
 
@@ -280,6 +292,7 @@ export default function Home() {
             <Card.Body>
               <Card.Title as="h3">{marker.name ?? "Name"}</Card.Title>
                 <Card.Text>
+                {marker.distance && `${marker.distance} miles away`} <br/>
                 <FaMapMarkerAlt color="#3083ff"/> {marker.vicinity ?? "Address"}
                 </Card.Text>
                 {marker.tags && (
