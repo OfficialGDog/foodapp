@@ -48,6 +48,28 @@ const options = {
   zoomControl: true,
 };
 
+const ACTIONS = {
+  ADD_MARKERS: "",
+  ADD_MARKER: "add-marker",
+  UPDATE_MARKER: "update-marker",
+  DELETE_MARKER: "delete-marker"
+}
+
+function reducer(markers, action) {
+  switch(action.type){
+    case ACTIONS.ADD_MARKERS: 
+      return [...markers, ...action.payload.map((marker) => { return { geometry: { location: { lat: () => marker.coordinates.latitude, lng: () => marker.coordinates.longitude }}, ...marker }})]
+    case ACTIONS.ADD_MARKER:
+      return [...markers, { geometry: { location: {  lat: () => action.payload.coordinates.latitude,  lng: () => action.payload.coordinates.longitude }}, ...action.payload  }]
+    case ACTIONS.UPDATE_MARKER: 
+      return markers.map(marker => marker.id === action.payload.id ? {...marker, tags: action.payload.tags} : marker)
+    case ACTIONS.DELETE_MARKER:
+      return []
+    default:
+      return markers
+  }
+}
+
 export default function Home() {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
@@ -55,7 +77,7 @@ export default function Home() {
     libraries,
   });
 
-  const [markers, setMarkers] = useState([]);
+  const [markers, dispatch] = useReducer(reducer, []);
   const [location, setLocation] = useState(null);
   const [selected, setSelected] = useState(null);
   const [view, setView] = useState({ mapView: true });
@@ -63,17 +85,9 @@ export default function Home() {
   const mapRef = useRef();
 
   const onMapClick = useCallback((event) => {
-    setMarkers((current) => [
-      ...current,
-      { 
-        geometry: {
-          location: {
-            lat: () => event.latLng.lat(),
-            lng: () => event.latLng.lng(),
-          }
-        },
-      },
-     ]);
+
+    dispatch({ type: ACTIONS.ADD_MARKER, payload: { coordinates: { latitude: event.latLng.lat(), longitude: event.latLng.lng()} } });
+
   }, []);
 
   const onMapLoad = useCallback((map) => {
@@ -107,7 +121,7 @@ export default function Home() {
     console.log("Fetching Map Markers ...", location);
 
     // Reset markers when the user changes location
-    setMarkers([]);
+    //setMarkers([]);
 
     const obj =
     { lat: location.lat, 
@@ -121,18 +135,14 @@ export default function Home() {
       let data = [];
 
       querySnapshot.forEach((doc) => {
-         console.log(`Fetching Marker ${doc.id} from the database`);
+        console.log(`Fetching Marker ${doc.id} from the database`);
         // doc.data() is never undefined for query doc snapshots
-         data.push({...doc.data(), distance: parseFloat(doc.distance / 1.6).toFixed(1), id: doc.id});
+        data.push({...doc.data(), distance: parseFloat(doc.distance / 1.6).toFixed(1), id: doc.id});
       });
 
-      setMarkers((current) => [...current,
-        ...data.map((marker) => { return {"geometry": {"location": { 
-          lat: () => marker.coordinates.latitude, 
-          lng: () => marker.coordinates.longitude
-        }}, ...marker }})]);
+      dispatch({type: ACTIONS.ADD_MARKERS, payload: data })
 
-        console.log(`Fetching Google Markers`);
+      console.log(`Fetching Google Markers`);
       // Get the rest of the map marker data from Google
       fetchGoogleMarkers(obj).then((response) => { 
            
@@ -159,16 +169,18 @@ export default function Home() {
 
           const found = data.find((item) => item.id === changedata.id);
           
-          if(!found) return setMarkers((current) => [
-            ...current,
-            { geometry: { location: { lat: () => changedata.coordinates.latitude,  lng: () => changedata.coordinates.longitude }}, ...changedata }
-          ]);
+          if(!found) {
 
-          // Only update if dietary tags change
-          if(changedata.tags.filter(arr => !found.tags.includes(arr)).length) return setMarkers((current) => [
-            ...current,
-            { geometry: { location: { lat: () => changedata.coordinates.latitude,  lng: () => changedata.coordinates.longitude }}, ...changedata }
-          ]);
+            data.push(changedata);
+
+            return dispatch({ type: ACTIONS.ADD_MARKER, payload: { ...changedata } })
+
+          }
+
+          // Listen for dietary tag changes in realtime and update UI
+          if(changedata.tags.filter(arr => !found.tags.includes(arr)).length) return dispatch({type: ACTIONS.UPDATE_MARKER, payload: { ...changedata } });
+          
+         
         });
 
       }, (error) => console.log(error));
