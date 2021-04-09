@@ -49,7 +49,7 @@ const options = {
 };
 
 const ACTIONS = {
-  ADD_MARKERS: "",
+  ADD_MARKERS: "add-markers",
   ADD_MARKER: "add-marker",
   UPDATE_MARKER: "update-marker",
   DELETE_MARKER: "delete-marker"
@@ -62,9 +62,11 @@ function reducer(markers, action) {
     case ACTIONS.ADD_MARKER:
       return [...markers, { geometry: { location: {  lat: () => action.payload.coordinates.latitude,  lng: () => action.payload.coordinates.longitude }}, ...action.payload  }]
     case ACTIONS.UPDATE_MARKER: 
-      return markers.map(marker => marker.id === action.payload.id ? {...marker, tags: action.payload.tags} : marker)
+      return markers.map(marker => marker.id === action.payload.id ? {...marker, ...action.payload} : marker)
     case ACTIONS.DELETE_MARKER:
-      return []
+      return markers.filter(marker => marker.id !== action.payload.id) 
+    case ACTIONS.RESET_MARKERS:
+      return [];
     default:
       return markers
   }
@@ -80,9 +82,11 @@ export default function Home() {
   const [markers, dispatch] = useReducer(reducer, []);
   const [location, setLocation] = useState(null);
   const [selected, setSelected] = useState(null);
+  const [filterResults, setFilterResults] = useState(true);
   const [view, setView] = useState({ mapView: true });
   const { userDietaryProfile } = useFood();
   const mapRef = useRef();
+  const listeners = useRef([]);
 
   const onMapClick = useCallback((event) => {
 
@@ -115,13 +119,19 @@ export default function Home() {
   .limit(25);
  }
 
+   
+ const attachListener = (listener) => listeners.current.push(listener);
+
+ const dettachListeners = () => listeners.current.forEach((listener) => listener());
+
+
 // Returns an array of map markers for the users current location
   useEffect(() => {
     if(!location) return
     console.log("Fetching Map Markers ...", location);
-
+    console.log("Dietary Profile: ", userDietaryProfile.current);
     // Reset markers when the user changes location
-    //setMarkers([]);
+    dispatch({type: ACTIONS.RESET_MARKERS });
 
     const obj =
     { lat: location.lat, 
@@ -161,40 +171,35 @@ export default function Home() {
           }); 
       }).catch(error => console.error(error));
 
-      fetchDatabaseMarkers(obj).onSnapshot(snapshot => {
+     const unsubscribe = fetchDatabaseMarkers(obj).onSnapshot(snapshot => {
 
         snapshot.docChanges().forEach((change) => {
-  
+
+          if(change.type === "removed") return dispatch({type: ACTIONS.DELETE_MARKER, payload: { id: change.doc.id  } });
+
           const changedata = {...change.doc.data(), distance: parseFloat(change.doc.distance / 1.6).toFixed(1), id: change.doc.id };
 
-          const found = data.find((item) => item.id === changedata.id);
-          
-          if(!found) {
+          if(change.type === "modified") return dispatch({type: ACTIONS.UPDATE_MARKER, payload: { ...changedata } });
 
-            data.push(changedata);
-
-            return dispatch({ type: ACTIONS.ADD_MARKER, payload: { ...changedata } })
-
-          }
-
-          // Listen for dietary tag changes in realtime and update UI
-          if(changedata.tags.filter(arr => !found.tags.includes(arr)).length) return dispatch({type: ACTIONS.UPDATE_MARKER, payload: { ...changedata } });
-          
-         
         });
 
       }, (error) => console.log(error));
 
+      attachListener(unsubscribe);
+
     }).catch(error => console.error(error));
+
+    // Cleanup subscription on unmount
+    return () => dettachListeners();
 
   }, [location]);
 
-   useEffect((() => {
-     if(!userDietaryProfile) return
-        console.log(userDietaryProfile.current); // An array of objects containing dietary conditions of the user
-    }),[]);
+  useEffect((() => { 
+    if(!selected) return
+    console.log(`user selected marker: `, selected);
+    setSelected(markers.find((item) => item.id === selected.id));   
 
-  useEffect((() => { console.log(`selected: `, selected)}),[selected])
+  }),[selected, markers])
 
   const panTo = useCallback(({ lat, lng }) => {
     mapRef.current.panTo({ lat, lng });
@@ -230,6 +235,12 @@ export default function Home() {
 
   if (loadError) return "Error loading maps";
   if (!isLoaded) return "Loading Maps";
+  if(!userDietaryProfile.current) return "Loading...";
+
+  const filterDC = (marker) => {
+    if(!filterResults) return true
+    return userDietaryProfile.current.some((condition) => marker.tags.some((tag) => condition.name === tag))
+  };
 
   return (
     <>
@@ -241,6 +252,7 @@ export default function Home() {
         </span>
       </h1>
       <button type="button" onClick={toggleView}>{view.mapView ? "Map view" : "Card view" }</button>
+      <button type="button" onClick={() => setFilterResults(!filterResults)}>{filterResults ? "Show All" : "Filter Dietary Profile" }</button>
       <Search panTo={panTo} />
       <Locate panTo={panTo} />
 
@@ -253,7 +265,7 @@ export default function Home() {
             options={options}
             onLoad={onMapLoad}
           >
-            {markers.map((marker, index) => (
+            {markers.map((marker, index) => filterDC(marker) && (
               <Marker
                 key={index}
                 animation={window.google.maps.Animation.Wp}
@@ -299,7 +311,7 @@ export default function Home() {
           </GoogleMap>      
       </div>
       <div id="cardview" style={{display: view.mapView ? 'none' : 'block'}}>
-        {markers.map((marker, index) => ( 
+        {markers.map((marker, index) => filterDC(marker) && ( 
           <Card key={index} bg="light">
             <Card.Body>
               <Card.Title as="h3">{marker.name ?? "Name"}</Card.Title>

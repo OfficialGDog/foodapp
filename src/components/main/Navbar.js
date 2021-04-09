@@ -19,7 +19,7 @@ export default function Navbar() {
           </Nav.Link>
           </div>
         </Nav.Item>
-        <Nav.Item className="flex-grow-1 text-center" style={{ flexBasis: "100%" }}>
+        <Nav.Item className="flex-grow-1 text-center" style={{ flexBasis: "100%", maxWidth: "250px" }}>
           <div className="d-inline-flex flex-column text-reset">
           <Nav.Link className="d-flex flex-column" title="Favourites" onClick={() => history.push("/favourites")}>
             <FaHeart className="w-auto" />

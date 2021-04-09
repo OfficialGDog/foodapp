@@ -4,13 +4,23 @@ import React, {
   useContext,
   createContext,
   useRef,
-  useCallback
+  useCallback,
+  useReducer
 } from "react";
 import { Form, Col, Card, Accordion, Button } from "react-bootstrap";
 import { firestore } from "../firebase/config";
 import { useAuth } from "./AuthContext";
 
 const FoodContext = createContext();
+
+const ACTIONS = {
+  ADDLIST: "add-list",
+  ADD: "add-object",
+  UPDATE: "update-object",
+  DELETE: "delete-object",
+  CLEAR: "clear-list",
+  SET: "set-list"
+}
 
 export const useFood = () => {
   return useContext(FoodContext);
@@ -24,167 +34,73 @@ export function ProvideFood({ children }) {
 }
 
 function useProvideFood() {
-  const [categories, setCategories] = useState(null);
-  const [foods, setFoods] = useState(null);
-  const [dietaryConditions, setDietaryConditions] = useState(null);
+  const [categories, dispatchCategory] = useReducer(reducer, []);
+  const [foods, dispatchFood] = useReducer(reducer, []);
+  const [dietaryConditions, dispatchDC] = useReducer(reducer, []);
   const [isLoading, setLoading] = useState(true);
   const [isSaved, setSaved] = useState(false);
-  const [selected, setSelected] = useState([]);
+  const [selected, dispatchSelect] = useReducer(reducer, []);
   const { user, setUserData } = useAuth();
   const listeners = useRef([]);
   const userDietaryProfile = useRef(null);
 
-  const getDataFromCache = () => {
-      try {
-          const foods = localStorage.getItem("LOCAL_FOOD");
-          const dietary = localStorage.getItem("LOCAL_DIETARY");
-          const category = localStorage.getItem("LOCAL_CATEGORY");
-          let lastupdated = localStorage.getItem("LAST_UPDATED");
-
-          if(foods) setFoods([...JSON.parse(foods)]);
-
-          if(dietary) setDietaryConditions([...JSON.parse(dietary)]);
-
-          if(category) setCategories([...JSON.parse(category)]);
-
-          if(lastupdated) lastupdated = new Date(lastupdated);
-
-          return {updated: lastupdated, isCache: (foods && dietary && category) ? true : false };
-        }
-
-      catch(error){
-          console.log(error)
-      }
-  }
-
-  const updateState = ({ categories, foods, dietaryconditions }) => {
-    if (categories)
-      setCategories((prevState) => [...reducer(prevState, categories)]);
-
-    if (dietaryconditions)
-      setDietaryConditions((prevState) => [
-        ...reducer(prevState, dietaryconditions),
-      ]);
-
-    if (foods) {
-      try {
-        let { intolerance, category } = foods.data[0];
-
-        let conditions = [], categories = [];
-
-        // VALIDATION of intolerance and category keys.
-
-        if (typeof intolerance === "object")
-          intolerance.forEach(
-            (condition) => condition.path && conditions.push(condition.path)
-          );
-
-        if (typeof intolerance === "string") conditions[0] = intolerance;
-
-        if (typeof category === "object")
-          category.path && categories.push(category.path);
-
-        if (typeof category === "string") categories[0] = category;
-
-        const newArray = { data: [{ ...foods.data[0], intolerance: conditions, category: categories }]};
-
-        setFoods((prevState) => [...reducer(prevState, newArray)]);
-
-      } catch (error) {
-        console.log(error);
-      }
-    }
-  };
-
-  const reducer = (prevState, array) => {
-    let newArray = array.data.filter((condition) => condition.name);
-    let updated = [];
-
-    if(prevState) {
-      updated = prevState.map((item) =>
-      newArray.length > 0 ?
-          item.path === newArray[0].path ?
-              newArray[0] 
-          : item
-        : item
-      );
-
-      // IF the document has been deleted, remove it from the front-end in real-time
-      if(newArray.length && newArray[0].isDeleted) updated = updated.filter((item) => item.path !== newArray[0].path);
-
-      if(prevState.some((item) => item.path === newArray[0].path)) newArray = [];
-
-    } 
-
-    return [...updated, ...newArray];
-  };
-
-  const isDateLessThanSixHoursAgo = (date) => {
-    const HOUR = 1000 * 60 * 60;
-    const sixHoursAgo = Date.now() - (HOUR * 6);
-    return date > sixHoursAgo
-  }
-
-  const updateLastUpdated = () => {
-    try {
-      localStorage.setItem("LAST_UPDATED", new Date());
-    } catch( error ) { 
-      console.error(error); 
+  function reducer(state, action) {
+    switch(action.type){
+      case ACTIONS.ADDLIST: 
+        return [...state, ...action.payload]
+      case ACTIONS.ADD: 
+        return [...state, action.payload]
+      case ACTIONS.UPDATE:
+        return state.map(item => item.path === action.payload.path ? {...item, ...action.payload} : item)
+      case ACTIONS.SET:
+        return [...action.payload]
+      case ACTIONS.DELETE: 
+        return state.filter(item => item.path !== action.payload.path) 
+      case ACTIONS.CLEAR:
+        return []
+      default:
+        return state
     }
   }
 
-  const getUserFoodProfile = useCallback(() => {
+  const getUserSelectedOptions = useCallback(() => { 
 
-    let data = { foodlist: [], conditionlist: []};
+    let foodlist = [], conditionlist = [];
 
-    try {
-      const { intolerance, foods } = user;
-      if(intolerance.length) data.conditionlist = intolerance.map((item) => 
-          dietaryConditions.find((item2) => 
-            item2.path === item.path || item2.name === item 
-          ));
-      if(foods.length) data.foodlist = foods.map((item) => 
-          foods.find((item2) => 
-            item2.path === item.path || item2.name === item 
-          ));
-
-    } catch (error) {
-      console.error(error);
-    }
-
-    return data;
+    if(user.foods) foodlist = foods.filter((item) => user.foods.some((item2) => item2 === item.name));
+      
+    if(user.intolerance) conditionlist = dietaryConditions.filter((item) => user.intolerance.some((item2) => item2 === item.name));
+    
+    return [...foodlist, ...conditionlist]
 
   }, [user, foods, dietaryConditions]);
 
   const handleCheck = useCallback((e) => {
     try {
+
       let { food, condition } = JSON.parse(e.target.value);
+
+      const isChecked = e.target.checked;
 
       food = foods.find((item) => item.path === food); 
 
       condition = dietaryConditions.find((item) => item.path === condition);
 
-      let obj = {};
+      if(food) return dispatchSelect({type: isChecked ? ACTIONS.ADD : ACTIONS.DELETE, payload: food })
 
-      if(food) obj = food;
-
-      if(condition) obj = condition;
-
-      if(!e.target.checked) return setSelected(selected.filter(item => item.path !== obj.path));
-      
-      return setSelected((prevState) => [...reducer(prevState, { data: [ obj ] }) ]);
+      if(condition) return dispatchSelect({type: isChecked ? ACTIONS.ADD : ACTIONS.DELETE, payload: condition})
 
     } catch (error) {
       console.error(error.message);
     }
-  }, [foods, dietaryConditions, selected]);
+  }, [foods, dietaryConditions]);
 
   
   const handleSave = useCallback(() => {
     try {
       if(!selected.length) return
-      const selectedFoods = selected.filter((item) => item.path.split("/")[0] === "foods");
-      const selectedConditions = selected.filter((item) => item.path.split("/")[0] === "dietaryconditions");
+      const selectedFoods = selected.filter((item) => item.path.split("/")[0] === "foods").map(item => item.name);
+      const selectedConditions = selected.filter((item) => item.path.split("/")[0] === "dietaryconditions").map(item => item.name);
       setUserData(user, {foods: selectedFoods, intolerance: selectedConditions });
       setSaved(true);
     } catch (error) {
@@ -194,6 +110,7 @@ function useProvideFood() {
   }, [user, selected, setUserData ])
 
   function updateProfileButton() {
+    if(isLoading) return "Loading..."
     return (
       <>
         <Button
@@ -248,8 +165,28 @@ function useProvideFood() {
     );
   }
 
-  function FoodCategories() {
+  function UserDietaryConditions() {
     if(isLoading) return "Loading..."
+    return (
+      <>
+        {dietaryConditions.map((condition, index) => (
+            <Col key={index} xs={4} sm={4} md={4} lg={4}>
+                  <Form.Check
+                      inline
+                      type="checkbox"
+                      value={JSON.stringify({condition: condition.path})}
+                      label={condition.name}
+                      onChange={handleCheck}
+                      checked={selected.some((checked) => checked.path === condition.path)}
+                      disabled={isLoading}
+                      />
+            </Col>
+        ))}
+      </>
+    );
+  }
+
+  function FoodCategories() {
     return (
       <Card>
         <Card.Header
@@ -276,8 +213,7 @@ function useProvideFood() {
                       <Card.Body>
                         {foods.map(
                           (food, index2) =>
-                            (food.category[0] === category.path ||
-                              food.category[0] === category.name) && (
+                            (food.category.path === category.path || food.category === category.name) && (
                               <Col key={index2} xs={6} sm={6} md={6} lg={4}>
                                 <Form.Group style={{ marginBottom: ".75rem" }}>
                                   <Form.Check
@@ -311,35 +247,32 @@ function useProvideFood() {
 
   useEffect(() => {
 
-    let currentDateTime = new Date(0); // Initialise the date to January 1st 1970 to view all records
-
-    const { isCache, updated } = getDataFromCache();
-
-    // Get data from cache if available
-    if(isCache) {
-      // Optional clean up local storage after 6 hours
-      if(!isDateLessThanSixHoursAgo(updated)) {
-        localStorage.clear();
-      } else {
-        currentDateTime = updated;
-      }
-    }
-
-    // Fetch from database
+    dispatchFood({type: ACTIONS.CLEAR});
+    dispatchCategory({type: ACTIONS.CLEAR});
+    dispatchDC({type: ACTIONS.CLEAR});
+    dispatchSelect({type: ACTIONS.CLEAR});
 
     const unsubscribe1 = firestore
       .collection("foods")
-      .where('updated', '>=', currentDateTime)
-      .limit(40) // This means the user can view up to 40 changes 
+      .limit(30) // This means the user can view up to 30 changes 
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
-            updateLastUpdated();
-            updateState({
-              foods: {
-                data: [{ ...change.doc.data(), path: change.doc.ref.path, isDeleted: change.type === "removed" ? true : false }],
-              },
-            });
+
+          if(change.type === "removed") {
+              dispatchFood({type: ACTIONS.DELETE, payload: { path: change.doc.ref.path  }});
+              return dispatchSelect({type: ACTIONS.DELETE, payload: { path: change.doc.ref.path }});
+          }
+
+          const data = change.doc.data();
+
+          if(change.type === "modified") {
+            dispatchFood({type: ACTIONS.UPDATE, payload: { ...data, path: change.doc.ref.path }});
+            return dispatchSelect({type: ACTIONS.UPDATE, payload: { ...data, path: change.doc.ref.path }});
+          } 
+
+          if(change.type === "added") return dispatchFood({type: ACTIONS.ADD, payload: { ...data, path: change.doc.ref.path }});
+
           });
         },
         (error) => {
@@ -349,18 +282,26 @@ function useProvideFood() {
 
     const unsubscribe2 = firestore
       .collection("categories")
-      .where('updated', '>=', currentDateTime)
-      .limit(40) // This means the user can view up to 40 changes 
+      .limit(30) // This means the user can view up to 30 changes 
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
-            updateLastUpdated();
-              updateState({
-                categories: {
-                  data: [{ ...change.doc.data(), path: change.doc.ref.path, isDeleted: change.type === "removed" ? true : false }],
-                },
-              });
-          });
+
+          if(change.type === "removed") {
+              dispatchCategory({type: ACTIONS.DELETE, payload: { path: change.doc.ref.path  }});
+              return dispatchSelect({type: ACTIONS.DELETE, payload: { path: change.doc.ref.path }});
+          }
+
+          const data = change.doc.data();
+
+          if(change.type === "modified") {
+            dispatchCategory({type: ACTIONS.UPDATE, payload: { ...data, path: change.doc.ref.path }});
+            return dispatchSelect({type: ACTIONS.UPDATE, payload: { ...data, path: change.doc.ref.path }});
+          } 
+
+          if(change.type === "added") return dispatchCategory({type: ACTIONS.ADD, payload: { ...data, path: change.doc.ref.path }});
+          
+        });
         },
         (error) => {
           console.error(error);
@@ -369,17 +310,25 @@ function useProvideFood() {
 
     const unsubscribe3 = firestore
       .collection("dietaryconditions")
-      .where('updated', '>=', currentDateTime)  // new Date should be date Object from local storage?
-      .limit(40) // This means the user can view up to 40 changes 
+      .limit(30) // This means the user can view up to 30 changes 
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
-            updateLastUpdated();
-             updateState({
-              dietaryconditions: {
-                data: [{ ...change.doc.data(), path: change.doc.ref.path, isDeleted: change.type === "removed" ? true : false }],
-              },
-            });
+
+            if(change.type === "removed") {
+                dispatchDC({type: ACTIONS.DELETE, payload: { path: change.doc.ref.path  }});
+                return dispatchSelect({type: ACTIONS.DELETE, payload: { path: change.doc.ref.path }});
+            }
+
+            const data = change.doc.data();
+
+            if(change.type === "modified") {
+              dispatchDC({type: ACTIONS.UPDATE, payload: { ...data, path: change.doc.ref.path }});
+              return dispatchSelect({type: ACTIONS.UPDATE, payload: { ...data, path: change.doc.ref.path }});
+            } 
+
+            if(change.type === "added") return dispatchDC({type: ACTIONS.ADD, payload: { ...data, path: change.doc.ref.path }});
+      
           });
         },
         (error) => {
@@ -398,42 +347,8 @@ function useProvideFood() {
   }, []);
 
   useEffect(() => {
-    try{
-      if(!foods) return
-      localStorage.setItem('LOCAL_FOOD', JSON.stringify(foods));
-    } catch (error) {
-      console.log(error)
-    }
-  },[foods]);
 
-  useEffect(() => {
-    try{
-      if(!categories) return
-      localStorage.setItem('LOCAL_CATEGORY', JSON.stringify(categories));
-    } catch (error) {
-      console.log(error)
-    }
-  },[categories]);
-
-  useEffect(() => {
-    try{
-      if(!dietaryConditions) return
-      localStorage.setItem('LOCAL_DIETARY', JSON.stringify(dietaryConditions));
-    } catch (error) {
-      console.log(error)
-    }
-  },[dietaryConditions]);
-
-  useEffect(() => {
-    if(!foods) return
-    if(!categories) return
-    if(!dietaryConditions) return
-
-    // Definitions loaded now get user settings and set into state
-
-    const { foodlist, conditionlist } = getUserFoodProfile();
-    
-    setSelected([...foodlist, ...conditionlist]);
+    dispatchSelect({type: ACTIONS.SET, payload: getUserSelectedOptions()});
 
     setLoading(false);
 
@@ -441,8 +356,11 @@ function useProvideFood() {
 
   // the useEffect() below runs whenever the user selects / unselects a checkbox 
   useEffect(() => {
+    // Re-Enable the save button if the user makes a change    
+    setSaved(false); 
+    // Finally set dietary profile
     userDietaryProfile.current = selected.filter((item) => item.path.split("/")[0] === "dietaryconditions");
-    setSaved(false); // Enable the save button if the user makes a change
+    
   }, [selected])
 
   // Return the user object and auth methods
