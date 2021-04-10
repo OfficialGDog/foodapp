@@ -42,7 +42,6 @@ function useProvideFood() {
   const [selected, dispatchSelect] = useReducer(reducer, []);
   const { user, setUserData } = useAuth();
   const listeners = useRef([]);
-  const userDietaryProfile = useRef(null);
 
   function reducer(state, action) {
     switch(action.type){
@@ -165,7 +164,7 @@ function useProvideFood() {
     );
   }
 
-  function UserDietaryConditions() {
+  function FilterDietaryConditions() {
     if(isLoading) return "Loading..."
     return (
       <>
@@ -240,13 +239,13 @@ function useProvideFood() {
       </Card>
     );
   }
-  
+
   const attachListener = (listener) => listeners.current.push(listener);
 
   const dettachListeners = () => listeners.current.forEach((listener) => listener());
 
   useEffect(() => {
-
+ 
     dispatchFood({type: ACTIONS.CLEAR});
     dispatchCategory({type: ACTIONS.CLEAR});
     dispatchDC({type: ACTIONS.CLEAR});
@@ -358,16 +357,15 @@ function useProvideFood() {
   useEffect(() => {
     // Re-Enable the save button if the user makes a change    
     setSaved(false); 
-    // Finally set dietary profile
-    userDietaryProfile.current = selected.filter((item) => item.path.split("/")[0] === "dietaryconditions");
-    
+
   }, [selected])
 
   // Return the user object and auth methods
   return {
+    selected,
     DietaryConditions,
     FoodCategories,
-    updateProfileButton,
-    userDietaryProfile
+    FilterDietaryConditions,
+    updateProfileButton
   };
 }

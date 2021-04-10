@@ -4,6 +4,7 @@ import useLongPress from "../../useLongPress";
 import { useFood } from "../../context/FoodContext";
 import Navbar from "./Navbar";
 import { FaMapMarkerAlt } from "react-icons/fa";
+import { IoIosClose } from "react-icons/io"
 import "./Home.css";
 
 import {
@@ -20,7 +21,7 @@ import {
   ComboboxOption,
 } from "@reach/combobox";
 
-import { Container, Card, ListGroup, Row } from "react-bootstrap";
+import { Container, Card, ListGroup, Row, FormControl, InputGroup } from "react-bootstrap";
 
 import mapStyles from "../../mapStyles";
 
@@ -82,15 +83,23 @@ export default function Home() {
   const [markers, dispatch] = useReducer(reducer, []);
   const [location, setLocation] = useState(null);
   const [selected, setSelected] = useState(null);
-  const [filterResults, setFilterResults] = useState(true);
+  const [radius, setRadius] = useState(1000);
+  const [filterResults, setFilterResults] = useState(false);
   const [view, setView] = useState({ mapView: true });
-  const { userDietaryProfile } = useFood();
+  const [userDietaryProfile, setUserDietaryProfile ]= useState(null);
+  const foodContext = useFood();
   const mapRef = useRef();
   const listeners = useRef([]);
 
   const onMapClick = useCallback((event) => {
 
-    dispatch({ type: ACTIONS.ADD_MARKER, payload: { coordinates: { latitude: event.latLng.lat(), longitude: event.latLng.lng()} } });
+    dispatch({ type: ACTIONS.ADD_MARKER, 
+      payload: { 
+      coordinates: { 
+        latitude: event.latLng.lat(), 
+        longitude: event.latLng.lng()
+      }, tags: [], isNew: true } 
+    });
 
   }, []);
 
@@ -119,17 +128,16 @@ export default function Home() {
   .limit(25);
  }
 
-   
  const attachListener = (listener) => listeners.current.push(listener);
 
  const dettachListeners = () => listeners.current.forEach((listener) => listener());
 
-
 // Returns an array of map markers for the users current location
   useEffect(() => {
     if(!location) return
+
     console.log("Fetching Map Markers ...", location);
-    console.log("Dietary Profile: ", userDietaryProfile.current);
+
     // Reset markers when the user changes location
     dispatch({type: ACTIONS.RESET_MARKERS });
 
@@ -181,6 +189,8 @@ export default function Home() {
 
           if(change.type === "modified") return dispatch({type: ACTIONS.UPDATE_MARKER, payload: { ...changedata } });
 
+          if(change.type === "added") return dispatch({type: !data.some((item) => item.id === changedata.id) && ACTIONS.ADD_MARKER, payload: { ...changedata }}); //CHECK IF ALREADY EXISTS 
+
         });
 
       }, (error) => console.log(error));
@@ -191,20 +201,32 @@ export default function Home() {
 
     // Cleanup subscription on unmount
     return () => dettachListeners();
-
+ 
   }, [location]);
 
   useEffect((() => { 
     if(!selected) return
-    console.log(`user selected marker: `, selected);
-    setSelected(markers.find((item) => item.id === selected.id));   
+    if(!selected.isNew) setSelected(markers.find((item) => item.id === selected.id));   
+  }),[selected, markers]);
 
-  }),[selected, markers])
+  useEffect(() => {
+    setUserDietaryProfile([...foodContext.selected.filter((item) => item.path.split("/")[0] === "dietaryconditions")])
+  },[foodContext.selected]);
+
+  useEffect(() => {
+    if(!selected) return
+    if(!userDietaryProfile) return
+    if(!filterResults) return
+
+    const keepSelected = userDietaryProfile.some((condition) => selected.tags.some((tag) => condition.name === tag));
+    if(!keepSelected) setSelected(null);
+
+  },[filterResults, selected, userDietaryProfile]);
 
   const panTo = useCallback(({ lat, lng }) => {
     mapRef.current.panTo({ lat, lng });
     mapRef.current.setZoom(14);
-    setLocation({lat, lng, radius: 1000});
+    setLocation({lat, lng, radius});
   }, []);
 
   const interact = useLongPress({
@@ -235,11 +257,12 @@ export default function Home() {
 
   if (loadError) return "Error loading maps";
   if (!isLoaded) return "Loading Maps";
-  if(!userDietaryProfile.current) return "Loading...";
+  if(!userDietaryProfile) return "Loading...";
 
   const filterDC = (marker) => {
     if(!filterResults) return true
-    return userDietaryProfile.current.some((condition) => marker.tags.some((tag) => condition.name === tag))
+    if(marker.isNew) return true // Shows markers created by the user
+    return userDietaryProfile.some((condition) => marker.tags.some((tag) => condition.name === tag))
   };
 
   return (
@@ -254,6 +277,12 @@ export default function Home() {
       <button type="button" onClick={toggleView}>{view.mapView ? "Map view" : "Card view" }</button>
       <button type="button" onClick={() => setFilterResults(!filterResults)}>{filterResults ? "Show All" : "Filter Dietary Profile" }</button>
       <Search panTo={panTo} />
+      <Row>
+        {filterResults && (
+          <foodContext.FilterDietaryConditions/>
+        )}
+      </Row>
+
       <Locate panTo={panTo} />
 
       <div id="mapview" style={{display: view.mapView ? 'block' : 'none'}}>
@@ -311,6 +340,10 @@ export default function Home() {
           </GoogleMap>      
       </div>
       <div id="cardview" style={{display: view.mapView ? 'none' : 'block'}}>
+        {markers && (
+          <p>{markers.length > 0 ? `Found ${markers.length} matches` : "We couldn't find any restaurants matching your dietary conditions."}</p>
+        )}
+
         {markers.map((marker, index) => filterDC(marker) && ( 
           <Card key={index} bg="light">
             <Card.Body>
@@ -373,7 +406,10 @@ function Search({ panTo }) {
       },
       radius: 200 * 1000,
     },
+    debounce: 300
   });
+
+  const searchBox = useRef();
 
   return (
     <div>
@@ -390,22 +426,27 @@ function Search({ panTo }) {
             console.error(error);
           }
           console.log(address);
-        }}
-      >
-        <ComboboxInput
-          value={value}
-          onChange={(event) => {
+        }}>
+
+        <InputGroup size="lg">
+          <FormControl ref={searchBox} value={value} onChange={(event) => {
             setValue(event.target.value);
-          }}
-          disabled={!ready}
-          placeholder="Enter adreess"
-        />
-        <ComboboxPopover>
+          }} disabled={!ready} placeholder="Search" aria-label="Large" aria-describedby="inputGroup-sizing-sm" />
+      
+        <InputGroup.Append>
+          {value && (
+            <InputGroup.Text onClick={() => { setValue(null); clearSuggestions(); searchBox.current.value = ""}}><IoIosClose/></InputGroup.Text>
+          )}
+          <InputGroup.Text>Search</InputGroup.Text>
+        </InputGroup.Append>
+        </InputGroup>
+
+        <div>
           {status === "OK" &&
             data.map(({ id, description }) => (
               <ComboboxOption key={id} value={description} />
             ))}
-        </ComboboxPopover>
+        </div>
       </Combobox>
     </div>
   );
