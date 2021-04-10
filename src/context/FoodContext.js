@@ -245,7 +245,7 @@ function useProvideFood() {
   const dettachListeners = () => listeners.current.forEach((listener) => listener());
 
   useEffect(() => {
- 
+  
     dispatchFood({type: ACTIONS.CLEAR});
     dispatchCategory({type: ACTIONS.CLEAR});
     dispatchDC({type: ACTIONS.CLEAR});
@@ -342,7 +342,7 @@ function useProvideFood() {
 
     // Cleanup subscription on unmount
     return () => dettachListeners();
-
+ 
   }, []);
 
   useEffect(() => {

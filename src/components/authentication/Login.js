@@ -37,7 +37,7 @@ export default function Login() {
 
       if(!isHuman) {
         setLoading(false);
-        setError(`Are you Human?`);
+        setError({captcha: 'Please tick the box below'});
         return;
       }
 
@@ -75,7 +75,7 @@ export default function Login() {
             >
               Log In
             </h2>
-            {error && <Alert variant="danger">{error}</Alert>}
+            {error && !error.captcha && (<Alert variant="danger">{error}</Alert>)}
             {!isValidEmail && (
               <Alert variant="danger">
                 Email address is not verified{" "}
@@ -102,7 +102,10 @@ export default function Login() {
                 <Form.Label className="d-none d-sm-block">Password</Form.Label>
                 <Form.Control type="password" ref={passwordRef} required placeholder="••••••••"/>
               </Form.Group>
-              <ReCAPTCHA sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY} size="normal" onExpired={() => setHuman(false)} onChange={() => setHuman(true)}/>
+              {error && error.captcha && (
+                <small className="text-danger font-weight-bold">Please tick the box below</small>
+              )}
+              <ReCAPTCHA sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY} size="normal" onExpired={() => setHuman(false)} onChange={() => { setError(false); setHuman(true)}}/>
               <ButtonGroup>
                 <div className="text-center p-2">
                   <Button

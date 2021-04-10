@@ -1,5 +1,6 @@
 import React from "react";
 import { Container } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import "./Wrapper.css";
 
 export default function Wrapper({children}) {
@@ -7,6 +8,9 @@ export default function Wrapper({children}) {
     <Container className="d-flex align-items-center justify-content-center px-0" style={{ minHeight: "100vh", minWidth: "320px" }}>
       <div className="w-100 wrapper" style={{ maxWidth: "420px", padding: "25px" }}>
         {children}
+        <div className="text-center" style={{padding: "10px"}}>
+        <Link to="/about">Developer Info</Link>
+        </div>
       </div>
     </Container>
   );

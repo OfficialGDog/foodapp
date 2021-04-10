@@ -134,7 +134,7 @@ export default function Home() {
 
 // Returns an array of map markers for the users current location
   useEffect(() => {
-    if(!location) return
+   if(!location) return
 
     console.log("Fetching Map Markers ...", location);
 
@@ -201,7 +201,7 @@ export default function Home() {
 
     // Cleanup subscription on unmount
     return () => dettachListeners();
- 
+  
   }, [location]);
 
   useEffect((() => { 
@@ -341,7 +341,7 @@ export default function Home() {
       </div>
       <div id="cardview" style={{display: view.mapView ? 'none' : 'block'}}>
         {markers && (
-          <p>{markers.length > 0 ? `Found ${markers.length} matches` : "We couldn't find any restaurants matching your dietary conditions."}</p>
+          <h4>{markers.length > 0 ? `Found ${markers.length} matches` : "Oops! We couldn't find any restaurants matching your dietary conditions."}</h4>
         )}
 
         {markers.map((marker, index) => filterDC(marker) && ( 

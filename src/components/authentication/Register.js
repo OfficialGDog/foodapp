@@ -38,7 +38,7 @@ export default function Register() {
 
       if(!isHuman) {
         setLoading(false);
-        setError(`Please tick I'm not a robot.`);
+        setError({captcha: 'Please tick the box below'});
         return;
       }
 
@@ -51,8 +51,7 @@ export default function Register() {
 
       setMessage(`An Email has been sent to: ${emailRef.current.value}`);
 
-      // Account was created successfully - now reset the captcha
-      recapRef.current.reset();
+      // Account was created successfully
       setHuman(false);
 
     } catch (error) {
@@ -67,7 +66,7 @@ export default function Register() {
       <Card className="shadow-sm rounded" style={{ height: "inherit" }}>
         <Card.Body>
           <h2 className="text-center mb-4" style={{ margin: "40px 20px 0" }}>Sign Up</h2>
-          {error && <Alert variant="danger">{error}</Alert>}
+          {error && !error.captcha && (<Alert variant="danger">{error}</Alert>)}
           {message && <Alert variant="success">{message}</Alert>}
           <Form onSubmit={handleSubmit} style={{padding: "10px"}}>
             <Form.Group id="email">
@@ -100,7 +99,10 @@ export default function Register() {
                 placeholder="Confirm Password"
               />
             </Form.Group>
-            <ReCAPTCHA ref={recapRef} sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY} size="normal" onExpired={() => setHuman(false)} onChange={() => setHuman(true)}/>
+            {error && error.captcha && (
+                <small className="text-danger font-weight-bold">Please tick the box below</small>
+              )}
+            <ReCAPTCHA ref={recapRef} sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY} size="normal" onExpired={() => setHuman(false)} onChange={() => { setError(false); setHuman(true)}}/>
             <Button disabled={isLoading} variant="success" className="w-100" type="submit">
               Sign Up
             </Button>
