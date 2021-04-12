@@ -5,11 +5,29 @@ import React, {
   createContext,
   useRef,
   useCallback,
-  useReducer
+  useReducer,
 } from "react";
-import { Form, Col, Card, Accordion, Button } from "react-bootstrap";
+import { Form, Col, Card, Button } from "react-bootstrap";
 import { firestore } from "../firebase/config";
 import { useAuth } from "./AuthContext";
+import {
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Grid,
+  TableContainer,
+  Table,
+  Paper,
+  TableRow,
+  TableFooter,
+  TablePagination,
+  TableBody,
+  TableCell,
+  FormControlLabel,
+  Checkbox,
+  withStyles
+} from "@material-ui/core";
+import "./FoodContext.css";
 
 const FoodContext = createContext();
 
@@ -19,8 +37,8 @@ const ACTIONS = {
   UPDATE: "update-object",
   DELETE: "delete-object",
   CLEAR: "clear-list",
-  SET: "set-list"
-}
+  SET: "set-list",
+};
 
 export const useFood = () => {
   return useContext(FoodContext);
@@ -39,77 +57,127 @@ function useProvideFood() {
   const [dietaryConditions, dispatchDC] = useReducer(reducer, []);
   const [isLoading, setLoading] = useState(true);
   const [isSaved, setSaved] = useState(false);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [selected, dispatchSelect] = useReducer(reducer, []);
+  const [expanded, setExpanded] = useState(false);
+  const [hide, setHide] = useState(true);
   const { user, setUserData } = useAuth();
   const listeners = useRef([]);
 
   function reducer(state, action) {
-    switch(action.type){
-      case ACTIONS.ADDLIST: 
-        return [...state, ...action.payload]
-      case ACTIONS.ADD: 
-        return [...state, action.payload]
+    switch (action.type) {
+      case ACTIONS.ADDLIST:
+        return [...state, ...action.payload];
+      case ACTIONS.ADD:
+        return [...state, action.payload];
       case ACTIONS.UPDATE:
-        return state.map(item => item.path === action.payload.path ? {...item, ...action.payload} : item)
+        return state.map((item) =>
+          item.path === action.payload.path
+            ? { ...item, ...action.payload }
+            : item
+        );
       case ACTIONS.SET:
-        return [...action.payload]
-      case ACTIONS.DELETE: 
-        return state.filter(item => item.path !== action.payload.path) 
+        return [...action.payload];
+      case ACTIONS.DELETE:
+        return state.filter((item) => item.path !== action.payload.path);
       case ACTIONS.CLEAR:
-        return []
+        return [];
       default:
-        return state
+        return state;
     }
   }
 
-  const getUserSelectedOptions = useCallback(() => { 
+  const CustomCheckbox = withStyles({
+    root: {
+      color: "#009688",
+      '&$checked': {
+        color: "#009688",
+      },
+    },
+    checked: {},
+  })((props) => <Checkbox color="default" {...props} />);
+  
 
-    let foodlist = [], conditionlist = [];
+  const getUserSelectedOptions = useCallback(() => {
+    let foodlist = [],
+      conditionlist = [];
 
-    if(user.foods) foodlist = foods.filter((item) => user.foods.some((item2) => item2 === item.name));
-      
-    if(user.intolerance) conditionlist = dietaryConditions.filter((item) => user.intolerance.some((item2) => item2 === item.name));
-    
-    return [...foodlist, ...conditionlist]
+    if (user.foods)
+      foodlist = foods.filter((item) =>
+        user.foods.some((item2) => item2 === item.name)
+      );
 
+    if (user.intolerance)
+      conditionlist = dietaryConditions.filter((item) =>
+        user.intolerance.some((item2) => item2 === item.name)
+      );
+
+    return [...foodlist, ...conditionlist];
   }, [user, foods, dietaryConditions]);
 
-  const handleCheck = useCallback((e) => {
+  const handleCheck = useCallback(
+    (e) => {
+      try {
+        let { food, condition } = JSON.parse(e.target.value);
+
+        const isChecked = e.target.checked;
+
+        food = foods.find((item) => item.path === food);
+
+        condition = dietaryConditions.find((item) => item.path === condition);
+
+        if (food)
+          return dispatchSelect({
+            type: isChecked ? ACTIONS.ADD : ACTIONS.DELETE,
+            payload: food,
+          });
+
+        if (condition)
+          return dispatchSelect({
+            type: isChecked ? ACTIONS.ADD : ACTIONS.DELETE,
+            payload: condition,
+          });
+      } catch (error) {
+        console.error(error.message);
+      }
+    },
+    [foods, dietaryConditions]
+  );
+
+  const handleSave = useCallback(async ()  => {
     try {
+      const selectedFoods = selected
+        .filter((item) => item.path.split("/")[0] === "foods")
+        .map((item) => item.name);
+      const selectedConditions = selected
+        .filter((item) => item.path.split("/")[0] === "dietaryconditions")
+        .map((item) => item.name);
 
-      let { food, condition } = JSON.parse(e.target.value);
+      const data = await setUserData(user, {
+        foods: selectedFoods,
+        intolerance: selectedConditions,
+        isNew: false
+      });
 
-      const isChecked = e.target.checked;
-
-      food = foods.find((item) => item.path === food); 
-
-      condition = dietaryConditions.find((item) => item.path === condition);
-
-      if(food) return dispatchSelect({type: isChecked ? ACTIONS.ADD : ACTIONS.DELETE, payload: food })
-
-      if(condition) return dispatchSelect({type: isChecked ? ACTIONS.ADD : ACTIONS.DELETE, payload: condition})
-
-    } catch (error) {
-      console.error(error.message);
-    }
-  }, [foods, dietaryConditions]);
-
-  
-  const handleSave = useCallback(() => {
-    try {
-      if(!selected.length) return
-      const selectedFoods = selected.filter((item) => item.path.split("/")[0] === "foods").map(item => item.name);
-      const selectedConditions = selected.filter((item) => item.path.split("/")[0] === "dietaryconditions").map(item => item.name);
-      setUserData(user, {foods: selectedFoods, intolerance: selectedConditions });
       setSaved(true);
+
     } catch (error) {
       console.error(error);
     }
+  }, [user, selected, setUserData]);
 
-  }, [user, selected, setUserData ])
+  const handleChange = (panel) => (event, isExpanded) => {
+    setExpanded(isExpanded ? panel : false);
+  };
 
-  function updateProfileButton() {
-    if(isLoading) return "Loading..."
+  const handleChangePage = (event, newPage) => {
+    if (newPage >= 0) return setPage(newPage + 1);
+    return setPage(newPage);
+  };
+
+  function updateProfileButton(props) {
+    if (isLoading) return "Loading...";
     return (
       <>
         <Button
@@ -117,15 +185,16 @@ function useProvideFood() {
           disabled={isSaved}
           size="lg"
           type="button"
-          onClick={handleSave}>
-          {!isSaved ? "Save" : "Saved"}
+          onClick={handleSave}
+        >
+          {props.label ? props.label : !isSaved ? "Save" : "Saved"}
         </Button>
       </>
-    )
+    );
   }
 
   function DietaryConditions() {
-    if(isLoading) return "Loading..."
+    if (isLoading) return "Loading...";
     return (
       <Card>
         <Card.Header
@@ -137,27 +206,21 @@ function useProvideFood() {
         </Card.Header>
         <Card.Body
           className="text-center"
-          style={{ paddingBottom: "0px", maxWidth: "800px" }}
+          style={{ paddingTop: "0px", maxWidth: "800px" }}
         >
           Tell us about your dietary conditions.
-          <Form className="m-sm-4">
-            <Form.Row className="checkboxgroup">
+          <Form className="mt-4">
+              <Grid container spacing={1}>
               {dietaryConditions.map((condition, index) => (
-                <Col key={index} xs={6} sm={6} md={6} lg={4}>
-                  <Form.Group style={{ marginBottom: ".75rem" }}>
-                    <Form.Check
-                      inline
-                      type="checkbox"
-                      value={JSON.stringify({condition: condition.path})}
-                      label={condition.name}
-                      onChange={handleCheck}
-                      checked={selected.some((checked) => checked.path === condition.path)}
-                      disabled={isLoading}
-                    />
-                  </Form.Group>
-                </Col>
+                  <Grid container item={true} key={index} xs={12} md={4} lg={4}>
+                      <FormControlLabel
+                          label={condition.name}
+                          control={<CustomCheckbox value={JSON.stringify({condition: condition.path})} checked={selected.some((checked) => checked.path === condition.path)} onChange={handleCheck} disabled={isLoading} />}
+                      />
+                  </Grid>         
               ))}
-            </Form.Row>
+                
+             </Grid>
           </Form>
         </Card.Body>
       </Card>
@@ -165,23 +228,26 @@ function useProvideFood() {
   }
 
   function FilterDietaryConditions() {
-    if(isLoading) return "Loading..."
+    if (isLoading) return "Loading...";
+
     return (
-      <>
-        {dietaryConditions.map((condition, index) => (
-            <Col key={index} xs={4} sm={4} md={4} lg={4}>
-                  <Form.Check
-                      inline
-                      type="checkbox"
-                      value={JSON.stringify({condition: condition.path})}
-                      label={condition.name}
-                      onChange={handleCheck}
-                      checked={selected.some((checked) => checked.path === condition.path)}
-                      disabled={isLoading}
-                      />
-            </Col>
+    <>
+      <Grid container spacing={1}>
+        {dietaryConditions.slice(0, hide ? 3 : dietaryConditions.length).map((condition, index) => (
+         <Grid container item={true} key={index} xs={12} sm={4}>
+             <FormControlLabel
+                 label={condition.name}
+                 control={<CustomCheckbox value={JSON.stringify({condition: condition.path})} checked={selected.some((checked) => checked.path === condition.path)} onChange={handleCheck} disabled={isLoading} />}
+             />
+         </Grid>         
         ))}
-      </>
+      </Grid>
+      <Button
+        variant="success"
+        disabled={isLoading}
+        type="button"
+        onClick={() => setHide(!hide)}>{hide ? "Show More" : "Collapse"}</Button>
+    </>
     );
   }
 
@@ -197,43 +263,67 @@ function useProvideFood() {
         </Card.Header>
         <Card.Body
           className="text-center"
-          style={{ paddingBottom: "0px", maxWidth: "800px" }}
+          style={{ paddingTop: "0px", maxWidth: "800px", padding: "0px" }}
         >
           Tell us about which foods you can't eat.
-          <Form className="m-sm-4">
-            <Form.Row className="checkboxgroup">
-              <Accordion className="w-100">
-                {categories.map((category, index) => (
-                  <Card key={index}>
-                    <Accordion.Toggle as={Card.Header} eventKey={index + 1}>
-                      {category.name}
-                    </Accordion.Toggle>
-                    <Accordion.Collapse eventKey={index + 1}>
-                      <Card.Body>
-                        {foods.map(
-                          (food, index2) =>
-                            (food.category.path === category.path || food.category === category.name) && (
-                              <Col key={index2} xs={6} sm={6} md={6} lg={4}>
-                                <Form.Group style={{ marginBottom: ".75rem" }}>
-                                  <Form.Check
-                                    inline
-                                    type="checkbox"
-                                    value={JSON.stringify({food: food.path})}
-                                    label={food.name}
-                                    onChange={handleCheck}
-                                    checked={selected.some((checked) => checked.path === food.path)}
-                                    disabled={isLoading}
-                                  />
-                                </Form.Group>
-                              </Col>
-                            )
-                        )}
-                      </Card.Body>
-                    </Accordion.Collapse>
-                  </Card>
-                ))}
-              </Accordion>
-            </Form.Row>
+          <Form className="mt-4">
+            <TableContainer component={Paper} style={{ minHeight: "315px" }}>
+              <Table aria-label="category table">
+                <TableBody>
+                  {categories
+                    .slice(
+                      (page - 1) * rowsPerPage,
+                      (page - 1) * rowsPerPage + rowsPerPage
+                    )
+                    .map((row, index) => (
+                      <TableRow key={index}>
+                        <TableCell component="th" scope="row">
+                          <Accordion disabled={!(foods.some((food) => food.category.path === row.path || food.category === row.name))} expanded={expanded === `panel${index}`} onChange={handleChange(`panel${index}`)}>
+                            <AccordionSummary
+                              aria-controls="panel1bh-content"
+                              id="panel1bh-header">
+                              {row.name}
+                            </AccordionSummary>
+                            <AccordionDetails>
+                              <Grid container spacing={1}>
+                                <Grid container item xs={12}>
+                              {foods.map((food, index2) => (food.category.path === row.path || food.category === row.name) && (
+                                 <Grid item={true} key={index2} xs={12} md={4} lg={4}>
+                                    <FormControlLabel
+                                      label={food.name}
+                                      control={<CustomCheckbox value={JSON.stringify({food: food.path})} checked={selected.some((checked) => checked.path === food.path)} onChange={handleCheck} disabled={isLoading} />}
+                                      />
+                                 </Grid>
+                                ))}
+                              </Grid>
+                              </Grid>
+                            </AccordionDetails>
+                          </Accordion>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TablePagination
+                      rowsPerPageOptions={[5, { value: -1, label: "All" }]}
+                      count={categories.length}
+                      rowsPerPage={rowsPerPage}
+                      page={page - 1}
+                      SelectProps={{
+                        inputProps: { "aria-label": "categories per page" },
+                        native: true,
+                      }}
+                      onChangePage={handleChangePage}
+                      onChangeRowsPerPage={(event) => {
+                        setRowsPerPage(parseInt(event.target.value, 10));
+                        setPage(1);
+                      }}
+                    />
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </TableContainer>
           </Form>
         </Card.Body>
       </Card>
@@ -242,36 +332,51 @@ function useProvideFood() {
 
   const attachListener = (listener) => listeners.current.push(listener);
 
-  const dettachListeners = () => listeners.current.forEach((listener) => listener());
+  const dettachListeners = () =>
+    listeners.current.forEach((listener) => listener());
 
   useEffect(() => {
-  
-    dispatchFood({type: ACTIONS.CLEAR});
-    dispatchCategory({type: ACTIONS.CLEAR});
-    dispatchDC({type: ACTIONS.CLEAR});
-    dispatchSelect({type: ACTIONS.CLEAR});
+    dispatchFood({ type: ACTIONS.CLEAR });
+    dispatchCategory({ type: ACTIONS.CLEAR });
+    dispatchDC({ type: ACTIONS.CLEAR });
+    dispatchSelect({ type: ACTIONS.CLEAR });
 
     const unsubscribe1 = firestore
       .collection("foods")
-      .limit(30) // This means the user can view up to 30 changes 
+      .limit(30) // This means the user can view up to 30 changes
+      .orderBy('name', 'desc')
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
+            if (change.type === "removed") {
+              dispatchFood({
+                type: ACTIONS.DELETE,
+                payload: { path: change.doc.ref.path },
+              });
+              return dispatchSelect({
+                type: ACTIONS.DELETE,
+                payload: { path: change.doc.ref.path },
+              });
+            }
 
-          if(change.type === "removed") {
-              dispatchFood({type: ACTIONS.DELETE, payload: { path: change.doc.ref.path  }});
-              return dispatchSelect({type: ACTIONS.DELETE, payload: { path: change.doc.ref.path }});
-          }
+            const data = change.doc.data();
 
-          const data = change.doc.data();
+            if (change.type === "modified") {
+              dispatchFood({
+                type: ACTIONS.UPDATE,
+                payload: { ...data, path: change.doc.ref.path },
+              });
+              return dispatchSelect({
+                type: ACTIONS.UPDATE,
+                payload: { ...data, path: change.doc.ref.path },
+              });
+            }
 
-          if(change.type === "modified") {
-            dispatchFood({type: ACTIONS.UPDATE, payload: { ...data, path: change.doc.ref.path }});
-            return dispatchSelect({type: ACTIONS.UPDATE, payload: { ...data, path: change.doc.ref.path }});
-          } 
-
-          if(change.type === "added") return dispatchFood({type: ACTIONS.ADD, payload: { ...data, path: change.doc.ref.path }});
-
+            if (change.type === "added")
+              return dispatchFood({
+                type: ACTIONS.ADD,
+                payload: { ...data, path: change.doc.ref.path },
+              });
           });
         },
         (error) => {
@@ -281,26 +386,41 @@ function useProvideFood() {
 
     const unsubscribe2 = firestore
       .collection("categories")
-      .limit(30) // This means the user can view up to 30 changes 
+      .limit(30) // This means the user can view up to 30 changes
+      .orderBy('name', 'desc')
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
+            if (change.type === "removed") {
+              dispatchCategory({
+                type: ACTIONS.DELETE,
+                payload: { path: change.doc.ref.path },
+              });
+              return dispatchSelect({
+                type: ACTIONS.DELETE,
+                payload: { path: change.doc.ref.path },
+              });
+            }
 
-          if(change.type === "removed") {
-              dispatchCategory({type: ACTIONS.DELETE, payload: { path: change.doc.ref.path  }});
-              return dispatchSelect({type: ACTIONS.DELETE, payload: { path: change.doc.ref.path }});
-          }
+            const data = change.doc.data();
 
-          const data = change.doc.data();
+            if (change.type === "modified") {
+              dispatchCategory({
+                type: ACTIONS.UPDATE,
+                payload: { ...data, path: change.doc.ref.path },
+              });
+              return dispatchSelect({
+                type: ACTIONS.UPDATE,
+                payload: { ...data, path: change.doc.ref.path },
+              });
+            }
 
-          if(change.type === "modified") {
-            dispatchCategory({type: ACTIONS.UPDATE, payload: { ...data, path: change.doc.ref.path }});
-            return dispatchSelect({type: ACTIONS.UPDATE, payload: { ...data, path: change.doc.ref.path }});
-          } 
-
-          if(change.type === "added") return dispatchCategory({type: ACTIONS.ADD, payload: { ...data, path: change.doc.ref.path }});
-          
-        });
+            if (change.type === "added")
+              return dispatchCategory({
+                type: ACTIONS.ADD,
+                payload: { ...data, path: change.doc.ref.path },
+              });
+          });
         },
         (error) => {
           console.error(error);
@@ -309,25 +429,40 @@ function useProvideFood() {
 
     const unsubscribe3 = firestore
       .collection("dietaryconditions")
-      .limit(30) // This means the user can view up to 30 changes 
+      .limit(30) // This means the user can view up to 30 changes
+      .orderBy('name', 'desc')
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
-
-            if(change.type === "removed") {
-                dispatchDC({type: ACTIONS.DELETE, payload: { path: change.doc.ref.path  }});
-                return dispatchSelect({type: ACTIONS.DELETE, payload: { path: change.doc.ref.path }});
+            if (change.type === "removed") {
+              dispatchDC({
+                type: ACTIONS.DELETE,
+                payload: { path: change.doc.ref.path },
+              });
+              return dispatchSelect({
+                type: ACTIONS.DELETE,
+                payload: { path: change.doc.ref.path },
+              });
             }
 
             const data = change.doc.data();
 
-            if(change.type === "modified") {
-              dispatchDC({type: ACTIONS.UPDATE, payload: { ...data, path: change.doc.ref.path }});
-              return dispatchSelect({type: ACTIONS.UPDATE, payload: { ...data, path: change.doc.ref.path }});
-            } 
+            if (change.type === "modified") {
+              dispatchDC({
+                type: ACTIONS.UPDATE,
+                payload: { ...data, path: change.doc.ref.path },
+              });
+              return dispatchSelect({
+                type: ACTIONS.UPDATE,
+                payload: { ...data, path: change.doc.ref.path },
+              });
+            }
 
-            if(change.type === "added") return dispatchDC({type: ACTIONS.ADD, payload: { ...data, path: change.doc.ref.path }});
-      
+            if (change.type === "added")
+              return dispatchDC({
+                type: ACTIONS.ADD,
+                payload: { ...data, path: change.doc.ref.path },
+              });
           });
         },
         (error) => {
@@ -335,37 +470,34 @@ function useProvideFood() {
         }
       );
 
-
     attachListener(unsubscribe1);
     attachListener(unsubscribe2);
     attachListener(unsubscribe3);
 
     // Cleanup subscription on unmount
     return () => dettachListeners();
- 
   }, []);
 
   useEffect(() => {
-
-    dispatchSelect({type: ACTIONS.SET, payload: getUserSelectedOptions()});
+    dispatchSelect({ type: ACTIONS.SET, payload: getUserSelectedOptions() });
 
     setLoading(false);
-
   }, [foods, categories, dietaryConditions]);
 
-  // the useEffect() below runs whenever the user selects / unselects a checkbox 
+  // the useEffect() below runs whenever the user selects / unselects a checkbox
   useEffect(() => {
-    // Re-Enable the save button if the user makes a change    
-    setSaved(false); 
+    // Re-Enable the save button if the user makes a change
+    setSaved(false);
 
-  }, [selected])
+  }, [selected]);
 
   // Return the user object and auth methods
   return {
     selected,
+    isSaved,
     DietaryConditions,
     FoodCategories,
     FilterDietaryConditions,
-    updateProfileButton
+    updateProfileButton,
   };
 }

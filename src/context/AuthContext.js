@@ -94,7 +94,7 @@ function useProvideAuth() {
 
   const setUserData = async (user, newData) => {
     try {
-    if(!user) return {isNew: true}
+    if(!user) return console.error("no user")
     if(!(typeof newData === "object")) newData = {};
 
     const userRef = firestore.doc(`users/${user.uid}`);
@@ -103,11 +103,16 @@ function useProvideAuth() {
 
     const { email } = user;
 
-    let data = { email, isNew: !snapshot.exists, ...newData };
+    let data = { email, isNew: true };
   
-    if(snapshot.exists) data = {...snapshot.data(), ...data };
+    if(snapshot.exists) {
+      const snapdata = await snapshot.data();
+      data = {...data, ...snapdata, ...newData }
+    }
 
-    userRef.set({...data});
+    if(Object.keys(newData).length) setUser((user) => ({...user, ...newData}));
+
+    await userRef.set({...data}, {merge: true});
 
     return { ...data }
 
@@ -126,6 +131,7 @@ function useProvideAuth() {
   useEffect(() => {
     const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
       // Is the user logged in?
+      console.log("changed")
       if (user) {
         setUserData(user)
         .then(data => {

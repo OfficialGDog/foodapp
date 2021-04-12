@@ -6,6 +6,10 @@
     height: 100vh;
 }
 
+.card {
+    background-color: #fafafa !important 
+}
+
 .card-body {
     width: 100%;
     margin: auto;
@@ -33,4 +37,8 @@ label {
 
 .swiper-pagination-bullet-active {
     background: #E83737;
+}
+
+.swiper-pagination-bullets {
+    bottom: 0px !important;
 }

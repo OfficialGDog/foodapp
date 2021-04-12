@@ -1,9 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import {
-  Card,
-  Button,
-  Container
-} from "react-bootstrap";
+import { Card, Button, Container } from "react-bootstrap";
 import Swiper, { Navigation, Pagination } from "swiper";
 import "swiper/swiper-bundle.css";
 import { useHistory } from "react-router-dom";
@@ -36,14 +32,18 @@ export default function Welcome() {
     });
 
     setMySwiper(swiper);
-
   }, []);
+
+  useEffect(() => {
+    if(!food.isSaved) return
+    history.go("/");
+  }, [food.isSaved])
 
   return (
     <div className="swiper-container">
       <div className="swiper-wrapper">
         <div className="swiper-slide">
-          <Card>
+          <Card style={{height: "100vh"}}>
             <div
               style={{
                 backgroundImage: `url(${mainLogo})`,
@@ -73,7 +73,7 @@ export default function Welcome() {
           <br />
         </div>
         <div className="swiper-slide">
-          <Card>
+          <Card style={{height: "100vh"}}>
             <div
               style={{
                 backgroundImage: `url(${mainLogo2})`,
@@ -103,42 +103,58 @@ export default function Welcome() {
           <br />
         </div>
         <div className="swiper-slide">
-          <Container fluid style={{ padding: "20px" }}>
-              <food.FoodCategories/>
-                <Container
-                  className="text-center"
-                  style={{ maxWidth: "400px" }}
+          <Container fluid style={{ padding: "25px" }}>
+            <Card>
+              <Card.Body
+                className="mt-2 text-center"
+                style={{ maxWidth: "800px", padding: "0px" }}
+              >
+                <food.FoodCategories />
+                <div className="m-4">
+                <Button
+                  onClick={() => mySwiper.slideNext()}
+                  size="lg"
+                  type="button"
+                  variant="success"
+                  className="btn btn-success btn-lg"
+                  style={{
+                    width: "25%",
+                    minWidth: "140px",
+                    maxHeight: "65px",
+                  }}
                 >
-                  <Button
-                    onClick={() => mySwiper.slideNext()}
-                    size="lg"
-                    type="button"
-                    variant="success"
-                    className="btn btn-success btn-lg"
-                    style={{
-                      width: "25%",
-                      minWidth: "140px",
-                      maxHeight: "65px",
-                    }}
-                  >
-                    Next
-                  </Button>
-                </Container>
+                  Next
+                </Button>
+                </div><br/>
+              </Card.Body>
+            </Card>
           </Container>
         </div>
         <div className="swiper-slide">
-          <Container fluid style={{ padding: "20px" }}>
-              <food.DietaryConditions/>
-                <Container
-                  className="text-center"
-                  style={{ maxWidth: "400px" }}
-                >
-                  <food.updateProfileButton/>
-                </Container>
+          <Container fluid style={{ padding: "25px" }}>
+
+          <Card>
+              <Card.Body
+                className="mt-2 text-center"
+                style={{ maxWidth: "800px" }} >
+                 <food.DietaryConditions />
+
+                <food.updateProfileButton label="Finish"/>
+
+              </Card.Body>
+            </Card>
+                <br/>
           </Container>
         </div>
       </div>
-      <div className="swiper-pagination"></div>
+      <div
+        className="swiper-pagination"
+        style={{
+          overflow: "hidden",
+          lineHeight: "50px", 
+          backgroundColor: "#fafafa"
+        }}
+      ></div>
     </div>
   );
 }

@@ -341,7 +341,7 @@ export default function Home() {
       </div>
       <div id="cardview" style={{display: view.mapView ? 'none' : 'block'}}>
         {markers && (
-          <h4>{markers.length > 0 ? `Found ${markers.length} matches` : "Oops! We couldn't find any restaurants matching your dietary conditions."}</h4>
+          <h4>{!filterResults && markers.length > 0 ? `Found ${markers.length} matches` : "Oops! We couldn't find any restaurants matching your dietary conditions."}</h4>
         )}
 
         {markers.map((marker, index) => filterDC(marker) && ( 
