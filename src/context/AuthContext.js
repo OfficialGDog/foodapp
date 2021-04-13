@@ -110,7 +110,7 @@ function useProvideAuth() {
       data = {...data, ...snapdata, ...newData }
     }
 
-    if(Object.keys(newData).length) setUser((user) => ({...user, ...newData}));
+    setUser((user) => ({...user, ...data, ...newData}));
 
     await userRef.set({...data}, {merge: true});
 

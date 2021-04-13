@@ -6,3 +6,9 @@
     overflow: hidden;
     white-space: nowrap;
 }
+
+
+.MuiInputBase-root > input {
+    padding: .75rem;
+    padding-left: 1.25rem;
+}

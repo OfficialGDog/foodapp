@@ -1,10 +1,33 @@
-import React, { useState, useRef, useEffect, useCallback, useReducer } from "react";
-import { geodatabase, geoPoint } from "../../firebase/config"
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useReducer,
+} from "react";
+import { geodatabase, geoPoint } from "../../firebase/config";
 import useLongPress from "../../useLongPress";
 import { useFood } from "../../context/FoodContext";
+import { useAuth } from "../../context/AuthContext";
 import Navbar from "./Navbar";
 import { FaMapMarkerAlt } from "react-icons/fa";
-import { IoIosClose } from "react-icons/io"
+import { MdAccountCircle } from "react-icons/md";
+import { IoIosClose, IoIosGlobe } from "react-icons/io";
+import { AiOutlineSearch, AiOutlineMenu } from "react-icons/ai";
+import { BiCurrentLocation } from "react-icons/bi";
+import { BsCardList, BsThreeDotsVertical } from "react-icons/bs";
+import { useHistory } from "react-router-dom";
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Menu,
+  MenuItem,
+  Fab,
+  InputBase,
+  Paper
+} from "@material-ui/core";
 import "./Home.css";
 
 import {
@@ -21,7 +44,14 @@ import {
   ComboboxOption,
 } from "@reach/combobox";
 
-import { Container, Card, ListGroup, Row, FormControl, InputGroup } from "react-bootstrap";
+import {
+  Container,
+  Card,
+  ListGroup,
+  Row,
+  FormControl,
+  InputGroup,
+} from "react-bootstrap";
 
 import mapStyles from "../../mapStyles";
 
@@ -33,14 +63,14 @@ import usePlacesAutocomplete, {
 const libraries = ["places"];
 
 const mapContainerStyle = {
-  width: "100vw",
+  width: "100%",
   height: "100vh",
 };
 
 const center = {
   lat: 55.0103,
   lng: -1.44464,
-  radius: 1000
+  radius: 1000,
 };
 
 const options = {
@@ -53,23 +83,51 @@ const ACTIONS = {
   ADD_MARKERS: "add-markers",
   ADD_MARKER: "add-marker",
   UPDATE_MARKER: "update-marker",
-  DELETE_MARKER: "delete-marker"
-}
+  DELETE_MARKER: "delete-marker",
+};
 
 function reducer(markers, action) {
-  switch(action.type){
-    case ACTIONS.ADD_MARKERS: 
-      return [...markers, ...action.payload.map((marker) => { return { geometry: { location: { lat: () => marker.coordinates.latitude, lng: () => marker.coordinates.longitude }}, ...marker }})]
+  switch (action.type) {
+    case ACTIONS.ADD_MARKERS:
+      return [
+        ...markers,
+        ...action.payload.map((marker) => {
+          return {
+            geometry: {
+              location: {
+                lat: () => marker.coordinates.latitude,
+                lng: () => marker.coordinates.longitude,
+              },
+            },
+            ...marker,
+          };
+        }),
+      ];
     case ACTIONS.ADD_MARKER:
-      return [...markers, { geometry: { location: {  lat: () => action.payload.coordinates.latitude,  lng: () => action.payload.coordinates.longitude }}, ...action.payload  }]
-    case ACTIONS.UPDATE_MARKER: 
-      return markers.map(marker => marker.id === action.payload.id ? {...marker, ...action.payload} : marker)
+      return [
+        ...markers,
+        {
+          geometry: {
+            location: {
+              lat: () => action.payload.coordinates.latitude,
+              lng: () => action.payload.coordinates.longitude,
+            },
+          },
+          ...action.payload,
+        },
+      ];
+    case ACTIONS.UPDATE_MARKER:
+      return markers.map((marker) =>
+        marker.id === action.payload.id
+          ? { ...marker, ...action.payload }
+          : marker
+      );
     case ACTIONS.DELETE_MARKER:
-      return markers.filter(marker => marker.id !== action.payload.id) 
+      return markers.filter((marker) => marker.id !== action.payload.id);
     case ACTIONS.RESET_MARKERS:
       return [];
     default:
-      return markers
+      return markers;
   }
 }
 
@@ -86,21 +144,26 @@ export default function Home() {
   const [radius, setRadius] = useState(1000);
   const [filterResults, setFilterResults] = useState(false);
   const [view, setView] = useState({ mapView: true });
-  const [userDietaryProfile, setUserDietaryProfile ]= useState(null);
+  const [userDietaryProfile, setUserDietaryProfile] = useState(null);
+  const [contextMenu, setContextMenu] = useState(null);
   const foodContext = useFood();
+  const history = useHistory();
+  const auth = useAuth();
   const mapRef = useRef();
   const listeners = useRef([]);
 
   const onMapClick = useCallback((event) => {
-
-    dispatch({ type: ACTIONS.ADD_MARKER, 
-      payload: { 
-      coordinates: { 
-        latitude: event.latLng.lat(), 
-        longitude: event.latLng.lng()
-      }, tags: [], isNew: true } 
+    dispatch({
+      type: ACTIONS.ADD_MARKER,
+      payload: {
+        coordinates: {
+          latitude: event.latLng.lat(),
+          longitude: event.latLng.lng(),
+        },
+        tags: [],
+        isNew: true,
+      },
     });
-
   }, []);
 
   const onMapLoad = useCallback((map) => {
@@ -108,33 +171,36 @@ export default function Home() {
     setLocation(center);
   }, []);
 
-  const fetchGoogleMarkers = ({lat,lng,radius}) => { 
-      let service = new window.google.maps.places.PlacesService(mapRef.current);
-      return new Promise((resolve, reject) => {
-        service.nearbySearch({ type: "restaurant",  location: {lat, lng}, radius}, (results, status) => { 
-          if(status === window.google.maps.places.PlacesServiceStatus.OK) {
+  const fetchGoogleMarkers = ({ lat, lng, radius }) => {
+    let service = new window.google.maps.places.PlacesService(mapRef.current);
+    return new Promise((resolve, reject) => {
+      service.nearbySearch(
+        { type: "restaurant", location: { lat, lng }, radius },
+        (results, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK) {
             resolve(results);
           } else {
             reject([]);
           }
-        });
-      });
-  }
+        }
+      );
+    });
+  };
 
- const fetchDatabaseMarkers = ({lat,lng,radius}) => {
-  return geodatabase
-  .restaurants
-  .near({ center: geoPoint(lat,lng), radius: ((radius / 1000) * 1.6)})
-  .limit(25);
- }
+  const fetchDatabaseMarkers = ({ lat, lng, radius }) => {
+    return geodatabase.restaurants
+      .near({ center: geoPoint(lat, lng), radius: (radius / 1000) * 1.6 })
+      .limit(25);
+  };
 
- const attachListener = (listener) => listeners.current.push(listener);
+  const attachListener = (listener) => listeners.current.push(listener);
 
- const dettachListeners = () => listeners.current.forEach((listener) => listener());
+  const dettachListeners = () =>
+    listeners.current.forEach((listener) => listener());
 
-// Returns an array of map markers for the users current location
+  // Returns an array of map markers for the users current location
   useEffect(() => {
-   if(!location) return
+    /*  if(!location) return
 
     console.log("Fetching Map Markers ...", location);
 
@@ -169,7 +235,7 @@ export default function Home() {
 
         // Are there any new map markers? If so add them to the database.
         if(newMarkers.length) newMarkers.forEach((marker) => {
-            console.warn(`Adding Google Marker with id: ${marker.place_id} to the database`);
+            //console.warn(`Adding Google Marker with id: ${marker.place_id} to the database`);
             geodatabase.restaurants.doc(marker.place_id).set({
               coordinates: geoPoint(marker.geometry.location.lat(), marker.geometry.location.lng()),
               g_place_id: marker.place_id,
@@ -200,195 +266,326 @@ export default function Home() {
     }).catch(error => console.error(error));
 
     // Cleanup subscription on unmount
-    return () => dettachListeners();
-  
+    return () => dettachListeners(); */
   }, [location]);
 
-  useEffect((() => { 
-    if(!selected) return
-    if(!selected.isNew) setSelected(markers.find((item) => item.id === selected.id));   
-  }),[selected, markers]);
+  useEffect(() => {
+    if (!selected) return;
+    if (!selected.isNew)
+      setSelected(markers.find((item) => item.id === selected.id));
+  }, [selected, markers]);
 
   useEffect(() => {
-    setUserDietaryProfile([...foodContext.selected.filter((item) => item.path.split("/")[0] === "dietaryconditions")])
-  },[foodContext.selected]);
+    setUserDietaryProfile([
+      ...foodContext.selected.filter(
+        (item) => item.path.split("/")[0] === "dietaryconditions"
+      ),
+    ]);
+  }, [foodContext.selected]);
 
   useEffect(() => {
-    if(!selected) return
-    if(!userDietaryProfile) return
-    if(!filterResults) return
+    if (!selected) return;
+    if (!userDietaryProfile) return;
+    if (!filterResults) return;
 
-    const keepSelected = userDietaryProfile.some((condition) => selected.tags.some((tag) => condition.name === tag));
-    if(!keepSelected) setSelected(null);
-
-  },[filterResults, selected, userDietaryProfile]);
+    const keepSelected = userDietaryProfile.some((condition) =>
+      selected.tags.some((tag) => condition.name === tag)
+    );
+    if (!keepSelected) setSelected(null);
+  }, [filterResults, selected, userDietaryProfile]);
 
   const panTo = useCallback(({ lat, lng }) => {
     mapRef.current.panTo({ lat, lng });
     mapRef.current.setZoom(14);
-    setLocation({lat, lng, radius});
+    setLocation({ lat, lng, radius });
   }, []);
 
   const interact = useLongPress({
-    onLongPress: (ev) => onMapClick(ev),
-    onClick: () => setSelected(null)
+    /*     onLongPress: (ev) => onMapClick(ev), */
+    onClick: () => setSelected(null),
   });
 
- // Reference https://www.xspdf.com/help/50658711.html
-
-  // Call when a user creates a new map marker
-  const newMarker = useCallback(({lat,lng}) => {
+/*   // Call when a user creates a new map marker
+  const updateMarker = useCallback(({ lat, lng }) => {
     // Create a reference to the geolocation so it can be added to firestore
-    const coordinates = geoPoint(lat, lng); 
+    const coordinates = geoPoint(lat, lng);
     // Add a GeoDocument to a GeoCollection
-    geodatabase.restaurants.add({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], coordinates });
-  }, []);
+    geodatabase.restaurants.add({
+      name: "name",
+      vicinity: "address",
+      tags: ["", "", ""],
+      coordinates,
+    });
+  }, []); */
 
   // Call when a user updates an exisiting marker
-  const editMarker = useCallback(() => {
+  const updateMarker = useCallback(() => {
     //geodatabase.restaurants.doc(id).set({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], g_place_id: null, coordinates });
   }, []);
 
   const toggleView = useCallback(() => {
-    if (!view) return 
-    setView((prevState) => ({ mapView: !(prevState.mapView)}));
+    if (!view) return;
+    setView((prevState) => ({ mapView: !prevState.mapView }));
     setSelected(null);
-  }, [view]);   
+  }, [view]);
 
   if (loadError) return "Error loading maps";
   if (!isLoaded) return "Loading Maps";
-  if(!userDietaryProfile) return "Loading...";
+  if (!userDietaryProfile) return "Loading...";
 
   const filterDC = (marker) => {
-    if(!filterResults) return true
-    if(marker.isNew) return true // Shows markers created by the user
-    return userDietaryProfile.some((condition) => marker.tags.some((tag) => condition.name === tag))
+    if (!filterResults) return true;
+    if (marker.isNew) return true; // Shows markers created by the user
+    return userDietaryProfile.some((condition) =>
+      marker.tags.some((tag) => condition.name === tag)
+    );
   };
 
   return (
     <>
-    <Container fluid>
-      <h1>
-        Food{" "}
-        <span role="img" aria-label="bacon">
-          🥓
-        </span>
-      </h1>
-      <button type="button" onClick={toggleView}>{view.mapView ? "Map view" : "Card view" }</button>
-      <button type="button" onClick={() => setFilterResults(!filterResults)}>{filterResults ? "Show All" : "Filter Dietary Profile" }</button>
-      <Search panTo={panTo} />
-      <Row>
-        {filterResults && (
-          <foodContext.FilterDietaryConditions/>
-        )}
-      </Row>
-
-      <Locate panTo={panTo} />
-
-      <div id="mapview" style={{display: view.mapView ? 'block' : 'none'}}>
-      <GoogleMap
-            {...interact}
-            mapContainerStyle={mapContainerStyle}
-            zoom={14}
-            center={center}
-            options={options}
-            onLoad={onMapLoad}
+      <AppBar
+        position="fixed"
+        style={{
+          backgroundColor: "white",
+          color: "black",
+          boxShadow: "0px 0px 0px 0px",
+        }}
+      >
+        <Toolbar style={{height: "125px", alignItems: "flex-start"}}>
+          <IconButton edge="start" color="inherit" aria-label="open drawer">
+            <AiOutlineMenu />
+          </IconButton>
+          <Typography variant="h6" noWrap style={{ position: "absolute", top: "8px", paddingLeft: "2.5rem" }}>
+            {view.mapView ? 'Map View 🗺' : 'Card View 🗃'}
+          </Typography>
+          <div style={{alignSelf: "flex-end", width: "100%"}}>
+          <InputBase
+              placeholder="Search Google Maps"
+              inputProps={{ 'aria-label': 'search google maps' }}
+              style={{border: "1px solid rgba(0,0,0,0.25)", borderRadius: "15px", boxShadow: "0px 2px 1px -1px rgb(0 0 0 / 20%), 0px 1px 1px 0px rgb(0 0 0 / 14%), 0px 1px 3px 0px rgb(0 0 0 / 12%)", width: "100%", margin: "20px"}}
+               />  
+          </div>
+          <IconButton
+            aria-label="User account"
+            edge="end"
+            aria-controls="menu-appbar"
+            aria-haspopup="true"
+            color="inherit"
+            onClick={() => {
+              navigator.geolocation.getCurrentPosition(
+                (position) => {
+                  panTo({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                  });
+                },
+                () => null
+              );
+            }}
           >
-            {markers.map((marker, index) => filterDC(marker) && (
-              <Marker
-                key={index}
-                animation={window.google.maps.Animation.Wp}
-                position={{ lat: marker.geometry.location.lat(), lng: marker.geometry.location.lng()}}
-                icon={{
-                  url: "/marker.svg",
-                  scaledSize: new window.google.maps.Size(30, 30),
-                  origin: new window.google.maps.Point(0, 0),
-                  anchor: new window.google.maps.Point(15, 15),
+            <BiCurrentLocation />
+          </IconButton>
+          <div>
+          <IconButton
+            aria-label="User account"
+            edge="end"
+            aria-controls="menu-appbar"
+            aria-haspopup="true"
+            color="inherit" 
+            onClick={(event) => setContextMenu(event.currentTarget)}
+            >
+            <BsThreeDotsVertical />
+          </IconButton>
+          <Menu
+              id="menu-appbar"
+              anchorEl={contextMenu}
+              anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
                 }}
-                onClick={() => {
-                  setSelected(marker);
-                }}
-              />
-            ))}
-    
-            {selected ? (
-              <InfoWindow
-                position={{ lat: selected.geometry.location.lat(), lng: selected.geometry.location.lng()}}
-                onCloseClick={() => {
-                  setSelected(null);
-                }}
+              keepMounted
+              transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+              }}
+              open={!!contextMenu}
+              onClose={() => setContextMenu(null)}
               >
-                <div>
-                  <h5>{selected.name ?? "Name"}</h5>
-                  <p>{selected.vicinity ?? "Address"}</p>
-                  {selected.tags && (
-                    <Container fluid>
-                      <Row>
-                        <ListGroup horizontal style={{display: "contents"}}>
-                          {selected.tags.map((tag, i) => (
-                            <ListGroup.Item key={i} variant="success" className="col-4 col-sm-auto col-md-auto col-lg-auto venuetag">{tag}</ListGroup.Item>
-                            ))}
-                      </ListGroup>
-                      </Row>
-                    </Container>
-                  )}
-                  <button className="mt-2" onClick={() => {
-                    newMarker(({lat: selected.geometry.location.lat(), lng: selected.geometry.location.lng()}))}}>Save</button>
-                </div>
-              </InfoWindow>
-            ) : null}
-          </GoogleMap>      
-      </div>
-      <div id="cardview" style={{display: view.mapView ? 'none' : 'block'}}>
-        {markers && (
-          <h4>{!filterResults && markers.length > 0 ? `Found ${markers.length} matches` : "Oops! We couldn't find any restaurants matching your dietary conditions."}</h4>
-        )}
+                <MenuItem onClick={() => auth.logout().then(() => history.push("/login"))}>Sign Out</MenuItem>
+          </Menu>
+          </div>
+        </Toolbar>
+      </AppBar>
+      <Container fluid>
+        <br/><br/>
+        <button type="button" onClick={() => setFilterResults(!filterResults)}>
+          {filterResults ? "Show All" : "Filter Dietary Profile"}
+        </button>
+        <Search panTo={panTo} />
+        <Row>{filterResults && <foodContext.FilterDietaryConditions />}</Row>
+        {view.mapView ? (
+          <>
+            <GoogleMap
+              {...interact}
+              mapContainerStyle={mapContainerStyle}
+              zoom={14}
+              center={center}
+              options={options}
+              onLoad={onMapLoad}
+            >
+              {markers.map(
+                (marker, index) =>
+                  filterDC(marker) && (
+                    <Marker
+                      key={index}
+                      animation={window.google.maps.Animation.Wp}
+                      position={{
+                        lat: marker.geometry.location.lat(),
+                        lng: marker.geometry.location.lng(),
+                      }}
+                      icon={{
+                        url: "/marker.svg",
+                        scaledSize: new window.google.maps.Size(30, 30),
+                        origin: new window.google.maps.Point(0, 0),
+                        anchor: new window.google.maps.Point(15, 15),
+                      }}
+                      onClick={() => {
+                        setSelected(marker);
+                      }}
+                    />
+                  )
+              )}
 
-        {markers.map((marker, index) => filterDC(marker) && ( 
-          <Card key={index} bg="light">
-            <Card.Body>
-              <Card.Title as="h3">{marker.name ?? "Name"}</Card.Title>
-                <Card.Text>
-                {marker.distance && `${marker.distance} miles away`} <br/>
-                <FaMapMarkerAlt color="#3083ff"/> {marker.vicinity ?? "Address"}
-                </Card.Text>
-                {marker.tags && (
-                  <Container fluid>
-                  <Row>
-                  <ListGroup horizontal style={{display: "contents"}}>
-                    {marker.tags.map((tag, i) => (
-                    <ListGroup.Item key={i} variant="success" className="col-4 col-sm-auto col-md-auto col-lg-auto venuetag">{tag}</ListGroup.Item>
-                    ))}
-                  </ListGroup>
-                  </Row>
-                  </Container>
-                )}
-            </Card.Body>
-          </Card>
-        ))}
-      </div>
-    </Container>
-    <Navbar/>
+              {selected ? (
+                <InfoWindow
+                  position={{
+                    lat: selected.geometry.location.lat(),
+                    lng: selected.geometry.location.lng(),
+                  }}
+                  onCloseClick={() => {
+                    setSelected(null);
+                  }}
+                >
+                  <div>
+                    <h5>{selected.name ?? "Name"}</h5>
+                    <p>{selected.vicinity ?? "Address"}</p>
+                    {selected.tags && (
+                      <Container fluid>
+                        <Row>
+                          <ListGroup horizontal style={{ display: "contents" }}>
+                            {selected.tags.map((tag, i) => (
+                              <ListGroup.Item
+                                key={i}
+                                variant="success"
+                                className="col-4 col-sm-auto col-md-auto col-lg-auto venuetag"
+                              >
+                                {tag}
+                              </ListGroup.Item>
+                            ))}
+                          </ListGroup>
+                        </Row>
+                      </Container>
+                    )}
+                    <button
+                      className="mt-2"
+                      onClick={() => {
+                        updateMarker({
+                          lat: selected.geometry.location.lat(),
+                          lng: selected.geometry.location.lng(),
+                        });
+                      }}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </InfoWindow>
+              ) : null}
+            </GoogleMap>
+            <Fab
+              size="large"
+              color="secondary"
+              aria-label="cardview"
+              style={{
+                fontSize: "2rem",
+                backgroundColor: "white",
+                color: "black",
+                position: "fixed",
+                bottom: "0px",
+                margin: "25px",
+                width: "65px",
+                height: "65px",
+              }}
+              onClick={toggleView}
+            >
+              <BsCardList />
+            </Fab>
+          </>
+        ) : (
+          <>
+            {markers.map(
+              (marker, index) =>
+                filterDC(marker) && (
+                  <Card key={index} bg="light">
+                    <Card.Body>
+                      <Card.Title as="h3">{marker.name ?? "Name"}</Card.Title>
+                      <Card.Text>
+                        {marker.distance && `${marker.distance} miles away`}{" "}
+                        <br />
+                        <FaMapMarkerAlt color="#3083ff" />{" "}
+                        {marker.vicinity ?? "Address"}
+                      </Card.Text>
+                      {marker.tags && (
+                        <Container fluid>
+                          <Row>
+                            <ListGroup
+                              horizontal
+                              style={{ display: "contents" }}
+                            >
+                              {marker.tags.map((tag, i) => (
+                                <ListGroup.Item
+                                  key={i}
+                                  variant="success"
+                                  className="col-4 col-sm-auto col-md-auto col-lg-auto venuetag"
+                                >
+                                  {tag}
+                                </ListGroup.Item>
+                              ))}
+                            </ListGroup>
+                          </Row>
+                        </Container>
+                      )}
+                    </Card.Body>
+                  </Card>
+                )
+            )}
+            <Fab
+              size="large"
+              color="secondary"
+              aria-label="mapview"
+              style={{
+                fontSize: "2rem",
+                backgroundColor: "white",
+                color: "black",
+                position: "fixed",
+                bottom: "0px",
+                margin: "25px",
+                width: "65px",
+                height: "65px",
+              }}
+              onClick={toggleView}
+            >
+              <IoIosGlobe />
+            </Fab>
+          </>
+        )}
+      </Container>
+      <Navbar />
     </>
   );
 }
 
 function Locate({ panTo }) {
-  return (
-    <button
-      onClick={() => {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            panTo({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            });
-          },
-          () => null
-        );
-      }}
-    >Locate</button>
-  );
+  return <button>Locate</button>;
 }
 
 function Search({ panTo }) {
@@ -406,7 +603,7 @@ function Search({ panTo }) {
       },
       radius: 200 * 1000,
     },
-    debounce: 300
+    debounce: 300,
   });
 
   const searchBox = useRef();
@@ -419,26 +616,42 @@ function Search({ panTo }) {
           clearSuggestions();
 
           try {
-            const results = await getGeocode({address});
+            const results = await getGeocode({ address });
             const { lat, lng } = await getLatLng(results[0]);
-            panTo({lat,lng})
+            panTo({ lat, lng });
           } catch (error) {
             console.error(error);
           }
           console.log(address);
-        }}>
-
+        }}
+      >
         <InputGroup size="lg">
-          <FormControl ref={searchBox} value={value} onChange={(event) => {
-            setValue(event.target.value);
-          }} disabled={!ready} placeholder="Search" aria-label="Large" aria-describedby="inputGroup-sizing-sm" />
-      
-        <InputGroup.Append>
-          {value && (
-            <InputGroup.Text onClick={() => { setValue(null); clearSuggestions(); searchBox.current.value = ""}}><IoIosClose/></InputGroup.Text>
-          )}
-          <InputGroup.Text>Search</InputGroup.Text>
-        </InputGroup.Append>
+          <FormControl
+            ref={searchBox}
+            value={value}
+            onChange={(event) => {
+              setValue(event.target.value);
+            }}
+            disabled={!ready}
+            placeholder="Search"
+            aria-label="Large"
+            aria-describedby="inputGroup-sizing-sm"
+          />
+
+          <InputGroup.Append>
+            {value && (
+              <InputGroup.Text
+                onClick={() => {
+                  setValue(null);
+                  clearSuggestions();
+                  searchBox.current.value = "";
+                }}
+              >
+                <IoIosClose />
+              </InputGroup.Text>
+            )}
+            <InputGroup.Text>Search</InputGroup.Text>
+          </InputGroup.Append>
         </InputGroup>
 
         <div>

@@ -336,7 +336,7 @@ function useProvideFood() {
     listeners.current.forEach((listener) => listener());
 
   useEffect(() => {
-    dispatchFood({ type: ACTIONS.CLEAR });
+   /*  dispatchFood({ type: ACTIONS.CLEAR });
     dispatchCategory({ type: ACTIONS.CLEAR });
     dispatchDC({ type: ACTIONS.CLEAR });
     dispatchSelect({ type: ACTIONS.CLEAR });
@@ -475,7 +475,7 @@ function useProvideFood() {
     attachListener(unsubscribe3);
 
     // Cleanup subscription on unmount
-    return () => dettachListeners();
+    return () => dettachListeners(); */
   }, []);
 
   useEffect(() => {

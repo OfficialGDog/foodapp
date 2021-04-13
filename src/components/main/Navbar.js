@@ -9,7 +9,8 @@ export default function Navbar() {
   const history = useHistory();
 
   return (
-    <FNavBar expand={false} bg="light" style={{position: "fixed", bottom: "0", width: "100%"}}>
+    <>
+    {/*  <FNavBar expand={false} bg="light" style={{position: "fixed", bottom: "0", width: "100%"}}>
       <Nav className="navbar-expand justify-content-center w-100" activeKey="/home">
         <Nav.Item className="flex-grow-1 text-lg-right text-md-center" style={{ flexBasis: "100%", textAlign: "center" }}>
           <div className="d-flex flex-column text-reset align-items-lg-end" style={{alignItems: "center"}}>
@@ -36,6 +37,7 @@ export default function Navbar() {
           </div>
         </Nav.Item>
       </Nav>
-    </FNavBar>
+    </FNavBar>  */}
+    </>
   );
 }

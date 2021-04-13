@@ -20,8 +20,6 @@ export default function Login() {
   const { handleSubmit, control, watch } = useForm();
   const history = useHistory();
 
-  console.log(auth.user);
-
   useEffect(() => {
     if (!auth.user.emailVerified) return;
     history.push("/");
@@ -49,7 +47,6 @@ export default function Login() {
 
       history.push("/");
 
-      console.log("Login Successfull!");
     } catch (error) {
       setError(error.message);
     }
