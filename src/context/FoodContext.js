@@ -336,7 +336,7 @@ function useProvideFood() {
     listeners.current.forEach((listener) => listener());
 
   useEffect(() => {
-   /*  dispatchFood({ type: ACTIONS.CLEAR });
+/*     dispatchFood({ type: ACTIONS.CLEAR });
     dispatchCategory({ type: ACTIONS.CLEAR });
     dispatchDC({ type: ACTIONS.CLEAR });
     dispatchSelect({ type: ACTIONS.CLEAR });

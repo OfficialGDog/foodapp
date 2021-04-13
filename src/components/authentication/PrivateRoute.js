@@ -6,10 +6,12 @@ import { ProvideFood } from '../../context/FoodContext';
 
 const PrivateRoute = ({ component: RouteComponent, ...rest }) => {
   const auth = useAuth();
+
   return (
     <Route
       {...rest}
       render={(routeProps) =>
+        
         auth.user && auth.user.emailVerified ? (
           <ProvideFood>
             {auth.user.isNew ? <Welcome /> : <RouteComponent {...routeProps} />}

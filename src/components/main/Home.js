@@ -200,7 +200,7 @@ export default function Home() {
 
   // Returns an array of map markers for the users current location
   useEffect(() => {
-    /*  if(!location) return
+    /* if(!location) return
 
     console.log("Fetching Map Markers ...", location);
 
@@ -510,8 +510,8 @@ export default function Home() {
                 backgroundColor: "white",
                 color: "black",
                 position: "fixed",
-                bottom: "0px",
-                margin: "25px",
+                bottom: "45px",
+                margin: "25px 10px",
                 width: "65px",
                 height: "65px",
               }}
@@ -567,8 +567,8 @@ export default function Home() {
                 backgroundColor: "white",
                 color: "black",
                 position: "fixed",
-                bottom: "0px",
-                margin: "25px",
+                bottom: "45px",
+                margin: "25px 10px",
                 width: "65px",
                 height: "65px",
               }}

@@ -22,7 +22,7 @@ export default function Login() {
 
   useEffect(() => {
     if (!auth.user.emailVerified) return;
-    history.push("/");
+      history.push("/");
   }, [auth.user]);
 
   async function onSubmit({ email, password }) {
@@ -201,6 +201,7 @@ export default function Login() {
                 <StyledFirebaseAuth
                   uiConfig={auth.uiConfig}
                   firebaseAuth={auth.singleSignIn()}
+                  
                 />
               </div>
             </form>

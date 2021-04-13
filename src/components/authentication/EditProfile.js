@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Form, Card, Button, Alert, Container } from "react-bootstrap";
 import Wrapper from "./Wrapper";
 import { useHistory } from "react-router";
@@ -14,15 +14,22 @@ export default function EditProfile() {
   const [error, setError] = useState();
   const [message, setMessage] = useState();
   const [isLoading, setLoading] = useState(false);
+  const [isDisabled, setDisabled] = useState(false);
   const history = useHistory();
   const food = useFood();
 
+  useEffect(() => {
+    setDisabled((auth.user.providerData[0].providerId !== "password"));
+  }, [auth.user])
 
   async function handleSubmit(e) {
+
     e.preventDefault();
     // Validation checks
 
     try {
+      if(auth.user.isSocial) return
+      console.log("Updating Profile")
       setError(false);
       setLoading(true);
       setMessage(false);
@@ -73,6 +80,7 @@ export default function EditProfile() {
                 ref={emailRef}
                 defaultValue={auth.user.email ?? ""}
                 required
+                disabled={isDisabled}
               />
             </Form.Group>
             <Form.Group id="password">
@@ -81,6 +89,7 @@ export default function EditProfile() {
                 type="password"
                 ref={passwordRef}
                 placeholder="Leave blank to keep same password"
+                disabled={isDisabled}
               />
             </Form.Group>
             <Form.Group id="password-confirm">
@@ -89,9 +98,12 @@ export default function EditProfile() {
                 type="password"
                 ref={passwordConfirmRef}
                 placeholder="Leave blank to keep same password"
+                disabled={isDisabled}
               />
             </Form.Group>
-            <Button disabled={isLoading} className="w-100" type="submit">
+            <Button 
+            disabled={isLoading || isDisabled} 
+            className="w-100" type="submit">
               Update Profile
             </Button>
           </Form>

@@ -1,7 +1,6 @@
 import React from "react";
 import Home from "./main/Home";
 import About from "./main/About";
-import NotFound from "./main/NotFound";
 import Register from "./authentication/Register";
 import Login from "./authentication/Login";
 import ForgotPassword from "./authentication/ForgotPassword";

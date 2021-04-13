@@ -27,17 +27,17 @@ function useProvideAuth() {
   const uiConfig = {
     // Popup signin flow rather than redirect flow.
     signInFlow: 'popup',
-    // Redirect to /signedIn after sign in is successful. Alternatively you can provide a callbacks.signInSuccess function.
-    signInSuccessUrl: '/',
     // We will display Google and Facebook as auth providers.
+    signInSuccessUrl: '/',
+
     signInOptions: [
       Firebase.auth.GoogleAuthProvider.PROVIDER_ID,
       Firebase.auth.FacebookAuthProvider.PROVIDER_ID
     ]
   };
 
-  const singleSignIn = () => {
-    return firebase.auth()
+  const singleSignIn =  () => {
+    return firebase.auth();
   };
 
   const login = ({ email, password }) => {
@@ -131,7 +131,6 @@ function useProvideAuth() {
   useEffect(() => {
     const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
       // Is the user logged in?
-      console.log("changed")
       if (user) {
         setUserData(user)
         .then(data => {
