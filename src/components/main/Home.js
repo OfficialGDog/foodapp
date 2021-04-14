@@ -25,8 +25,7 @@ import {
   Menu,
   MenuItem,
   Fab,
-  InputBase,
-  Paper
+  InputBase
 } from "@material-ui/core";
 import "./Home.css";
 
@@ -39,8 +38,6 @@ import {
 
 import {
   Combobox,
-  ComboboxInput,
-  ComboboxPopover,
   ComboboxOption,
 } from "@reach/combobox";
 
@@ -67,10 +64,11 @@ const mapContainerStyle = {
   height: "100vh",
 };
 
-const center = {
+let center = {
   lat: 55.0103,
   lng: -1.44464,
   radius: 1000,
+  zoom: 4
 };
 
 const options = {
@@ -93,13 +91,13 @@ function reducer(markers, action) {
         ...markers,
         ...action.payload.map((marker) => {
           return {
+            ...marker,
             geometry: {
               location: {
                 lat: () => marker.coordinates.latitude,
                 lng: () => marker.coordinates.longitude,
               },
-            },
-            ...marker,
+            }
           };
         }),
       ];
@@ -198,14 +196,79 @@ export default function Home() {
   const dettachListeners = () =>
     listeners.current.forEach((listener) => listener());
 
+  const isDateLessThanOneHourAgo = (date) => {
+      const HOUR = 1000 * 60 * 60;
+      const oneHourAgo = Date.now() - (HOUR * 1)
+      return date > oneHourAgo
+  }
+
+  const getCache = () => {
+      try {
+
+        let markerCache = JSON.parse(localStorage.getItem("markers"));
+       // let latlng = JSON.parse(localStorage.getItem("latlng"));
+
+        const lastupdated = localStorage.getItem("updated");
+
+        if(!markerCache) markerCache = [];
+
+        if(!(isDateLessThanOneHourAgo(new Date(lastupdated)))) {
+          localStorage.clear();
+          return false;
+        }
+
+        if(typeof markerCache === "object") dispatch({type: ACTIONS.ADD_MARKERS, payload: markerCache });
+
+        return markerCache.length ? true : false
+
+      } catch (error) {
+        console.error(error)
+      }
+  }
+  
+  const updateLastUpdated = () => {
+    try {
+      localStorage.setItem("updated", new Date());
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  useEffect(() => {
+    try {
+      const lastlocation = JSON.parse(localStorage.getItem("latlng"));
+      if(!lastlocation) return
+      if(typeof lastlocation === "object") center = { ...lastlocation, zoom: 14 };
+    } catch(error) {
+      console.error(error);
+    }
+  }, []);
+
+
   // Returns an array of map markers for the users current location
   useEffect(() => {
-    /* if(!location) return
-
-    console.log("Fetching Map Markers ...", location);
+    if(!location) return
 
     // Reset markers when the user changes location
     dispatch({type: ACTIONS.RESET_MARKERS });
+
+    try {
+
+      const prevLoc = localStorage.getItem('latlng');
+
+      if(prevLoc && prevLoc === JSON.stringify(location)) {
+
+        if(getCache()) return console.log(`Serving markers from cache`)
+        
+      }
+
+      localStorage.setItem('latlng', JSON.stringify({...location, zoom: 14 }));
+
+    } catch (error) {
+      console.error(error);
+    }
+
+    console.log("Fetching Map Markers ...", location);
 
     const obj =
     { lat: location.lat, 
@@ -249,6 +312,8 @@ export default function Home() {
 
         snapshot.docChanges().forEach((change) => {
 
+          updateLastUpdated();
+
           if(change.type === "removed") return dispatch({type: ACTIONS.DELETE_MARKER, payload: { id: change.doc.id  } });
 
           const changedata = {...change.doc.data(), distance: parseFloat(change.doc.distance / 1.6).toFixed(1), id: change.doc.id };
@@ -266,7 +331,7 @@ export default function Home() {
     }).catch(error => console.error(error));
 
     // Cleanup subscription on unmount
-    return () => dettachListeners(); */
+    return () => dettachListeners();
   }, [location]);
 
   useEffect(() => {
@@ -274,6 +339,15 @@ export default function Home() {
     if (!selected.isNew)
       setSelected(markers.find((item) => item.id === selected.id));
   }, [selected, markers]);
+
+  useEffect(() => {
+    try {
+      if(!markers.length) return
+      localStorage.setItem("markers", JSON.stringify(markers));
+    } catch (error) {
+      console.error(error);
+    }
+  }, [markers]);
 
   useEffect(() => {
     setUserDietaryProfile([
@@ -300,11 +374,6 @@ export default function Home() {
     setLocation({ lat, lng, radius });
   }, []);
 
-  const interact = useLongPress({
-    /*     onLongPress: (ev) => onMapClick(ev), */
-    onClick: () => setSelected(null),
-  });
-
 /*   // Call when a user creates a new map marker
   const updateMarker = useCallback(({ lat, lng }) => {
     // Create a reference to the geolocation so it can be added to firestore
@@ -328,6 +397,11 @@ export default function Home() {
     setView((prevState) => ({ mapView: !prevState.mapView }));
     setSelected(null);
   }, [view]);
+
+  const interact = useLongPress({
+    /* onLongPress: (ev) => onMapClick(ev), */
+    onClick: () => setSelected(null)
+  });
 
   if (loadError) return "Error loading maps";
   if (!isLoaded) return "Loading Maps";
@@ -359,11 +433,15 @@ export default function Home() {
             {view.mapView ? 'Map View 🗺' : 'Card View 🗃'}
           </Typography>
           <div style={{alignSelf: "flex-end", width: "100%"}}>
-          <InputBase
+
+            <InputBase
+              className="search"
               placeholder="Search Google Maps"
               inputProps={{ 'aria-label': 'search google maps' }}
-              style={{border: "1px solid rgba(0,0,0,0.25)", borderRadius: "15px", boxShadow: "0px 2px 1px -1px rgb(0 0 0 / 20%), 0px 1px 1px 0px rgb(0 0 0 / 14%), 0px 1px 3px 0px rgb(0 0 0 / 12%)", width: "100%", margin: "20px"}}
+              style={{border: "1px solid rgba(0,0,0,0.25)", borderRadius: "15px", boxShadow: "0px 2px 1px -1px rgb(0 0 0 / 20%), 0px 1px 1px 0px rgb(0 0 0 / 14%), 0px 1px 3px 0px rgb(0 0 0 / 12%)", width: "96vw", top: "40px", left: "0px", position: "absolute", margin: "20px"}} 
                />  
+  
+
           </div>
           <IconButton
             aria-label="User account"
@@ -428,7 +506,7 @@ export default function Home() {
             <GoogleMap
               {...interact}
               mapContainerStyle={mapContainerStyle}
-              zoom={14}
+              zoom={center.zoom}
               center={center}
               options={options}
               onLoad={onMapLoad}
@@ -579,7 +657,7 @@ export default function Home() {
           </>
         )}
       </Container>
-      <Navbar />
+      <Navbar item={0} />
     </>
   );
 }

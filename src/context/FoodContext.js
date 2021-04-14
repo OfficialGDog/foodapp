@@ -332,11 +332,56 @@ function useProvideFood() {
 
   const attachListener = (listener) => listeners.current.push(listener);
 
-  const dettachListeners = () =>
-    listeners.current.forEach((listener) => listener());
+  const dettachListeners = () => listeners.current.forEach((listener) => listener());
+
+  const updateLastUpdated = () => {
+    try {
+      localStorage.setItem("updated", new Date());
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const isDateLessThanOneHourAgo = (date) => {
+    const HOUR = 1000 * 60 * 60;
+    const oneHourAgo = Date.now() - (HOUR * 1);
+    return date > oneHourAgo
+  }
+
+  const getCache = () => {
+    try {
+      let foodsCache = JSON.parse(localStorage.getItem("foods"));
+      let categoryCache = JSON.parse(localStorage.getItem("categories"));
+      let conditionCache = JSON.parse(localStorage.getItem("conditions"));
+      const lastupdated = localStorage.getItem("updated");
+
+      if(!foodsCache) foodsCache = [];
+      if(!categoryCache) categoryCache = [];
+      if(!conditionCache) conditionCache = [];
+
+      if(!(isDateLessThanOneHourAgo(new Date(lastupdated)))) {
+        localStorage.clear();
+        return false;
+      }
+
+      if(typeof foodsCache === "object") dispatchFood({type: ACTIONS.ADDLIST, payload: foodsCache })
+      if(typeof categoryCache === "object") dispatchCategory({type: ACTIONS.ADDLIST, payload: categoryCache })
+      if(typeof conditionCache === "object") dispatchDC({type: ACTIONS.ADDLIST, payload: conditionCache })
+
+      return (foodsCache.length && categoryCache.length && conditionCache.length)
+
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   useEffect(() => {
-/*     dispatchFood({ type: ACTIONS.CLEAR });
+
+    if(getCache()) return console.log(`Serving data from cache`)
+
+    console.log("Fetching Dietary Data");
+
+    dispatchFood({ type: ACTIONS.CLEAR });
     dispatchCategory({ type: ACTIONS.CLEAR });
     dispatchDC({ type: ACTIONS.CLEAR });
     dispatchSelect({ type: ACTIONS.CLEAR });
@@ -348,6 +393,9 @@ function useProvideFood() {
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
+
+            updateLastUpdated();
+
             if (change.type === "removed") {
               dispatchFood({
                 type: ACTIONS.DELETE,
@@ -391,6 +439,9 @@ function useProvideFood() {
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
+
+            updateLastUpdated();
+
             if (change.type === "removed") {
               dispatchCategory({
                 type: ACTIONS.DELETE,
@@ -434,6 +485,9 @@ function useProvideFood() {
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
+
+            updateLastUpdated();
+
             if (change.type === "removed") {
               dispatchDC({
                 type: ACTIONS.DELETE,
@@ -475,13 +529,26 @@ function useProvideFood() {
     attachListener(unsubscribe3);
 
     // Cleanup subscription on unmount
-    return () => dettachListeners(); */
+
+    return () => dettachListeners();
+
   }, []);
 
   useEffect(() => {
+
     dispatchSelect({ type: ACTIONS.SET, payload: getUserSelectedOptions() });
 
+    try {
+      if(!foods.length || !categories.length || !dietaryConditions.length) return
+      localStorage.setItem("foods", JSON.stringify(foods));
+      localStorage.setItem("conditions", JSON.stringify(dietaryConditions));
+      localStorage.setItem("categories", JSON.stringify(categories));
+    } catch (error) {
+      console.error(error);
+    }
+
     setLoading(false);
+
   }, [foods, categories, dietaryConditions]);
 
   // the useEffect() below runs whenever the user selects / unselects a checkbox
