@@ -38,9 +38,7 @@ export default function EditProfile() {
         return setError("You cannot change your email or password from a Google / Facebook account!");
       }
 
-      if(auth.user.email !== email) {
-          await auth.updateEmail(email);
-      }
+      if(auth.user.email !== email) await auth.updateEmail(email);
 
       await auth.updatePassword(password);
       setMessage('Your account has been updated.');
@@ -105,9 +103,8 @@ export default function EditProfile() {
           </div>
         </Toolbar>
       </AppBar>
-      <Card>
+      <Card style={{marginTop: "60px"}}>
         <Card.Body>
-          <h2 className="text-center mb-4">Update Profile</h2>
           {error && <Alert variant="danger">{error}</Alert>}
           {message && <Alert variant="success">{message}</Alert>}
           <form
@@ -180,7 +177,6 @@ export default function EditProfile() {
                       inputRef={ref}
                       InputLabelProps={{ shrink: true }}
                       value={value}
-                      disabled={isDisabled}
                     />
                   )}
                   rules={{
@@ -213,7 +209,6 @@ export default function EditProfile() {
                       inputRef={ref}
                       InputLabelProps={{ shrink: true }}
                       value={value}
-                      disabled={isDisabled}
                     />
                   )}
                   rules={{
@@ -225,19 +220,19 @@ export default function EditProfile() {
                 />
               </Grid>
             </Grid>
+            <div style={{marginTop: "20px"}}>
             <Button
-              disabled={isLoading || isDisabled}
+              size="lg"
+              disabled={isLoading}
               className="w-100"
               type="submit"
             >
               Update Profile
             </Button>
+            </div>
           </form>
         </Card.Body>
       </Card>
-      <Container fluid style={{ padding: "20px" }}>
-        <food.FoodCategories />
-      </Container>
       <Container fluid style={{ padding: "20px" }}>
         <food.DietaryConditions />
       </Container>

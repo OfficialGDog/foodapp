@@ -27,6 +27,8 @@ import {
   Checkbox,
   withStyles
 } from "@material-ui/core";
+
+import { Button as MDButton } from "@material-ui/core";
 import "./FoodContext.css";
 
 const FoodContext = createContext();
@@ -231,23 +233,28 @@ function useProvideFood() {
     if (isLoading) return "Loading...";
 
     return (
-    <>
       <Grid container spacing={1}>
         {dietaryConditions.slice(0, hide ? 3 : dietaryConditions.length).map((condition, index) => (
-         <Grid container item={true} key={index} xs={12} sm={4}>
+         <Grid container item={true} key={index} xs={12} sm={3}>
              <FormControlLabel
                  label={condition.name}
                  control={<CustomCheckbox value={JSON.stringify({condition: condition.path})} checked={selected.some((checked) => checked.path === condition.path)} onChange={handleCheck} disabled={isLoading} />}
              />
          </Grid>         
         ))}
+         <Grid container item={true} xs={12} sm={3}>
+        <div style={{alignSelf: "center"}}>
+         <MDButton
+          size="medium"
+          variant="outlined"
+          disabled={isLoading}
+          style={{bottom: "4px"}}
+          type="button"
+          onClick={() => setHide(!hide)}>{hide ? "Show more" : "Show less"}
+        </MDButton>
+        </div>
+         </Grid>
       </Grid>
-      <Button
-        variant="success"
-        disabled={isLoading}
-        type="button"
-        onClick={() => setHide(!hide)}>{hide ? "Show More" : "Collapse"}</Button>
-    </>
     );
   }
 
@@ -377,14 +384,14 @@ function useProvideFood() {
 
   useEffect(() => {
 
-    if(getCache()) return console.log(`Serving data from cache`)
-
-    console.log("Fetching Dietary Data");
-
     dispatchFood({ type: ACTIONS.CLEAR });
     dispatchCategory({ type: ACTIONS.CLEAR });
     dispatchDC({ type: ACTIONS.CLEAR });
     dispatchSelect({ type: ACTIONS.CLEAR });
+
+    if(getCache()) return console.log(`Serving data from cache`);
+
+    console.log("Fetching Dietary Data");
 
     const unsubscribe1 = firestore
       .collection("foods")

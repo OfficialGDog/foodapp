@@ -25,7 +25,10 @@ import {
   Menu,
   MenuItem,
   Fab,
-  InputBase
+  InputBase,
+  Checkbox,
+  FormControlLabel,
+  withStyles
 } from "@material-ui/core";
 import "./Home.css";
 
@@ -48,6 +51,7 @@ import {
   Row,
   FormControl,
   InputGroup,
+  Button
 } from "react-bootstrap";
 
 import mapStyles from "../../mapStyles";
@@ -128,6 +132,17 @@ function reducer(markers, action) {
       return markers;
   }
 }
+
+const CustomCheckbox = withStyles({
+  root: {
+    color: "#009688",
+    '&$checked': {
+      color: "#009688",
+    },
+  },
+  checked: {},
+})((props) => <Checkbox color="default" {...props} />);
+
 
 export default function Home() {
   const { isLoaded, loadError } = useLoadScript({
@@ -251,7 +266,6 @@ export default function Home() {
 
     // Reset markers when the user changes location
     dispatch({type: ACTIONS.RESET_MARKERS });
-
     try {
 
       const prevLoc = localStorage.getItem('latlng');
@@ -371,7 +385,7 @@ export default function Home() {
   const panTo = useCallback(({ lat, lng }) => {
     mapRef.current.panTo({ lat, lng });
     mapRef.current.setZoom(14);
-    setLocation({ lat, lng, radius });
+    setLocation({ lat, lng, radius, zoom: 14 });
   }, []);
 
 /*   // Call when a user creates a new map marker
@@ -494,13 +508,23 @@ export default function Home() {
           </div>
         </Toolbar>
       </AppBar>
-      <Container fluid>
-        <br/><br/>
-        <button type="button" onClick={() => setFilterResults(!filterResults)}>
-          {filterResults ? "Show All" : "Filter Dietary Profile"}
-        </button>
+
+      <Container fluid style={{marginTop: "125px"}}>
+
+
+
         <Search panTo={panTo} />
+
+        <Container className="text-center">
+        <FormControlLabel
+        label="Filter Markers"
+        style={{position: "relative", left: "-15px"}}
+        control={<CustomCheckbox 
+                  checked={filterResults} 
+                  onClick={() => setFilterResults(!filterResults)}
+                 />} />
         <Row>{filterResults && <foodContext.FilterDietaryConditions />}</Row>
+        </Container>
         {view.mapView ? (
           <>
             <GoogleMap
@@ -597,9 +621,11 @@ export default function Home() {
             >
               <BsCardList />
             </Fab>
+            <br/><br/>
           </>
         ) : (
           <>
+            <Typography variant="h5" style={{margin: "20px 0px 0px 20px"}}>Found {filterResults ? markers.filter((marker) => filterDC(marker)).length : markers.length} Matches</Typography>
             {markers.map(
               (marker, index) =>
                 filterDC(marker) && (
@@ -654,6 +680,7 @@ export default function Home() {
             >
               <IoIosGlobe />
             </Fab>
+            <br/><br/>
           </>
         )}
       </Container>
@@ -689,6 +716,7 @@ function Search({ panTo }) {
   return (
     <div>
       <Combobox
+        style={{display: "none"}}
         onSelect={async (address) => {
           setValue(address, false);
           clearSuggestions();
