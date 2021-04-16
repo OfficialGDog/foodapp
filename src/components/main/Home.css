@@ -1,4 +1,5 @@
 .venuetag {
+    border-radius: .75rem !important;
     border-left-width: thin !important;
     margin: 5px 5px 0px 0px;
     text-overflow: ellipsis;
@@ -7,8 +8,21 @@
     white-space: nowrap;
 }
 
+ .searchbox {
+    border: 1px solid rgba(0,0,0,0.25) !important;
+    top: 40px !important;
+    left: 0px !important;
+    position: absolute !important;
+    margin: 20px !important;
+    width: 90% !important;
+}
 
- .search > input {
-    padding: .75rem;
-    padding-left: 1.25rem;
+.clearsearch {
+    border: none;
+}
+
+@media (min-width:500px) {
+    .searchbox {
+        width: 97vw !important;
+    }
 }

@@ -10,11 +10,12 @@ import useLongPress from "../../useLongPress";
 import { useFood } from "../../context/FoodContext";
 import { useAuth } from "../../context/AuthContext";
 import Navbar from "./Navbar";
+import Modal from "./Modal";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { MdAccountCircle } from "react-icons/md";
 import { IoIosClose, IoIosGlobe } from "react-icons/io";
 import { AiOutlineSearch, AiOutlineMenu } from "react-icons/ai";
-import { BiCurrentLocation } from "react-icons/bi";
+import { BiCurrentLocation, BiSearchAlt2 } from "react-icons/bi";
 import { BsCardList, BsThreeDotsVertical } from "react-icons/bs";
 import { useHistory } from "react-router-dom";
 import {
@@ -30,6 +31,7 @@ import {
   FormControlLabel,
   withStyles
 } from "@material-ui/core";
+import { Button as MDButton } from "@material-ui/core";
 import "./Home.css";
 
 import {
@@ -40,8 +42,7 @@ import {
 } from "@react-google-maps/api";
 
 import {
-  Combobox,
-  ComboboxOption,
+  Combobox
 } from "@reach/combobox";
 
 import {
@@ -155,6 +156,7 @@ export default function Home() {
   const [location, setLocation] = useState(null);
   const [selected, setSelected] = useState(null);
   const [radius, setRadius] = useState(1000);
+  const [modal, setModal] = useState(false);
   const [filterResults, setFilterResults] = useState(false);
   const [view, setView] = useState({ mapView: true });
   const [userDietaryProfile, setUserDietaryProfile] = useState(null);
@@ -164,7 +166,7 @@ export default function Home() {
   const auth = useAuth();
   const mapRef = useRef();
   const listeners = useRef([]);
-
+/* 
   const onMapClick = useCallback((event) => {
     dispatch({
       type: ACTIONS.ADD_MARKER,
@@ -177,7 +179,7 @@ export default function Home() {
         isNew: true,
       },
     });
-  }, []);
+  }, []); */
 
   const onMapLoad = useCallback((map) => {
     mapRef.current = map;
@@ -221,7 +223,6 @@ export default function Home() {
       try {
 
         let markerCache = JSON.parse(localStorage.getItem("markers"));
-       // let latlng = JSON.parse(localStorage.getItem("latlng"));
 
         const lastupdated = localStorage.getItem("updated");
 
@@ -251,6 +252,8 @@ export default function Home() {
 
   useEffect(() => {
     try {
+      const hideModal = localStorage.getItem('hideWelcome');
+      if(!hideModal) setModal(true);
       const lastlocation = JSON.parse(localStorage.getItem("latlng"));
       if(!lastlocation) return
       if(typeof lastlocation === "object") center = { ...lastlocation, zoom: 14 };
@@ -296,7 +299,6 @@ export default function Home() {
       let data = [];
 
       querySnapshot.forEach((doc) => {
-        console.log(`Fetching Marker ${doc.id} from the database`);
         // doc.data() is never undefined for query doc snapshots
         data.push({...doc.data(), distance: parseFloat(doc.distance / 1.6).toFixed(1), id: doc.id});
       });
@@ -350,8 +352,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!selected) return;
-    if (!selected.isNew)
-      setSelected(markers.find((item) => item.id === selected.id));
+    setSelected(markers.find((item) => item.id === selected.id));
   }, [selected, markers]);
 
   useEffect(() => {
@@ -401,9 +402,14 @@ export default function Home() {
     });
   }, []); */
 
-  // Call when a user updates an exisiting marker
-  const updateMarker = useCallback(() => {
-    //geodatabase.restaurants.doc(id).set({name: 'Gareth', vicinity: "23 Tenbury Crescent", tags: ["Vegeterian", "Vegan", "Halal"], g_place_id: null, coordinates });
+
+  const hideModal = useCallback(() => {
+   try {
+     setModal(false);
+     localStorage.setItem("hideWelcome", true);
+   } catch (error) {
+     console.error(error);
+   }
   }, []);
 
   const toggleView = useCallback(() => {
@@ -448,12 +454,7 @@ export default function Home() {
           </Typography>
           <div style={{alignSelf: "flex-end", width: "100%"}}>
 
-            <InputBase
-              className="search"
-              placeholder="Search Google Maps"
-              inputProps={{ 'aria-label': 'search google maps' }}
-              style={{border: "1px solid rgba(0,0,0,0.25)", borderRadius: "15px", boxShadow: "0px 2px 1px -1px rgb(0 0 0 / 20%), 0px 1px 1px 0px rgb(0 0 0 / 14%), 0px 1px 3px 0px rgb(0 0 0 / 12%)", width: "96vw", top: "40px", left: "0px", position: "absolute", margin: "20px"}} 
-               />  
+          <Search panTo={panTo} />
   
 
           </div>
@@ -510,23 +511,22 @@ export default function Home() {
       </AppBar>
 
       <Container fluid style={{marginTop: "125px"}}>
-
-
-
-        <Search panTo={panTo} />
-
         <Container className="text-center">
         <FormControlLabel
         label="Filter Markers"
-        style={{position: "relative", left: "-15px"}}
+        style={{position: "relative", left: "6vh"}}
         control={<CustomCheckbox 
                   checked={filterResults} 
                   onClick={() => setFilterResults(!filterResults)}
                  />} />
         <Row>{filterResults && <foodContext.FilterDietaryConditions />}</Row>
         </Container>
+
         {view.mapView ? (
           <>
+            <Modal open={modal} title="Disclaimer" onClose={hideModal}>
+              This app is currently in beta testing, we're currently adding more information.
+            </Modal>
             <GoogleMap
               {...interact}
               mapContainerStyle={mapContainerStyle}
@@ -588,7 +588,7 @@ export default function Home() {
                         </Row>
                       </Container>
                     )}
-                    <button
+{/*                     <button
                       className="mt-2"
                       onClick={() => {
                         updateMarker({
@@ -598,7 +598,7 @@ export default function Home() {
                       }}
                     >
                       Save
-                    </button>
+                    </button> */}
                   </div>
                 </InfoWindow>
               ) : null}
@@ -625,6 +625,9 @@ export default function Home() {
           </>
         ) : (
           <>
+            <Modal marker={selected} dietaryconditions={foodContext.dietaryConditions} open={modal} title="Add Dietary Tags" onClose={(e) => {!setModal(false) && e.target.tagName === "SPAN" && dispatch({type: ACTIONS.UPDATE_MARKER, payload: {...selected, tags: [...e.target.closest('div.MuiPaper-root').querySelectorAll('.Mui-checked')].map(item => item.parentElement).map(tag => tag.innerText)}})}}>
+              Select below
+            </Modal>
             <Typography variant="h5" style={{margin: "20px 0px 0px 20px"}}>Found {filterResults ? markers.filter((marker) => filterDC(marker)).length : markers.length} Matches</Typography>
             {markers.map(
               (marker, index) =>
@@ -654,6 +657,9 @@ export default function Home() {
                                   {tag}
                                 </ListGroup.Item>
                               ))}
+                          
+                                <MDButton variant="outlined" onClick={() => { setSelected(marker); setModal(true); }}>Add Tag</MDButton>
+                              
                             </ListGroup>
                           </Row>
                         </Container>
@@ -680,7 +686,7 @@ export default function Home() {
             >
               <IoIosGlobe />
             </Fab>
-            <br/><br/>
+            <br/><br/><br/><br/><br/><br/>
           </>
         )}
       </Container>
@@ -716,7 +722,6 @@ function Search({ panTo }) {
   return (
     <div>
       <Combobox
-        style={{display: "none"}}
         onSelect={async (address) => {
           setValue(address, false);
           clearSuggestions();
@@ -731,10 +736,11 @@ function Search({ panTo }) {
           console.log(address);
         }}
       >
-        <InputGroup size="lg">
+        <InputGroup className="searchbox" size="lg">
           <FormControl
             ref={searchBox}
             value={value}
+            list="place-list"
             onChange={(event) => {
               setValue(event.target.value);
             }}
@@ -744,27 +750,16 @@ function Search({ panTo }) {
             aria-describedby="inputGroup-sizing-sm"
           />
 
-          <InputGroup.Append>
-            {value && (
-              <InputGroup.Text
-                onClick={() => {
-                  setValue(null);
-                  clearSuggestions();
-                  searchBox.current.value = "";
-                }}
-              >
-                <IoIosClose />
-              </InputGroup.Text>
-            )}
-            <InputGroup.Text>Search</InputGroup.Text>
-          </InputGroup.Append>
         </InputGroup>
 
-        <div>
-          {status === "OK" &&
-            data.map(({ id, description }) => (
-              <ComboboxOption key={id} value={description} />
-            ))}
+        <div style={{position: "absolute"}}>
+          {status === "OK" && (
+          <datalist id="place-list">
+              {data.map(({ id, description }) => (
+              <option key={id} value={description} />
+              ))}
+            </datalist>
+          )}
         </div>
       </Combobox>
     </div>

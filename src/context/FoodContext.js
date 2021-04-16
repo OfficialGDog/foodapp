@@ -389,7 +389,7 @@ function useProvideFood() {
     dispatchDC({ type: ACTIONS.CLEAR });
     dispatchSelect({ type: ACTIONS.CLEAR });
 
-    if(getCache()) return console.log(`Serving data from cache`);
+    if(getCache()) return console.log(`Serving dietary data from cache`);
 
     console.log("Fetching Dietary Data");
 
@@ -568,6 +568,7 @@ function useProvideFood() {
   // Return the user object and auth methods
   return {
     selected,
+    dietaryConditions,
     isSaved,
     DietaryConditions,
     FoodCategories,

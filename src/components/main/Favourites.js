@@ -64,7 +64,9 @@ export default function Favourites() {
           </div>
         </Toolbar>
       </AppBar>
-
+      <div className="text-center">
+      <Typography variant="h5" style={{marginTop: "100px"}}>You don't have any favourites!</Typography>
+      </div>
       <Navbar item={1} />
     </>
   );
