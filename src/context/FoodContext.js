@@ -7,7 +7,7 @@ import React, {
   useCallback,
   useReducer,
 } from "react";
-import { Form, Col, Card, Button } from "react-bootstrap";
+import { Form, Card, Button } from "react-bootstrap";
 import { firestore } from "../firebase/config";
 import { useAuth } from "./AuthContext";
 import {
@@ -285,7 +285,7 @@ function useProvideFood() {
                     .map((row, index) => (
                       <TableRow key={index}>
                         <TableCell component="th" scope="row">
-                          <Accordion disabled={!(foods.some((food) => food.category.path === row.path || food.category === row.name))} expanded={expanded === `panel${index}`} onChange={handleChange(`panel${index}`)}>
+                          <Accordion disabled={!(foods.some((food) => food.category === row.name))} expanded={expanded === `panel${index}`} onChange={handleChange(`panel${index}`)}>
                             <AccordionSummary
                               aria-controls="panel1bh-content"
                               id="panel1bh-header">
@@ -294,7 +294,7 @@ function useProvideFood() {
                             <AccordionDetails>
                               <Grid container spacing={1}>
                                 <Grid container item xs={12}>
-                              {foods.map((food, index2) => (food.category.path === row.path || food.category === row.name) && (
+                              {foods.map((food, index2) => (food.category === row.name) && (
                                  <Grid item={true} key={index2} xs={12} md={4} lg={4}>
                                     <FormControlLabel
                                       label={food.name}

@@ -8,7 +8,7 @@
     white-space: nowrap;
 }
 
- .searchbox {
+ .datalist-input {
     border: 1px solid rgba(0,0,0,0.25) !important;
     top: 40px !important;
     left: 0px !important;
@@ -17,12 +17,17 @@
     width: 90% !important;
 }
 
+.datalist-input > input {
+    border: none !important;
+    padding: .75rem !important;
+}
+
 .clearsearch {
     border: none;
 }
 
 @media (min-width:500px) {
-    .searchbox {
+    .datalist-input {
         width: 97vw !important;
     }
 }

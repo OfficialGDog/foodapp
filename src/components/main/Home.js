@@ -17,6 +17,7 @@ import { IoIosClose, IoIosGlobe } from "react-icons/io";
 import { AiOutlineSearch, AiOutlineMenu } from "react-icons/ai";
 import { BiCurrentLocation, BiSearchAlt2 } from "react-icons/bi";
 import { BsCardList, BsThreeDotsVertical } from "react-icons/bs";
+import DataListInput from "react-datalist-input";
 import { useHistory } from "react-router-dom";
 import {
   AppBar,
@@ -42,7 +43,8 @@ import {
 } from "@react-google-maps/api";
 
 import {
-  Combobox
+  Combobox,
+  ComboboxOption
 } from "@reach/combobox";
 
 import {
@@ -717,51 +719,27 @@ function Search({ panTo }) {
     debounce: 300,
   });
 
-  const searchBox = useRef();
-
   return (
     <div>
-      <Combobox
-        onSelect={async (address) => {
-          setValue(address, false);
-          clearSuggestions();
+      <DataListInput
+      placeholder="🔎 Search"
+      items={data.map(({ place_id, description }) => ( { key: place_id, label: description } ))}
+      value={value}
+      disabled={!ready} 
+      onInput={(val) => setValue(val)}
+      onSelect={async ({ label }) => {
+        setValue(label, false);
+        clearSuggestions();
+        try {
+          const results = await getGeocode({ address: label });
+          const { lat, lng } = await getLatLng(results[0]);
+          localStorage.setItem('latlng', JSON.stringify({ lat, lng, zoom: 14 }));
+          panTo({lat,lng})
+        } catch (error) {
+          console.error(error);
+        }
+      }} />
 
-          try {
-            const results = await getGeocode({ address });
-            const { lat, lng } = await getLatLng(results[0]);
-            panTo({ lat, lng });
-          } catch (error) {
-            console.error(error);
-          }
-          console.log(address);
-        }}
-      >
-        <InputGroup className="searchbox" size="lg">
-          <FormControl
-            ref={searchBox}
-            value={value}
-            list="place-list"
-            onChange={(event) => {
-              setValue(event.target.value);
-            }}
-            disabled={!ready}
-            placeholder="Search"
-            aria-label="Large"
-            aria-describedby="inputGroup-sizing-sm"
-          />
-
-        </InputGroup>
-
-        <div style={{position: "absolute"}}>
-          {status === "OK" && (
-          <datalist id="place-list">
-              {data.map(({ id, description }) => (
-              <option key={id} value={description} />
-              ))}
-            </datalist>
-          )}
-        </div>
-      </Combobox>
     </div>
   );
 }
