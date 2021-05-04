@@ -4,7 +4,16 @@ import { useHistory } from "react-router";
 import { useFood } from "../../context/FoodContext";
 import { useAuth } from "../../context/AuthContext";
 import { useForm, Controller } from "react-hook-form";
-import { TextField, Grid, AppBar, Menu, MenuItem, Typography, Toolbar, IconButton } from "@material-ui/core";
+import {
+  TextField,
+  Grid,
+  AppBar,
+  Menu,
+  MenuItem,
+  Typography,
+  Toolbar,
+  IconButton,
+} from "@material-ui/core";
 import { AiOutlineMenu } from "react-icons/ai";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import Navbar from "../main/Navbar";
@@ -26,23 +35,24 @@ export default function EditProfile() {
     setDisabled(auth.user.providerData[0].providerId !== "password");
   }, [auth.user]);
 
-  async function onSubmit({email, password}) {
+  async function onSubmit({ email, password }) {
     // Validation checks
     try {
       setError(false);
       setLoading(true);
       setMessage(false);
 
-      if(isDisabled) {
+      if (isDisabled) {
         setLoading(false);
-        return setError("You cannot change your email or password from a Google / Facebook account!");
+        return setError(
+          "You cannot change your email or password from a Google / Facebook account!"
+        );
       }
 
-      if(auth.user.email !== email) await auth.updateEmail(email);
+      if (auth.user.email !== email) await auth.updateEmail(email);
 
       await auth.updatePassword(password);
-      setMessage('Your account has been updated.');
-
+      setMessage("Your account has been updated.");
     } catch (error) {
       setError(error.message);
     }
@@ -56,7 +66,7 @@ export default function EditProfile() {
 
   return (
     <>
-     <AppBar
+      <AppBar
         position="fixed"
         style={{
           backgroundColor: "white",
@@ -68,42 +78,42 @@ export default function EditProfile() {
           <IconButton edge="start" color="inherit" aria-label="open drawer">
             <AiOutlineMenu />
           </IconButton>
-          <Typography variant="h6" noWrap style={{flexGrow: "1"}}>
+          <Typography variant="h6" noWrap style={{ flexGrow: "1" }}>
             Edit Profile
           </Typography>
 
           <div>
-          <IconButton
-            aria-label="User account"
-            edge="end"
-            aria-controls="menu-appbar"
-            aria-haspopup="true"
-            color="inherit" 
-            onClick={(event) => setContextMenu(event.currentTarget)}
+            <IconButton
+              aria-label="User account"
+              edge="end"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              color="inherit"
+              onClick={(event) => setContextMenu(event.currentTarget)}
             >
-            <BsThreeDotsVertical />
-          </IconButton>
-          <Menu
+              <BsThreeDotsVertical />
+            </IconButton>
+            <Menu
               id="menu-appbar"
               anchorEl={contextMenu}
               anchorOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
+                vertical: "top",
+                horizontal: "right",
+              }}
               keepMounted
               transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
+                vertical: "top",
+                horizontal: "right",
               }}
               open={!!contextMenu}
               onClose={() => setContextMenu(null)}
-              >
-                <MenuItem onClick={logout}>Sign Out</MenuItem>
-          </Menu>
+            >
+              <MenuItem onClick={logout}>Sign Out</MenuItem>
+            </Menu>
           </div>
         </Toolbar>
       </AppBar>
-      <Card style={{marginTop: "60px"}}>
+      <Card style={{ marginTop: "60px" }}>
         <Card.Body>
           {error && <Alert variant="danger">{error}</Alert>}
           {message && <Alert variant="success">{message}</Alert>}
@@ -220,15 +230,15 @@ export default function EditProfile() {
                 />
               </Grid>
             </Grid>
-            <div style={{marginTop: "20px"}}>
-            <Button
-              size="lg"
-              disabled={isLoading}
-              className="w-100"
-              type="submit"
-            >
-              Update Profile
-            </Button>
+            <div style={{ marginTop: "20px" }}>
+              <Button
+                size="lg"
+                disabled={isLoading}
+                className="w-100"
+                type="submit"
+              >
+                Update Profile
+              </Button>
             </div>
           </form>
         </Card.Body>
@@ -237,7 +247,7 @@ export default function EditProfile() {
         <food.DietaryConditions />
       </Container>
       <div className="text-center">
-      <food.updateProfileButton />
+        <food.updateProfileButton />
       </div>
 
       <br />

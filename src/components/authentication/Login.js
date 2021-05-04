@@ -22,7 +22,7 @@ export default function Login() {
 
   useEffect(() => {
     if (!auth.user.emailVerified) return;
-      history.push("/");
+    history.push("/");
   }, [auth.user]);
 
   async function onSubmit({ email, password }) {
@@ -37,7 +37,7 @@ export default function Login() {
         return;
       }
 
-      const user = await auth.login({email, password});
+      const user = await auth.login({ email, password });
 
       if (!user.emailVerified) {
         setLoading(false);
@@ -46,7 +46,6 @@ export default function Login() {
       }
 
       history.push("/");
-
     } catch (error) {
       setError(error.message);
     }
@@ -57,7 +56,15 @@ export default function Login() {
   return (
     <>
       <Wrapper>
-        <Card className="rounded" style={{ height: "inherit", boxShadow: "0px 1px 5px 0px rgb(0 0 0 / 20%), 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 3px 1px -2px rgb(0 0 0 / 12%)", minWidth: "300px" }}>
+        <Card
+          className="rounded"
+          style={{
+            height: "inherit",
+            boxShadow:
+              "0px 1px 5px 0px rgb(0 0 0 / 20%), 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 3px 1px -2px rgb(0 0 0 / 12%)",
+            minWidth: "300px",
+          }}
+        >
           <Card.Body>
             <h2
               className="text-center mb-4 title"
@@ -75,7 +82,8 @@ export default function Login() {
 
             <form
               style={{ margin: "20px", marginTop: "40px" }}
-              onSubmit={handleSubmit(data => onSubmit(data))}>
+              onSubmit={handleSubmit((data) => onSubmit(data))}
+            >
               <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <Grid container spacing={2}>
@@ -124,9 +132,7 @@ export default function Login() {
                             label="Password"
                             type="password"
                             error={invalid}
-                            helperText={
-                              error &&
-                              error.message}
+                            helperText={error && error.message}
                             onChange={onChange}
                             inputRef={ref}
                             InputLabelProps={{ shrink: true }}
@@ -134,7 +140,7 @@ export default function Login() {
                           />
                         )}
                         rules={{
-                          required: "Password is required"
+                          required: "Password is required",
                         }}
                       />
                     </Grid>
@@ -201,7 +207,6 @@ export default function Login() {
                 <StyledFirebaseAuth
                   uiConfig={auth.uiConfig}
                   firebaseAuth={auth.singleSignIn()}
-                  
                 />
               </div>
             </form>

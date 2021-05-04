@@ -26,17 +26,17 @@ function useProvideAuth() {
 
   const uiConfig = {
     // Popup signin flow rather than redirect flow.
-    signInFlow: 'popup',
+    signInFlow: "popup",
     // We will display Google and Facebook as auth providers.
-    signInSuccessUrl: '/',
+    signInSuccessUrl: "/",
 
     signInOptions: [
       Firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-      Firebase.auth.FacebookAuthProvider.PROVIDER_ID
-    ]
+      Firebase.auth.FacebookAuthProvider.PROVIDER_ID,
+    ],
   };
 
-  const singleSignIn =  () => {
+  const singleSignIn = () => {
     return firebase.auth();
   };
 
@@ -44,12 +44,11 @@ function useProvideAuth() {
     return firebase
       .auth()
       .signInWithEmailAndPassword(email, password)
-      .then(({user}) => {
-        if(!user.emailVerified) return user // Safe guard to prevent unverified users from logging in 
-          user = {...user, ...setUserData(user).then(v => v)};
-          setUser(user);
-        }
-      );
+      .then(({ user }) => {
+        if (!user.emailVerified) return user; // Safe guard to prevent unverified users from logging in
+        user = { ...user, ...setUserData(user).then((v) => v) };
+        setUser(user);
+      });
   };
 
   const register = ({ email, password }) => {
@@ -63,7 +62,7 @@ function useProvideAuth() {
   };
 
   const verifyEmail = () => {
-    return firebase.auth().currentUser.sendEmailVerification()
+    return firebase.auth().currentUser.sendEmailVerification();
   };
 
   const logout = () => {
@@ -94,31 +93,30 @@ function useProvideAuth() {
 
   const setUserData = async (user, newData) => {
     try {
-    if(!user) return console.error("no user")
-    if(!(typeof newData === "object")) newData = {};
+      if (!user) return console.error("no user");
+      if (!(typeof newData === "object")) newData = {};
 
-    const userRef = firestore.doc(`users/${user.uid}`);
+      const userRef = firestore.doc(`users/${user.uid}`);
 
-    const snapshot = await userRef.get();
+      const snapshot = await userRef.get();
 
-    const { email } = user;
+      const { email } = user;
 
-    let data = { email, isNew: true };
-  
-    if(snapshot.exists) {
-      const snapdata = await snapshot.data();
-      data = {...data, ...snapdata, ...newData }
+      let data = { email, isNew: true };
+
+      if (snapshot.exists) {
+        const snapdata = await snapshot.data();
+        data = { ...data, ...snapdata, ...newData };
+      }
+
+      setUser((user) => ({ ...user, ...data, ...newData }));
+
+      await userRef.set({ ...data }, { merge: true });
+
+      return { ...data };
+    } catch (error) {
+      console.error(error);
     }
-
-    setUser((user) => ({...user, ...data, ...newData}));
-
-    await userRef.set({...data}, {merge: true});
-
-    return { ...data }
-
-  } catch (error) {
-    console.error(error);
-  }
   };
 
   /* 
@@ -133,14 +131,14 @@ function useProvideAuth() {
       // Is the user logged in?
       if (user) {
         setUserData(user)
-        .then(data => {
-          user = 
-          {...user, 
-            ...data // Here we add the 'isNew' property and snapshot data to the currently logged in user.
-          }
-        })
-        .catch(error => console.log(error))
-        .finally(() => setUser(user))
+          .then((data) => {
+            user = {
+              ...user,
+              ...data, // Here we add the 'isNew' property and snapshot data to the currently logged in user.
+            };
+          })
+          .catch((error) => console.log(error))
+          .finally(() => setUser(user));
       } else {
         setUser(false);
       }
@@ -162,6 +160,6 @@ function useProvideAuth() {
     updatePassword,
     singleSignIn,
     setUserData,
-    uiConfig
+    uiConfig,
   };
 }

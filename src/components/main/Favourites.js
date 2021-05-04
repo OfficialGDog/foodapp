@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { AppBar, Toolbar, IconButton, Typography, Menu, MenuItem} from "@material-ui/core";
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Menu,
+  MenuItem,
+} from "@material-ui/core";
 import { useAuth } from "../../context/AuthContext";
 import { useHistory } from "react-router";
 import { AiOutlineMenu } from "react-icons/ai";
@@ -65,7 +72,9 @@ export default function Favourites() {
         </Toolbar>
       </AppBar>
       <div className="text-center">
-      <Typography variant="h5" style={{marginTop: "100px"}}>You don't have any favourites!</Typography>
+        <Typography variant="h5" style={{ marginTop: "100px" }}>
+          You don't have any favourites!
+        </Typography>
       </div>
       <Navbar item={1} />
     </>

@@ -2,7 +2,7 @@ import React from "react";
 import { Redirect, Route } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Welcome from "../main/Welcome";
-import { ProvideFood } from '../../context/FoodContext';
+import { ProvideFood } from "../../context/FoodContext";
 
 const PrivateRoute = ({ component: RouteComponent, ...rest }) => {
   const auth = useAuth();
@@ -11,7 +11,6 @@ const PrivateRoute = ({ component: RouteComponent, ...rest }) => {
     <Route
       {...rest}
       render={(routeProps) =>
-        
         auth.user && auth.user.emailVerified ? (
           <ProvideFood>
             {auth.user.isNew ? <Welcome /> : <RouteComponent {...routeProps} />}

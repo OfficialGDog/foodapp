@@ -25,7 +25,7 @@ import {
   TableCell,
   FormControlLabel,
   Checkbox,
-  withStyles
+  withStyles,
 } from "@material-ui/core";
 
 import { Button as MDButton } from "@material-ui/core";
@@ -93,13 +93,12 @@ function useProvideFood() {
   const CustomCheckbox = withStyles({
     root: {
       color: "#009688",
-      '&$checked': {
+      "&$checked": {
         color: "#009688",
       },
     },
     checked: {},
   })((props) => <Checkbox color="default" {...props} />);
-  
 
   const getUserSelectedOptions = useCallback(() => {
     let foodlist = [],
@@ -147,7 +146,7 @@ function useProvideFood() {
     [foods, dietaryConditions]
   );
 
-  const handleSave = useCallback(async ()  => {
+  const handleSave = useCallback(async () => {
     try {
       const selectedFoods = selected
         .filter((item) => item.path.split("/")[0] === "foods")
@@ -159,11 +158,10 @@ function useProvideFood() {
       const data = await setUserData(user, {
         foods: selectedFoods,
         intolerance: selectedConditions,
-        isNew: false
+        isNew: false,
       });
 
       setSaved(true);
-
     } catch (error) {
       console.error(error);
     }
@@ -212,17 +210,25 @@ function useProvideFood() {
         >
           Tell us about your dietary conditions.
           <Form className="mt-4">
-              <Grid container spacing={1}>
+            <Grid container spacing={1}>
               {dietaryConditions.map((condition, index) => (
-                  <Grid container item={true} key={index} xs={12} md={4} lg={4}>
-                      <FormControlLabel
-                          label={condition.name}
-                          control={<CustomCheckbox value={JSON.stringify({condition: condition.path})} checked={selected.some((checked) => checked.path === condition.path)} onChange={handleCheck} disabled={isLoading} />}
+                <Grid container item={true} key={index} xs={12} md={4} lg={4}>
+                  <FormControlLabel
+                    label={condition.name}
+                    control={
+                      <CustomCheckbox
+                        value={JSON.stringify({ condition: condition.path })}
+                        checked={selected.some(
+                          (checked) => checked.path === condition.path
+                        )}
+                        onChange={handleCheck}
+                        disabled={isLoading}
                       />
-                  </Grid>         
+                    }
+                  />
+                </Grid>
               ))}
-                
-             </Grid>
+            </Grid>
           </Form>
         </Card.Body>
       </Card>
@@ -234,26 +240,39 @@ function useProvideFood() {
 
     return (
       <Grid container spacing={1}>
-        {dietaryConditions.slice(0, hide ? 3 : dietaryConditions.length).map((condition, index) => (
-         <Grid container item={true} key={index} xs={12} sm={3}>
-             <FormControlLabel
-                 label={condition.name}
-                 control={<CustomCheckbox value={JSON.stringify({condition: condition.path})} checked={selected.some((checked) => checked.path === condition.path)} onChange={handleCheck} disabled={isLoading} />}
-             />
-         </Grid>         
-        ))}
-         <Grid container item={true} xs={12} sm={3}>
-        <div style={{alignSelf: "center"}}>
-         <MDButton
-          size="medium"
-          variant="outlined"
-          disabled={isLoading}
-          style={{bottom: "4px"}}
-          type="button"
-          onClick={() => setHide(!hide)}>{hide ? "Show more" : "Show less"}
-        </MDButton>
-        </div>
-         </Grid>
+        {dietaryConditions
+          .slice(0, hide ? 3 : dietaryConditions.length)
+          .map((condition, index) => (
+            <Grid container item={true} key={index} xs={12} sm={3}>
+              <FormControlLabel
+                label={condition.name}
+                control={
+                  <CustomCheckbox
+                    value={JSON.stringify({ condition: condition.path })}
+                    checked={selected.some(
+                      (checked) => checked.path === condition.path
+                    )}
+                    onChange={handleCheck}
+                    disabled={isLoading}
+                  />
+                }
+              />
+            </Grid>
+          ))}
+        <Grid container item={true} xs={12} sm={3}>
+          <div style={{ alignSelf: "center" }}>
+            <MDButton
+              size="medium"
+              variant="outlined"
+              disabled={isLoading}
+              style={{ bottom: "4px" }}
+              type="button"
+              onClick={() => setHide(!hide)}
+            >
+              {hide ? "Show more" : "Show less"}
+            </MDButton>
+          </div>
+        </Grid>
       </Grid>
     );
   }
@@ -285,24 +304,52 @@ function useProvideFood() {
                     .map((row, index) => (
                       <TableRow key={index}>
                         <TableCell component="th" scope="row">
-                          <Accordion disabled={!(foods.some((food) => food.category === row.name))} expanded={expanded === `panel${index}`} onChange={handleChange(`panel${index}`)}>
+                          <Accordion
+                            disabled={
+                              !foods.some((food) => food.category === row.name)
+                            }
+                            expanded={expanded === `panel${index}`}
+                            onChange={handleChange(`panel${index}`)}
+                          >
                             <AccordionSummary
                               aria-controls="panel1bh-content"
-                              id="panel1bh-header">
+                              id="panel1bh-header"
+                            >
                               {row.name}
                             </AccordionSummary>
                             <AccordionDetails>
                               <Grid container spacing={1}>
                                 <Grid container item xs={12}>
-                              {foods.map((food, index2) => (food.category === row.name) && (
-                                 <Grid item={true} key={index2} xs={12} md={4} lg={4}>
-                                    <FormControlLabel
-                                      label={food.name}
-                                      control={<CustomCheckbox value={JSON.stringify({food: food.path})} checked={selected.some((checked) => checked.path === food.path)} onChange={handleCheck} disabled={isLoading} />}
-                                      />
-                                 </Grid>
-                                ))}
-                              </Grid>
+                                  {foods.map(
+                                    (food, index2) =>
+                                      food.category === row.name && (
+                                        <Grid
+                                          item={true}
+                                          key={index2}
+                                          xs={12}
+                                          md={4}
+                                          lg={4}
+                                        >
+                                          <FormControlLabel
+                                            label={food.name}
+                                            control={
+                                              <CustomCheckbox
+                                                value={JSON.stringify({
+                                                  food: food.path,
+                                                })}
+                                                checked={selected.some(
+                                                  (checked) =>
+                                                    checked.path === food.path
+                                                )}
+                                                onChange={handleCheck}
+                                                disabled={isLoading}
+                                              />
+                                            }
+                                          />
+                                        </Grid>
+                                      )
+                                  )}
+                                </Grid>
                               </Grid>
                             </AccordionDetails>
                           </Accordion>
@@ -339,7 +386,8 @@ function useProvideFood() {
 
   const attachListener = (listener) => listeners.current.push(listener);
 
-  const dettachListeners = () => listeners.current.forEach((listener) => listener());
+  const dettachListeners = () =>
+    listeners.current.forEach((listener) => listener());
 
   const updateLastUpdated = () => {
     try {
@@ -347,13 +395,13 @@ function useProvideFood() {
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   const isDateLessThanOneHourAgo = (date) => {
     const HOUR = 1000 * 60 * 60;
-    const oneHourAgo = Date.now() - (HOUR * 1);
-    return date > oneHourAgo
-  }
+    const oneHourAgo = Date.now() - HOUR * 1;
+    return date > oneHourAgo;
+  };
 
   const getCache = () => {
     try {
@@ -362,45 +410,45 @@ function useProvideFood() {
       let conditionCache = JSON.parse(localStorage.getItem("conditions"));
       const lastupdated = localStorage.getItem("updated");
 
-      if(!foodsCache) foodsCache = [];
-      if(!categoryCache) categoryCache = [];
-      if(!conditionCache) conditionCache = [];
+      if (!foodsCache) foodsCache = [];
+      if (!categoryCache) categoryCache = [];
+      if (!conditionCache) conditionCache = [];
 
-      if(!(isDateLessThanOneHourAgo(new Date(lastupdated)))) {
+      if (!isDateLessThanOneHourAgo(new Date(lastupdated))) {
         localStorage.clear();
         return false;
       }
 
-      if(typeof foodsCache === "object") dispatchFood({type: ACTIONS.ADDLIST, payload: foodsCache })
-      if(typeof categoryCache === "object") dispatchCategory({type: ACTIONS.ADDLIST, payload: categoryCache })
-      if(typeof conditionCache === "object") dispatchDC({type: ACTIONS.ADDLIST, payload: conditionCache })
+      if (typeof foodsCache === "object")
+        dispatchFood({ type: ACTIONS.ADDLIST, payload: foodsCache });
+      if (typeof categoryCache === "object")
+        dispatchCategory({ type: ACTIONS.ADDLIST, payload: categoryCache });
+      if (typeof conditionCache === "object")
+        dispatchDC({ type: ACTIONS.ADDLIST, payload: conditionCache });
 
-      return (foodsCache.length && categoryCache.length && conditionCache.length)
-
+      return foodsCache.length && categoryCache.length && conditionCache.length;
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
-  }
+  };
 
   useEffect(() => {
-
     dispatchFood({ type: ACTIONS.CLEAR });
     dispatchCategory({ type: ACTIONS.CLEAR });
     dispatchDC({ type: ACTIONS.CLEAR });
     dispatchSelect({ type: ACTIONS.CLEAR });
 
-    if(getCache()) return console.log(`Serving dietary data from cache`);
+    if (getCache()) return console.log(`Serving dietary data from cache`);
 
     console.log("Fetching Dietary Data");
 
     const unsubscribe1 = firestore
       .collection("foods")
       .limit(30) // This means the user can view up to 30 changes
-      .orderBy('name', 'desc')
+      .orderBy("name", "desc")
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
-
             updateLastUpdated();
 
             if (change.type === "removed") {
@@ -442,11 +490,10 @@ function useProvideFood() {
     const unsubscribe2 = firestore
       .collection("categories")
       .limit(30) // This means the user can view up to 30 changes
-      .orderBy('name', 'desc')
+      .orderBy("name", "desc")
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
-
             updateLastUpdated();
 
             if (change.type === "removed") {
@@ -488,11 +535,10 @@ function useProvideFood() {
     const unsubscribe3 = firestore
       .collection("dietaryconditions")
       .limit(30) // This means the user can view up to 30 changes
-      .orderBy('name', 'desc')
+      .orderBy("name", "desc")
       .onSnapshot(
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
-
             updateLastUpdated();
 
             if (change.type === "removed") {
@@ -538,15 +584,14 @@ function useProvideFood() {
     // Cleanup subscription on unmount
 
     return () => dettachListeners();
-
   }, []);
 
   useEffect(() => {
-
     dispatchSelect({ type: ACTIONS.SET, payload: getUserSelectedOptions() });
 
     try {
-      if(!foods.length || !categories.length || !dietaryConditions.length) return
+      if (!foods.length || !categories.length || !dietaryConditions.length)
+        return;
       localStorage.setItem("foods", JSON.stringify(foods));
       localStorage.setItem("conditions", JSON.stringify(dietaryConditions));
       localStorage.setItem("categories", JSON.stringify(categories));
@@ -555,14 +600,12 @@ function useProvideFood() {
     }
 
     setLoading(false);
-
   }, [foods, categories, dietaryConditions]);
 
   // the useEffect() below runs whenever the user selects / unselects a checkbox
   useEffect(() => {
     // Re-Enable the save button if the user makes a change
     setSaved(false);
-
   }, [selected]);
 
   // Return the user object and auth methods

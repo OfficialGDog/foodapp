@@ -17,18 +17,16 @@ export default function About() {
           minWidth: "300px",
         }}
       >
-
-
         <Card.Body>
           <h2 className="mb-4" style={{ margin: "40px 20px 0" }}>
             About
           </h2>
           <blockquote>
-            Hello, I hope you enjoy using this app.
-            This was created for my client James Miller as part of my final year degree project.
-            If you like what I have created and would like me to do some work for you.
-            You can contact me on garethdavieslive@gmail.com
-            Thanks for reading. 🙂
+            Hello, I hope you enjoy using this app. This was created for my
+            client James Miller as part of my final year degree project. If you
+            like what I have created and would like me to do some work for you.
+            You can contact me on garethdavieslive@gmail.com Thanks for reading.
+            🙂
           </blockquote>
           <p>Created by Gareth Davies (2021)</p>
           <p>University of Sunderland Web and Mobile Development student</p>

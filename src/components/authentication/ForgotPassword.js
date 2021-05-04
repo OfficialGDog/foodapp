@@ -35,7 +35,15 @@ export default function ForgotPassword() {
 
   return (
     <Wrapper>
-      <Card className="rounded" style={{ height: "inherit", boxShadow: "0px 1px 5px 0px rgb(0 0 0 / 20%), 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 3px 1px -2px rgb(0 0 0 / 12%)", minWidth: "300px" }}>
+      <Card
+        className="rounded"
+        style={{
+          height: "inherit",
+          boxShadow:
+            "0px 1px 5px 0px rgb(0 0 0 / 20%), 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 3px 1px -2px rgb(0 0 0 / 12%)",
+          minWidth: "300px",
+        }}
+      >
         <Card.Body>
           <h2 className="text-center mb-4" style={{ margin: "40px 20px 0" }}>
             Reset Password
@@ -84,7 +92,7 @@ export default function ForgotPassword() {
               Reset Password
             </Button>
           </form>
-          <div className="text-center mt-3" style={{whiteSpace: "nowrap"}}>
+          <div className="text-center mt-3" style={{ whiteSpace: "nowrap" }}>
             Already have an account? <Link to="/login">Log In</Link>
           </div>
           <div className="text-center p-2">

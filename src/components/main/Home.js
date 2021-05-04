@@ -30,7 +30,7 @@ import {
   InputBase,
   Checkbox,
   FormControlLabel,
-  withStyles
+  withStyles,
 } from "@material-ui/core";
 import { Button as MDButton } from "@material-ui/core";
 import "./Home.css";
@@ -42,10 +42,7 @@ import {
   InfoWindow,
 } from "@react-google-maps/api";
 
-import {
-  Combobox,
-  ComboboxOption
-} from "@reach/combobox";
+import { Combobox, ComboboxOption } from "@reach/combobox";
 
 import {
   Container,
@@ -54,7 +51,7 @@ import {
   Row,
   FormControl,
   InputGroup,
-  Button
+  Button,
 } from "react-bootstrap";
 
 import mapStyles from "../../mapStyles";
@@ -75,7 +72,7 @@ let center = {
   lat: 55.0103,
   lng: -1.44464,
   radius: 1000,
-  zoom: 4
+  zoom: 4,
 };
 
 const options = {
@@ -104,7 +101,7 @@ function reducer(markers, action) {
                 lat: () => marker.coordinates.latitude,
                 lng: () => marker.coordinates.longitude,
               },
-            }
+            },
           };
         }),
       ];
@@ -139,13 +136,12 @@ function reducer(markers, action) {
 const CustomCheckbox = withStyles({
   root: {
     color: "#009688",
-    '&$checked': {
+    "&$checked": {
       color: "#009688",
     },
   },
   checked: {},
 })((props) => <Checkbox color="default" {...props} />);
-
 
 export default function Home() {
   const { isLoaded, loadError } = useLoadScript({
@@ -168,7 +164,7 @@ export default function Home() {
   const auth = useAuth();
   const mapRef = useRef();
   const listeners = useRef([]);
-/* 
+  /* 
   const onMapClick = useCallback((event) => {
     dispatch({
       type: ACTIONS.ADD_MARKER,
@@ -216,137 +212,163 @@ export default function Home() {
     listeners.current.forEach((listener) => listener());
 
   const isDateLessThanOneHourAgo = (date) => {
-      const HOUR = 1000 * 60 * 60;
-      const oneHourAgo = Date.now() - (HOUR * 1)
-      return date > oneHourAgo
-  }
+    const HOUR = 1000 * 60 * 60;
+    const oneHourAgo = Date.now() - HOUR * 1;
+    return date > oneHourAgo;
+  };
 
   const getCache = () => {
-      try {
+    try {
+      let markerCache = JSON.parse(localStorage.getItem("markers"));
 
-        let markerCache = JSON.parse(localStorage.getItem("markers"));
+      const lastupdated = localStorage.getItem("updated");
 
-        const lastupdated = localStorage.getItem("updated");
+      if (!markerCache) markerCache = [];
 
-        if(!markerCache) markerCache = [];
-
-        if(!(isDateLessThanOneHourAgo(new Date(lastupdated)))) {
-          localStorage.clear();
-          return false;
-        }
-
-        if(typeof markerCache === "object") dispatch({type: ACTIONS.ADD_MARKERS, payload: markerCache });
-
-        return markerCache.length ? true : false
-
-      } catch (error) {
-        console.error(error)
+      if (!isDateLessThanOneHourAgo(new Date(lastupdated))) {
+        localStorage.clear();
+        return false;
       }
-  }
-  
+
+      if (typeof markerCache === "object")
+        dispatch({ type: ACTIONS.ADD_MARKERS, payload: markerCache });
+
+      return markerCache.length ? true : false;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const updateLastUpdated = () => {
     try {
       localStorage.setItem("updated", new Date());
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   useEffect(() => {
     try {
-      const hideModal = localStorage.getItem('hideWelcome');
-      if(!hideModal) setModal(true);
+      const hideModal = localStorage.getItem("hideWelcome");
+      if (!hideModal) setModal(true);
       const lastlocation = JSON.parse(localStorage.getItem("latlng"));
-      if(!lastlocation) return
-      if(typeof lastlocation === "object") center = { ...lastlocation, zoom: 14 };
-    } catch(error) {
+      if (!lastlocation) return;
+      if (typeof lastlocation === "object")
+        center = { ...lastlocation, zoom: 14 };
+    } catch (error) {
       console.error(error);
     }
   }, []);
 
-
   // Returns an array of map markers for the users current location
   useEffect(() => {
-    if(!location) return
+    if (!location) return;
 
     // Reset markers when the user changes location
-    dispatch({type: ACTIONS.RESET_MARKERS });
+    dispatch({ type: ACTIONS.RESET_MARKERS });
     try {
+      const prevLoc = localStorage.getItem("latlng");
 
-      const prevLoc = localStorage.getItem('latlng');
-
-      if(prevLoc && prevLoc === JSON.stringify(location)) {
-
-        if(getCache()) return console.log(`Serving markers from cache`)
-        
+      if (prevLoc && prevLoc === JSON.stringify(location)) {
+        if (getCache()) return console.log(`Serving markers from cache`);
       }
 
-      localStorage.setItem('latlng', JSON.stringify({...location, zoom: 14 }));
-
+      localStorage.setItem("latlng", JSON.stringify({ ...location, zoom: 14 }));
     } catch (error) {
       console.error(error);
     }
 
     console.log("Fetching Map Markers ...", location);
 
-    const obj =
-    { lat: location.lat, 
-      lng: location.lng, 
-      radius: location.radius
+    const obj = {
+      lat: location.lat,
+      lng: location.lng,
+      radius: location.radius,
     };
 
     // On inital load get Firestore Map Markers near the users location
-    fetchDatabaseMarkers(obj).get().then((querySnapshot) => {
-      
-      let data = [];
+    fetchDatabaseMarkers(obj)
+      .get()
+      .then((querySnapshot) => {
+        let data = [];
 
-      querySnapshot.forEach((doc) => {
-        // doc.data() is never undefined for query doc snapshots
-        data.push({...doc.data(), distance: parseFloat(doc.distance / 1.6).toFixed(1), id: doc.id});
-      });
-
-      dispatch({type: ACTIONS.ADD_MARKERS, payload: data })
-
-      console.log(`Fetching Google Markers`);
-      // Get the rest of the map marker data from Google
-      fetchGoogleMarkers(obj).then((response) => { 
-           
-        // Filter Google Map Markers not in the database
-        const newMarkers = response.filter((location) => !data.some((item) => item.g_place_id === location.place_id));
-
-        // Are there any new map markers? If so add them to the database.
-        if(newMarkers.length) newMarkers.forEach((marker) => {
-            //console.warn(`Adding Google Marker with id: ${marker.place_id} to the database`);
-            geodatabase.restaurants.doc(marker.place_id).set({
-              coordinates: geoPoint(marker.geometry.location.lat(), marker.geometry.location.lng()),
-              g_place_id: marker.place_id,
-              name: marker.name,
-              tags: [],
-              vicinity: marker.vicinity});
-          }); 
-      }).catch(error => console.error(error));
-
-     const unsubscribe = fetchDatabaseMarkers(obj).onSnapshot(snapshot => {
-
-        snapshot.docChanges().forEach((change) => {
-
-          updateLastUpdated();
-
-          if(change.type === "removed") return dispatch({type: ACTIONS.DELETE_MARKER, payload: { id: change.doc.id  } });
-
-          const changedata = {...change.doc.data(), distance: parseFloat(change.doc.distance / 1.6).toFixed(1), id: change.doc.id };
-
-          if(change.type === "modified") return dispatch({type: ACTIONS.UPDATE_MARKER, payload: { ...changedata } });
-
-          if(change.type === "added") return dispatch({type: !data.some((item) => item.id === changedata.id) && ACTIONS.ADD_MARKER, payload: { ...changedata }}); //CHECK IF ALREADY EXISTS 
-
+        querySnapshot.forEach((doc) => {
+          // doc.data() is never undefined for query doc snapshots
+          data.push({
+            ...doc.data(),
+            distance: parseFloat(doc.distance / 1.6).toFixed(1),
+            id: doc.id,
+          });
         });
 
-      }, (error) => console.log(error));
+        dispatch({ type: ACTIONS.ADD_MARKERS, payload: data });
 
-      attachListener(unsubscribe);
+        console.log(`Fetching Google Markers`);
+        // Get the rest of the map marker data from Google
+        fetchGoogleMarkers(obj)
+          .then((response) => {
+            // Filter Google Map Markers not in the database
+            const newMarkers = response.filter(
+              (location) =>
+                !data.some((item) => item.g_place_id === location.place_id)
+            );
 
-    }).catch(error => console.error(error));
+            // Are there any new map markers? If so add them to the database.
+            if (newMarkers.length)
+              newMarkers.forEach((marker) => {
+                //console.warn(`Adding Google Marker with id: ${marker.place_id} to the database`);
+                geodatabase.restaurants.doc(marker.place_id).set({
+                  coordinates: geoPoint(
+                    marker.geometry.location.lat(),
+                    marker.geometry.location.lng()
+                  ),
+                  g_place_id: marker.place_id,
+                  name: marker.name,
+                  tags: [],
+                  vicinity: marker.vicinity,
+                });
+              });
+          })
+          .catch((error) => console.error(error));
+
+        const unsubscribe = fetchDatabaseMarkers(obj).onSnapshot(
+          (snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+              updateLastUpdated();
+
+              if (change.type === "removed")
+                return dispatch({
+                  type: ACTIONS.DELETE_MARKER,
+                  payload: { id: change.doc.id },
+                });
+
+              const changedata = {
+                ...change.doc.data(),
+                distance: parseFloat(change.doc.distance / 1.6).toFixed(1),
+                id: change.doc.id,
+              };
+
+              if (change.type === "modified")
+                return dispatch({
+                  type: ACTIONS.UPDATE_MARKER,
+                  payload: { ...changedata },
+                });
+
+              if (change.type === "added")
+                return dispatch({
+                  type:
+                    !data.some((item) => item.id === changedata.id) &&
+                    ACTIONS.ADD_MARKER,
+                  payload: { ...changedata },
+                }); //CHECK IF ALREADY EXISTS
+            });
+          },
+          (error) => console.log(error)
+        );
+
+        attachListener(unsubscribe);
+      })
+      .catch((error) => console.error(error));
 
     // Cleanup subscription on unmount
     return () => dettachListeners();
@@ -359,7 +381,7 @@ export default function Home() {
 
   useEffect(() => {
     try {
-      if(!markers.length) return
+      if (!markers.length) return;
       localStorage.setItem("markers", JSON.stringify(markers));
     } catch (error) {
       console.error(error);
@@ -391,7 +413,7 @@ export default function Home() {
     setLocation({ lat, lng, radius, zoom: 14 });
   }, []);
 
-/*   // Call when a user creates a new map marker
+  /*   // Call when a user creates a new map marker
   const updateMarker = useCallback(({ lat, lng }) => {
     // Create a reference to the geolocation so it can be added to firestore
     const coordinates = geoPoint(lat, lng);
@@ -404,14 +426,13 @@ export default function Home() {
     });
   }, []); */
 
-
   const hideModal = useCallback(() => {
-   try {
-     setModal(false);
-     localStorage.setItem("hideWelcome", true);
-   } catch (error) {
-     console.error(error);
-   }
+    try {
+      setModal(false);
+      localStorage.setItem("hideWelcome", true);
+    } catch (error) {
+      console.error(error);
+    }
   }, []);
 
   const toggleView = useCallback(() => {
@@ -422,7 +443,7 @@ export default function Home() {
 
   const interact = useLongPress({
     /* onLongPress: (ev) => onMapClick(ev), */
-    onClick: () => setSelected(null)
+    onClick: () => setSelected(null),
   });
 
   if (loadError) return "Error loading maps";
@@ -447,18 +468,19 @@ export default function Home() {
           boxShadow: "0px 0px 0px 0px",
         }}
       >
-        <Toolbar style={{height: "125px", alignItems: "flex-start"}}>
+        <Toolbar style={{ height: "125px", alignItems: "flex-start" }}>
           <IconButton edge="start" color="inherit" aria-label="open drawer">
             <AiOutlineMenu />
           </IconButton>
-          <Typography variant="h6" noWrap style={{ position: "absolute", top: "8px", paddingLeft: "2.5rem" }}>
-            {view.mapView ? 'Map View 🗺' : 'Card View 🗃'}
+          <Typography
+            variant="h6"
+            noWrap
+            style={{ position: "absolute", top: "8px", paddingLeft: "2.5rem" }}
+          >
+            {view.mapView ? "Map View 🗺" : "Card View 🗃"}
           </Typography>
-          <div style={{alignSelf: "flex-end", width: "100%"}}>
-
-          <Search panTo={panTo} />
-  
-
+          <div style={{ alignSelf: "flex-end", width: "100%" }}>
+            <Search panTo={panTo} />
           </div>
           <IconButton
             aria-label="User account"
@@ -481,53 +503,61 @@ export default function Home() {
             <BiCurrentLocation />
           </IconButton>
           <div>
-          <IconButton
-            aria-label="User account"
-            edge="end"
-            aria-controls="menu-appbar"
-            aria-haspopup="true"
-            color="inherit" 
-            onClick={(event) => setContextMenu(event.currentTarget)}
+            <IconButton
+              aria-label="User account"
+              edge="end"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              color="inherit"
+              onClick={(event) => setContextMenu(event.currentTarget)}
             >
-            <BsThreeDotsVertical />
-          </IconButton>
-          <Menu
+              <BsThreeDotsVertical />
+            </IconButton>
+            <Menu
               id="menu-appbar"
               anchorEl={contextMenu}
               anchorOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
+                vertical: "top",
+                horizontal: "right",
+              }}
               keepMounted
               transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
+                vertical: "top",
+                horizontal: "right",
               }}
               open={!!contextMenu}
               onClose={() => setContextMenu(null)}
+            >
+              <MenuItem
+                onClick={() => auth.logout().then(() => history.push("/login"))}
               >
-                <MenuItem onClick={() => auth.logout().then(() => history.push("/login"))}>Sign Out</MenuItem>
-          </Menu>
+                Sign Out
+              </MenuItem>
+            </Menu>
           </div>
         </Toolbar>
       </AppBar>
 
-      <Container fluid style={{marginTop: "125px"}}>
+      <Container fluid style={{ marginTop: "125px" }}>
         <Container className="text-center">
-        <FormControlLabel
-        label="Filter Markers"
-        style={{position: "relative", left: "6vh"}}
-        control={<CustomCheckbox 
-                  checked={filterResults} 
-                  onClick={() => setFilterResults(!filterResults)}
-                 />} />
-        <Row>{filterResults && <foodContext.FilterDietaryConditions />}</Row>
+          <FormControlLabel
+            label="Filter Markers"
+            style={{ position: "relative", left: "6vh" }}
+            control={
+              <CustomCheckbox
+                checked={filterResults}
+                onClick={() => setFilterResults(!filterResults)}
+              />
+            }
+          />
+          <Row>{filterResults && <foodContext.FilterDietaryConditions />}</Row>
         </Container>
 
         {view.mapView ? (
           <>
             <Modal open={modal} title="Disclaimer" onClose={hideModal}>
-              This app is currently in beta testing, we're currently adding more information.
+              This app is currently in beta testing, we're currently adding more
+              information.
             </Modal>
             <GoogleMap
               {...interact}
@@ -590,7 +620,7 @@ export default function Home() {
                         </Row>
                       </Container>
                     )}
-{/*                     <button
+                    {/*                     <button
                       className="mt-2"
                       onClick={() => {
                         updateMarker({
@@ -623,14 +653,43 @@ export default function Home() {
             >
               <BsCardList />
             </Fab>
-            <br/><br/>
+            <br />
+            <br />
           </>
         ) : (
           <>
-            <Modal marker={selected} dietaryconditions={foodContext.dietaryConditions} open={modal} title="Add Dietary Tags" onClose={(e) => {!setModal(false) && e.target.tagName === "SPAN" && dispatch({type: ACTIONS.UPDATE_MARKER, payload: {...selected, tags: [...e.target.closest('div.MuiPaper-root').querySelectorAll('.Mui-checked')].map(item => item.parentElement).map(tag => tag.innerText)}})}}>
+            <Modal
+              marker={selected}
+              dietaryconditions={foodContext.dietaryConditions}
+              open={modal}
+              title="Add Dietary Tags"
+              onClose={(e) => {
+                !setModal(false) &&
+                  e.target.tagName === "SPAN" &&
+                  dispatch({
+                    type: ACTIONS.UPDATE_MARKER,
+                    payload: {
+                      ...selected,
+                      tags: [
+                        ...e.target
+                          .closest("div.MuiPaper-root")
+                          .querySelectorAll(".Mui-checked"),
+                      ]
+                        .map((item) => item.parentElement)
+                        .map((tag) => tag.innerText),
+                    },
+                  });
+              }}
+            >
               Select below
             </Modal>
-            <Typography variant="h5" style={{margin: "20px 0px 0px 20px"}}>Found {filterResults ? markers.filter((marker) => filterDC(marker)).length : markers.length} Matches</Typography>
+            <Typography variant="h5" style={{ margin: "20px 0px 0px 20px" }}>
+              Found{" "}
+              {filterResults
+                ? markers.filter((marker) => filterDC(marker)).length
+                : markers.length}{" "}
+              Matches
+            </Typography>
             {markers.map(
               (marker, index) =>
                 filterDC(marker) && (
@@ -659,9 +718,16 @@ export default function Home() {
                                   {tag}
                                 </ListGroup.Item>
                               ))}
-                          
-                                <MDButton variant="outlined" onClick={() => { setSelected(marker); setModal(true); }}>Add Tag</MDButton>
-                              
+
+                              <MDButton
+                                variant="outlined"
+                                onClick={() => {
+                                  setSelected(marker);
+                                  setModal(true);
+                                }}
+                              >
+                                Add Tag
+                              </MDButton>
                             </ListGroup>
                           </Row>
                         </Container>
@@ -688,7 +754,12 @@ export default function Home() {
             >
               <IoIosGlobe />
             </Fab>
-            <br/><br/><br/><br/><br/><br/>
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
           </>
         )}
       </Container>
@@ -722,24 +793,30 @@ function Search({ panTo }) {
   return (
     <div>
       <DataListInput
-      placeholder="🔎 Search"
-      items={data.map(({ place_id, description }) => ( { key: place_id, label: description } ))}
-      value={value}
-      disabled={!ready} 
-      onInput={(val) => setValue(val)}
-      onSelect={async ({ label }) => {
-        setValue(label, false);
-        clearSuggestions();
-        try {
-          const results = await getGeocode({ address: label });
-          const { lat, lng } = await getLatLng(results[0]);
-          localStorage.setItem('latlng', JSON.stringify({ lat, lng, zoom: 14 }));
-          panTo({lat,lng})
-        } catch (error) {
-          console.error(error);
-        }
-      }} />
-
+        placeholder="🔎 Search"
+        items={data.map(({ place_id, description }) => ({
+          key: place_id,
+          label: description,
+        }))}
+        value={value}
+        disabled={!ready}
+        onInput={(val) => setValue(val)}
+        onSelect={async ({ label }) => {
+          setValue(label, false);
+          clearSuggestions();
+          try {
+            const results = await getGeocode({ address: label });
+            const { lat, lng } = await getLatLng(results[0]);
+            localStorage.setItem(
+              "latlng",
+              JSON.stringify({ lat, lng, zoom: 14 })
+            );
+            panTo({ lat, lng });
+          } catch (error) {
+            console.error(error);
+          }
+        }}
+      />
     </div>
   );
 }

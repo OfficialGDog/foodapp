@@ -35,15 +35,15 @@ export default function Welcome() {
   }, []);
 
   useEffect(() => {
-    if(!food.isSaved) return
+    if (!food.isSaved) return;
     history.go("/");
-  }, [food.isSaved])
+  }, [food.isSaved]);
 
   return (
     <div className="swiper-container">
       <div className="swiper-wrapper">
         <div className="swiper-slide">
-          <Card style={{height: "100vh"}}>
+          <Card style={{ height: "100vh" }}>
             <div
               style={{
                 backgroundImage: `url(${mainLogo})`,
@@ -73,7 +73,7 @@ export default function Welcome() {
           <br />
         </div>
         <div className="swiper-slide">
-          <Card style={{height: "100vh"}}>
+          <Card style={{ height: "100vh" }}>
             <div
               style={{
                 backgroundImage: `url(${mainLogo2})`,
@@ -111,39 +111,39 @@ export default function Welcome() {
               >
                 <food.FoodCategories />
                 <div className="m-4">
-                <Button
-                  onClick={() => mySwiper.slideNext()}
-                  size="lg"
-                  type="button"
-                  variant="success"
-                  className="btn btn-success btn-lg"
-                  style={{
-                    width: "25%",
-                    minWidth: "140px",
-                    maxHeight: "65px",
-                  }}
-                >
-                  Next
-                </Button>
-                </div><br/>
+                  <Button
+                    onClick={() => mySwiper.slideNext()}
+                    size="lg"
+                    type="button"
+                    variant="success"
+                    className="btn btn-success btn-lg"
+                    style={{
+                      width: "25%",
+                      minWidth: "140px",
+                      maxHeight: "65px",
+                    }}
+                  >
+                    Next
+                  </Button>
+                </div>
+                <br />
               </Card.Body>
             </Card>
           </Container>
         </div>
         <div className="swiper-slide">
           <Container fluid style={{ padding: "25px" }}>
-
-          <Card>
+            <Card>
               <Card.Body
                 className="mt-2 text-center"
-                style={{ maxWidth: "800px" }} >
-                 <food.DietaryConditions />
+                style={{ maxWidth: "800px" }}
+              >
+                <food.DietaryConditions />
 
-                <food.updateProfileButton label="Finish"/>
-
+                <food.updateProfileButton label="Finish" />
               </Card.Body>
             </Card>
-                <br/>
+            <br />
           </Container>
         </div>
       </div>
@@ -151,8 +151,8 @@ export default function Welcome() {
         className="swiper-pagination"
         style={{
           overflow: "hidden",
-          lineHeight: "50px", 
-          backgroundColor: "#fafafa"
+          lineHeight: "50px",
+          backgroundColor: "#fafafa",
         }}
       ></div>
     </div>
