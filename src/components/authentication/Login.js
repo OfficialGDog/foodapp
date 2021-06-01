@@ -6,7 +6,14 @@ import { Link, useHistory } from "react-router-dom";
 import StyledFirebaseAuth from "react-firebaseui/StyledFirebaseAuth";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, Controller } from "react-hook-form";
-import { TextField, Grid, makeStyles } from "@material-ui/core";
+import {
+  TextField,
+  Grid,
+  makeStyles,
+  InputAdornment,
+  IconButton,
+} from "@material-ui/core";
+import { Visibility, VisibilityOff } from "@material-ui/icons";
 import "./Login.css";
 
 const useStyles = makeStyles((theme) => ({}));
@@ -17,6 +24,7 @@ export default function Login() {
   const [isLoading, setLoading] = useState(false);
   const [isValidEmail, setValidEmail] = useState(true);
   const [isHuman, setHuman] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { handleSubmit, control, watch } = useForm();
   const history = useHistory();
 
@@ -130,13 +138,35 @@ export default function Login() {
                           <TextField
                             fullWidth
                             label="Password"
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             error={invalid}
                             helperText={error && error.message}
                             onChange={onChange}
                             inputRef={ref}
                             InputLabelProps={{ shrink: true }}
                             value={value}
+                            InputProps={{
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <IconButton
+                                    aria-label="toggle password visibility"
+                                    onClick={() =>
+                                      setShowPassword(!showPassword)
+                                    }
+                                    onMouseDown={(event) => {
+                                      event.preventDefault();
+                                    }}
+                                    edge="end"
+                                  >
+                                    {showPassword ? (
+                                      <Visibility />
+                                    ) : (
+                                      <VisibilityOff />
+                                    )}
+                                  </IconButton>
+                                </InputAdornment>
+                              ),
+                            }}
                           />
                         )}
                         rules={{

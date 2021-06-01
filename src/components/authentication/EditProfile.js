@@ -13,7 +13,9 @@ import {
   Typography,
   Toolbar,
   IconButton,
+  InputAdornment,
 } from "@material-ui/core";
+import { Visibility, VisibilityOff } from "@material-ui/icons";
 import { AiOutlineMenu } from "react-icons/ai";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import Navbar from "../main/Navbar";
@@ -24,6 +26,7 @@ export default function EditProfile() {
   const [message, setMessage] = useState();
   const [isLoading, setLoading] = useState(false);
   const [isDisabled, setDisabled] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const { handleSubmit, control, watch } = useForm();
   const password = useRef({});
@@ -165,7 +168,7 @@ export default function EditProfile() {
                     <TextField
                       fullWidth
                       label="Password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       variant="outlined"
                       error={invalid}
                       helperText={
@@ -187,12 +190,33 @@ export default function EditProfile() {
                       inputRef={ref}
                       InputLabelProps={{ shrink: true }}
                       value={value}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={() => setShowPassword(!showPassword)}
+                              onMouseDown={(event) => {
+                                event.preventDefault();
+                              }}
+                              edge="end"
+                            >
+                              {showPassword ? (
+                                <Visibility />
+                              ) : (
+                                <VisibilityOff />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
                     />
                   )}
                   rules={{
                     required: "Password is required",
                     pattern: {
-                      value: /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$/,
+                      value:
+                        /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$/,
                       message:
                         "Minimum 8 characters, At least one upper case letter [A-Z], At least one lower case letter [a-z], At least one digit [0-9], At least one special character [!£$%^&*]",
                     },
@@ -211,7 +235,7 @@ export default function EditProfile() {
                     <TextField
                       fullWidth
                       label="Confirm Password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       error={invalid}
                       variant="outlined"
                       helperText={error && error.message}
@@ -219,6 +243,26 @@ export default function EditProfile() {
                       inputRef={ref}
                       InputLabelProps={{ shrink: true }}
                       value={value}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={() => setShowPassword(!showPassword)}
+                              onMouseDown={(event) => {
+                                event.preventDefault();
+                              }}
+                              edge="end"
+                            >
+                              {showPassword ? (
+                                <Visibility />
+                              ) : (
+                                <VisibilityOff />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
                     />
                   )}
                   rules={{

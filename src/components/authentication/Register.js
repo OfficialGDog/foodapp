@@ -5,13 +5,15 @@ import { useAuth } from "../../context/AuthContext";
 import { Link, useHistory } from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, Controller } from "react-hook-form";
-import { TextField, Grid } from "@material-ui/core";
+import { TextField, Grid, InputAdornment, IconButton } from "@material-ui/core";
+import { Visibility, VisibilityOff } from "@material-ui/icons";
 
 export default function Register() {
   const [error, setError] = useState();
   const [message, setMessage] = useState();
   const [isLoading, setLoading] = useState(false);
   const [isHuman, setHuman] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { handleSubmit, control, watch } = useForm();
   const recapRef = useRef();
   const password = useRef({});
@@ -122,7 +124,7 @@ export default function Register() {
                         <TextField
                           fullWidth
                           label="Password"
-                          type="password"
+                          type={showPassword ? "text" : "password"}
                           error={invalid}
                           helperText={
                             error &&
@@ -145,12 +147,33 @@ export default function Register() {
                           inputRef={ref}
                           InputLabelProps={{ shrink: true }}
                           value={value}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  aria-label="toggle password visibility"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  onMouseDown={(event) => {
+                                    event.preventDefault();
+                                  }}
+                                  edge="end"
+                                >
+                                  {showPassword ? (
+                                    <Visibility />
+                                  ) : (
+                                    <VisibilityOff />
+                                  )}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
                         />
                       )}
                       rules={{
                         required: "Password is required",
                         pattern: {
-                          value: /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$/,
+                          value:
+                            /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$/,
                           message:
                             "Minimum 8 characters, At least one upper case letter [A-Z], At least one lower case letter [a-z], At least one digit [0-9], At least one special character [!£$%^&*]",
                         },
@@ -169,13 +192,33 @@ export default function Register() {
                         <TextField
                           fullWidth
                           label="Confirm Password"
-                          type="password"
+                          type={showPassword ? "text" : "password"}
                           error={invalid}
                           helperText={error && error.message}
                           onChange={onChange}
                           inputRef={ref}
                           InputLabelProps={{ shrink: true }}
                           value={value}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  aria-label="toggle password visibility"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  onMouseDown={(event) => {
+                                    event.preventDefault();
+                                  }}
+                                  edge="end"
+                                >
+                                  {showPassword ? (
+                                    <Visibility />
+                                  ) : (
+                                    <VisibilityOff />
+                                  )}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
                         />
                       )}
                       rules={{
