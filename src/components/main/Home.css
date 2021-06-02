@@ -1,33 +1,31 @@
 .venuetag {
-    border-radius: .75rem !important;
-    border-left-width: thin !important;
-    margin: 5px 5px 0px 0px;
-    text-overflow: ellipsis;
-    max-width: max-content !important;
-    overflow: hidden;
-    white-space: nowrap;
+  border-radius: 0.75rem !important;
+  border-left-width: thin !important;
+  margin: 5px 5px 0px 0px;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
- .datalist-input {
-    border: 1px solid rgba(0,0,0,0.25) !important;
-    top: 40px !important;
-    left: 0px !important;
-    position: absolute !important;
-    margin: 20px !important;
-    width: 90% !important;
+.datalist-input {
+  border: 1px solid rgba(0, 0, 0, 0.25) !important;
+  top: 40px !important;
+  left: 0px !important;
+  position: absolute !important;
+  margin: 20px !important;
+  width: 90% !important;
 }
 
 .datalist-input > input {
-    border: none !important;
-    padding: .75rem !important;
+  border: none !important;
+  padding: 0.75rem !important;
 }
 
 .clearsearch {
-    border: none;
+  border: none;
 }
 
-@media (min-width:500px) {
-    .datalist-input {
-        width: 97vw !important;
-    }
+@media (min-width: 500px) {
+  .datalist-input {
+    width: 97vw !important;
+  }
 }

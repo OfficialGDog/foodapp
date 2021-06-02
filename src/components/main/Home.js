@@ -12,9 +12,8 @@ import { useAuth } from "../../context/AuthContext";
 import Navbar from "./Navbar";
 import Modal from "./Modal";
 import { FaMapMarkerAlt } from "react-icons/fa";
-import { MdAccountCircle } from "react-icons/md";
-import { IoIosClose, IoIosGlobe } from "react-icons/io";
-import { AiOutlineSearch, AiOutlineMenu } from "react-icons/ai";
+import { IoIosGlobe } from "react-icons/io";
+import { AiOutlineMenu } from "react-icons/ai";
 import { BiCurrentLocation, BiSearchAlt2 } from "react-icons/bi";
 import { BsCardList, BsThreeDotsVertical } from "react-icons/bs";
 import DataListInput from "react-datalist-input";
@@ -27,7 +26,6 @@ import {
   Menu,
   MenuItem,
   Fab,
-  InputBase,
   Checkbox,
   FormControlLabel,
   withStyles,
@@ -42,17 +40,7 @@ import {
   InfoWindow,
 } from "@react-google-maps/api";
 
-import { Combobox, ComboboxOption } from "@reach/combobox";
-
-import {
-  Container,
-  Card,
-  ListGroup,
-  Row,
-  FormControl,
-  InputGroup,
-  Button,
-} from "react-bootstrap";
+import { Container, Card, ListGroup, Row } from "react-bootstrap";
 
 import mapStyles from "../../mapStyles";
 
@@ -69,10 +57,10 @@ const mapContainerStyle = {
 };
 
 let center = {
-  lat: 55.0103,
-  lng: -1.44464,
+  lat: 0,
+  lng: 0,
   radius: 1000,
-  zoom: 4,
+  zoom: 2,
 };
 
 const options = {
@@ -153,7 +141,6 @@ export default function Home() {
   const [markers, dispatch] = useReducer(reducer, []);
   const [location, setLocation] = useState(null);
   const [selected, setSelected] = useState(null);
-  const [radius, setRadius] = useState(1000);
   const [modal, setModal] = useState(false);
   const [filterResults, setFilterResults] = useState(false);
   const [view, setView] = useState({ mapView: true });
@@ -181,7 +168,22 @@ export default function Home() {
 
   const onMapLoad = useCallback((map) => {
     mapRef.current = map;
-    setLocation(center);
+    // Optional try to get the users current location
+
+    if (!localStorage.getItem("latlng"))
+      getUserLocation()
+        .then((res) => {
+          if (res) {
+            setLocation({
+              lat: res.coords.latitude,
+              lng: res.coords.longitude,
+              radius: 1000,
+            });
+          } else {
+            setLocation(center);
+          }
+        })
+        .catch(() => console.log("Unable to locate, geolocation is disabled!"));
   }, []);
 
   const fetchGoogleMarkers = ({ lat, lng, radius }) => {
@@ -204,6 +206,12 @@ export default function Home() {
     return geodatabase.restaurants
       .near({ center: geoPoint(lat, lng), radius: (radius / 1000) * 1.6 })
       .limit(25);
+  };
+
+  const getUserLocation = () => {
+    return new Promise((res, rej) => {
+      navigator.geolocation.getCurrentPosition(res, rej);
+    });
   };
 
   const attachListener = (listener) => listeners.current.push(listener);
@@ -247,33 +255,22 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    try {
-      const hideModal = localStorage.getItem("hideWelcome");
-      if (!hideModal) setModal(true);
-      const lastlocation = JSON.parse(localStorage.getItem("latlng"));
-      if (!lastlocation) return;
-      if (typeof lastlocation === "object")
-        center = { ...lastlocation, zoom: 14 };
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
   // Returns an array of map markers for the users current location
   useEffect(() => {
     if (!location) return;
+    if (!location.lat && !location.lng) return;
+    center = { ...location, zoom: 14 };
 
     // Reset markers when the user changes location
     dispatch({ type: ACTIONS.RESET_MARKERS });
     try {
       const prevLoc = localStorage.getItem("latlng");
 
-      if (prevLoc && prevLoc === JSON.stringify(location)) {
+      if (prevLoc === JSON.stringify(location)) {
         if (getCache()) return console.log(`Serving markers from cache`);
       }
 
-      localStorage.setItem("latlng", JSON.stringify({ ...location, zoom: 14 }));
+      localStorage.setItem("latlng", JSON.stringify({ ...location }));
     } catch (error) {
       console.error(error);
     }
@@ -410,7 +407,17 @@ export default function Home() {
   const panTo = useCallback(({ lat, lng }) => {
     mapRef.current.panTo({ lat, lng });
     mapRef.current.setZoom(14);
-    setLocation({ lat, lng, radius, zoom: 14 });
+    setLocation({ lat, lng, radius: 1000 });
+  }, []);
+
+  useEffect(() => {
+    try {
+      // Hides Welcome Message
+      const hideModal = localStorage.getItem("hideWelcome");
+      if (!hideModal) setModal(true);
+    } catch (error) {
+      console.error(error);
+    }
   }, []);
 
   /*   // Call when a user creates a new map marker
@@ -442,7 +449,6 @@ export default function Home() {
   }, [view]);
 
   const interact = useLongPress({
-    /* onLongPress: (ev) => onMapClick(ev), */
     onClick: () => setSelected(null),
   });
 
@@ -489,15 +495,18 @@ export default function Home() {
             aria-haspopup="true"
             color="inherit"
             onClick={() => {
-              navigator.geolocation.getCurrentPosition(
-                (position) => {
-                  panTo({
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                  });
-                },
-                () => null
-              );
+              getUserLocation()
+                .then((res) => {
+                  if (res) {
+                    panTo({
+                      lat: res.coords.latitude,
+                      lng: res.coords.longitude,
+                    });
+                  }
+                })
+                .catch(() =>
+                  console.log("Unable to locate, geolocation is disabled!")
+                );
             }}
           >
             <BiCurrentLocation />
@@ -611,7 +620,7 @@ export default function Home() {
                               <ListGroup.Item
                                 key={i}
                                 variant="success"
-                                className="col-4 col-sm-auto col-md-auto col-lg-auto venuetag"
+                                className="col-auto venuetag"
                               >
                                 {tag}
                               </ListGroup.Item>
@@ -713,7 +722,7 @@ export default function Home() {
                                 <ListGroup.Item
                                   key={i}
                                   variant="success"
-                                  className="col-4 col-sm-auto col-md-auto col-lg-auto venuetag"
+                                  className="col-auto venuetag"
                                 >
                                   {tag}
                                 </ListGroup.Item>
@@ -807,10 +816,6 @@ function Search({ panTo }) {
           try {
             const results = await getGeocode({ address: label });
             const { lat, lng } = await getLatLng(results[0]);
-            localStorage.setItem(
-              "latlng",
-              JSON.stringify({ lat, lng, zoom: 14 })
-            );
             panTo({ lat, lng });
           } catch (error) {
             console.error(error);
