@@ -414,7 +414,8 @@ export default function Home() {
     try {
       // Hides Welcome Message
       const hideModal = localStorage.getItem("hideWelcome");
-      if (!hideModal) setModal(true);
+      if (hideModal === "true") return setModal(false);
+      setModal(true);
     } catch (error) {
       console.error(error);
     }
@@ -564,7 +565,33 @@ export default function Home() {
 
         {view.mapView ? (
           <>
-            <Modal open={modal} title="Disclaimer" onClose={hideModal}>
+            <Modal
+              marker={selected}
+              dietaryconditions={foodContext.dietaryConditions}
+              open={modal}
+              title={selected ? "Add Dietary Tags" : "Disclaimer"}
+              onClose={
+                selected
+                  ? (e) => {
+                      !setModal(false) &&
+                        e.target.tagName === "SPAN" &&
+                        dispatch({
+                          type: ACTIONS.UPDATE_MARKER,
+                          payload: {
+                            ...selected,
+                            tags: [
+                              ...e.target
+                                .closest("div.MuiPaper-root")
+                                .querySelectorAll(".Mui-checked"),
+                            ]
+                              .map((item) => item.parentElement)
+                              .map((tag) => tag.innerText),
+                          },
+                        });
+                    }
+                  : hideModal
+              }
+            >
               This app is currently in beta testing, we're currently adding more
               information.
             </Modal>
@@ -625,21 +652,18 @@ export default function Home() {
                                 {tag}
                               </ListGroup.Item>
                             ))}
+                            <MDButton
+                              variant="outlined"
+                              onClick={() => {
+                                setModal(true);
+                              }}
+                            >
+                              Add Tag
+                            </MDButton>
                           </ListGroup>
                         </Row>
                       </Container>
                     )}
-                    {/*                     <button
-                      className="mt-2"
-                      onClick={() => {
-                        updateMarker({
-                          lat: selected.geometry.location.lat(),
-                          lng: selected.geometry.location.lng(),
-                        });
-                      }}
-                    >
-                      Save
-                    </button> */}
                   </div>
                 </InfoWindow>
               ) : null}
@@ -775,10 +799,6 @@ export default function Home() {
       <Navbar item={0} />
     </>
   );
-}
-
-function Locate({ panTo }) {
-  return <button>Locate</button>;
 }
 
 function Search({ panTo }) {

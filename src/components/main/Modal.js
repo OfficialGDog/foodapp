@@ -89,8 +89,8 @@ export default function Modal({
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
-        <DialogContent dividers={dietaryconditions ? true : false}>
-          {dietaryconditions ? (
+        <DialogContent dividers={markerRef ? true : false}>
+          {markerRef ? (
             <Grid container spacing={1}>
               {dietaryconditions.map((condition, index) => (
                 <Grid container item={true} key={index} xs={12} md={4} lg={4}>
