@@ -170,20 +170,40 @@ export default function Home() {
     mapRef.current = map;
     // Optional try to get the users current location
 
-    if (!localStorage.getItem("latlng"))
-      getUserLocation()
-        .then((res) => {
-          if (res) {
-            setLocation({
-              lat: res.coords.latitude,
-              lng: res.coords.longitude,
-              radius: 1000,
-            });
-          } else {
-            setLocation(center);
-          }
-        })
-        .catch(() => console.log("Unable to locate, geolocation is disabled!"));
+    let prevLoc = localStorage.getItem("latlng");
+
+    if (prevLoc) {
+      try {
+        prevLoc = JSON.parse(prevLoc);
+        if (
+          /^(-?[1-8]?\d(?:\.\d{1,18})?|90(?:\.0{1,18})?)$/.test(prevLoc.lat) &&
+          /^(-?(?:1[0-7]|[1-9])?\d(?:\.\d{1,18})?|180(?:\.0{1,18})?)$/.test(
+            prevLoc.lng
+          )
+        )
+          return setLocation({
+            lat: prevLoc.lat,
+            lng: prevLoc.lng,
+            radius: 1000,
+          });
+      } catch (error) {
+        console.log("Invalid latlng object!");
+      }
+    }
+
+    getUserLocation()
+      .then((res) => {
+        if (res) {
+          setLocation({
+            lat: res.coords.latitude,
+            lng: res.coords.longitude,
+            radius: 1000,
+          });
+        } else {
+          setLocation(center);
+        }
+      })
+      .catch(() => console.log("Unable to locate, geolocation is disabled!"));
   }, []);
 
   const fetchGoogleMarkers = ({ lat, lng, radius }) => {
