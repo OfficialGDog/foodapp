@@ -129,20 +129,14 @@ function useProvideAuth() {
     const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
       // Is the user logged in?
       if (user) {
-        // Check if the user has an email address
-        const foundEmail = user.providerData.findIndex((data) => data.email);
-
-        // Create an email if no email address is not provided and the user is logged into Facebook.
-        if (foundEmail === -1) {
-          user.providerData.map((data) => {
-            switch (data.providerId) {
-              case "facebook.com":
-                user.email = `${data.uid}@facebook.com`;
-                user.emailVerified = true;
-                break;
-            }
-          });
-        }
+        // Enable Facebook logins
+        user.providerData.map((data) => {
+          switch (data.providerId) {
+            case "facebook.com":
+              user = { ...user, emailVerified: true };
+              break;
+          }
+        });
 
         setUserData(user)
           .then((data) => {
