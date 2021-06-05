@@ -16,11 +16,12 @@ export default function Navbar(props) {
         if (history.location.pathname !== "/") history.push("/");
         return;
       case 1:
-        if (history.location.pathname !== "/favourites")
-          history.push("/favourites");
+        if (history.location.pathname !== "/myfavourites")
+          history.push("/myfavourites");
         return;
       case 2:
-        if (history.location.pathname !== "/profile") history.push("/profile");
+        if (history.location.pathname !== "/myprofile")
+          history.push("/myprofile");
         return;
     }
   }, [index]);

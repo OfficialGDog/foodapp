@@ -99,13 +99,13 @@ function useProvideAuth() {
 
       const snapshot = await userRef.get();
 
-      const { email } = user;
+      const { email, emailVerified } = user;
 
-      let data = { email, isNew: true };
+      let data = { email, isNew: true, emailVerified };
 
       if (snapshot.exists) {
         const snapdata = await snapshot.data();
-        data = { ...data, ...snapdata, ...newData };
+        data = { ...data, ...snapdata, ...newData, emailVerified };
       }
 
       setUser((user) => ({ ...user, ...data, ...newData }));

@@ -18,8 +18,8 @@ function App() {
         <Route path="/reset/password" component={ForgotPassword} />
         <Route path="/about" component={About} />
         <PrivateRoute exact path="/" component={Home} />
-        <PrivateRoute path="/profile" component={EditProfile} />
-        <PrivateRoute path="/favourites" component={Favourites} />
+        <PrivateRoute path="/myprofile" component={EditProfile} />
+        <PrivateRoute path="/myfavourites" component={Favourites} />
         {/* Redirect the user if they go to a unknown route  */}
         <PrivateRoute component={Home} />
       </Switch>

@@ -1,21 +1,18 @@
 .MuiTableCell-root {
-    padding: 5px !important;
+  padding: 5px !important;
 }
 
 .MuiAccordion-root {
-    box-shadow: none !important;
+  box-shadow: none !important;
 }
 
 .Mui-disabled {
-    background-color: unset !important;
+  background-color: unset !important;
 }
 
 label.MuiFormControlLabel-root {
-    max-width: 225px;
-    width: 100%;
-}
-
-.MuiFormControlLabel-label {
-    text-overflow: ellipsis;
-    overflow: hidden;
+  max-width: 225px;
+  width: 100%;
+  text-align: left;
+  white-space: normal;
 }

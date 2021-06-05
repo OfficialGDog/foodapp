@@ -212,7 +212,15 @@ function useProvideFood() {
           <Form className="mt-4">
             <Grid container spacing={1}>
               {dietaryConditions.map((condition, index) => (
-                <Grid container item={true} key={index} xs={12} md={4} lg={4}>
+                <Grid
+                  container
+                  item={true}
+                  key={index}
+                  xs={12}
+                  md={4}
+                  lg={4}
+                  style={{ flexDirection: "column" }}
+                >
                   <FormControlLabel
                     label={condition.name}
                     control={

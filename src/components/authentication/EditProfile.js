@@ -35,7 +35,9 @@ export default function EditProfile() {
   password.current = watch("password", "");
 
   useEffect(() => {
-    setDisabled(auth.user.providerData[0].providerId !== "password");
+    if (!auth.user.providerData) return;
+    if (auth.user.providerData.some((data) => data.providerData !== "password"))
+      return setDisabled(true);
   }, [auth.user]);
 
   async function onSubmit({ email, password }) {
@@ -117,7 +119,7 @@ export default function EditProfile() {
         </Toolbar>
       </AppBar>
       <Card style={{ marginTop: "60px" }}>
-        <Card.Body>
+        <Card.Body style={{ maxWidth: "800px" }}>
           {error && <Alert variant="danger">{error}</Alert>}
           {message && <Alert variant="success">{message}</Alert>}
           <form
