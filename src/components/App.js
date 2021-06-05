@@ -8,6 +8,7 @@ import EditProfile from "./authentication/EditProfile";
 import PrivateRoute from "./authentication/PrivateRoute";
 import Favourites from "./main/Favourites";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import "./App.css";
 
 function App() {
   return (

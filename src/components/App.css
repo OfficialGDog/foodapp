@@ -1,0 +1,29 @@
+@media (max-width: 350px) {
+  #captcha {
+    transform: scale(0.75);
+    transform-origin: 0 0;
+  }
+  .btn-group {
+    margin-top: -20px;
+  }
+}
+
+@media (min-width: 350px) and (max-width: 400px) {
+  #captcha {
+    transform: scale(0.85);
+    transform-origin: 0 0;
+  }
+  .btn-group {
+    margin-top: -12px;
+  }
+}
+
+@media (min-width: 400px) and (max-width: 450px) {
+  #captcha {
+    transform: scale(0.95);
+    transform-origin: 0 0;
+  }
+  .btn-group {
+    margin-top: -5px;
+  }
+}

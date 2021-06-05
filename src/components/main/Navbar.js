@@ -40,7 +40,7 @@ export default function Navbar(props) {
           width: "100%",
         }}
       >
-        <BottomNavigationAction label="Home" icon={<BsSearch />} />
+        <BottomNavigationAction label="Search" icon={<BsSearch />} />
         <BottomNavigationAction label="Favorites" icon={<FaHeart />} />
         <BottomNavigationAction label="Profile" icon={<BsPersonFill />} />
       </BottomNavigation>

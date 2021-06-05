@@ -237,7 +237,7 @@ export default function Register() {
                 Please tick the box below
               </small>
             )}
-            <div style={{ margin: "15px 0px 15px" }}>
+            <div style={{ margin: "15px 0px 15px" }} id="captcha">
               <ReCAPTCHA
                 ref={recapRef}
                 sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}

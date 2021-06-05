@@ -183,7 +183,7 @@ export default function Login() {
                   Please tick the box below
                 </small>
               )}
-              <div style={{ margin: "15px 0px 5px" }}>
+              <div id="captcha" style={{ margin: "15px 0px 5px" }}>
                 <ReCAPTCHA
                   sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}
                   size="normal"
