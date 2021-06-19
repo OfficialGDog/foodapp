@@ -29,17 +29,15 @@ import {
   Link,
   MenuItem,
   Fab,
-  Checkbox,
   Dialog,
   DialogTitle,
-  FormControlLabel,
-  withStyles,
   Button,
   ButtonGroup,
   Paper
 } from "@material-ui/core";
 import { Button as MDButton } from "@material-ui/core";
 import Slider from 'react-rangeslider';
+import Logout from './Logout';
 import { Favorite as FavoriteIcon, FavoriteBorderOutlined as NotFavoriteIcon} from '@material-ui/icons';
 import 'react-rangeslider/lib/index.css'
 import "./Home.css";
@@ -132,16 +130,6 @@ function reducer(markers, action) {
   }
 }
 
-const CustomCheckbox = withStyles({
-  root: {
-    color: "#009688",
-    "&$checked": {
-      color: "#009688",
-    },
-  },
-  checked: {},
-})((props) => <Checkbox color="default" {...props} />);
-
 export default function Home() {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
@@ -155,6 +143,7 @@ export default function Home() {
   const [selected, setSelected] = useState(null);
   const [modal, setModal] = useState(false);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
+  const [showLogOutDialog, setShowLogOutDialog] = useState(false);
   const [view, setView] = useState({ mapView: true });
   const [userDietaryProfile, setUserDietaryProfile] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
@@ -498,10 +487,6 @@ export default function Home() {
 
   const filteredMarkers = markers.filter((marker) => filterDC(marker));
 
-  function logout() {
-    auth.logout().then(() => history.push("/login"));
-  }
-
   return (
     <>
       <AppBar
@@ -583,7 +568,7 @@ export default function Home() {
               <MenuItem onClick={() => { history.push("/myprofile")}}>
                 My profile
               </MenuItem>
-              <MenuItem onClick={logout}>
+              <MenuItem onClick={() => { setContextMenu(null); setShowLogOutDialog(true); }}>
                 Logout
               </MenuItem>
             </Menu>
@@ -591,7 +576,7 @@ export default function Home() {
         </Toolbar>
       </AppBar>
 
-      <SideDrawer visible={isDrawerOpen} onClose={() => setDrawerOpen(false)}/>
+      <SideDrawer visible={isDrawerOpen} onClose={() => setDrawerOpen(false)} logout={() => { setDrawerOpen(false); setShowLogOutDialog(true)}}/>
 
       <Dialog onClose={handleCancel} aria-labelledby="filter-marker" open={showFilterOptions}>
       <DialogTitle id="filter-markers">Filter Options</DialogTitle>
@@ -609,7 +594,7 @@ export default function Home() {
           onChange={(val) => { setRadius((val * 1000)) }}
         /><Typography variant="h5">{(radius / 1000)} {(radius / 1000) === 1 ? "Mile" : "Miles"}</Typography>
                 <hr/>
-        <div className="text-sm-right" style={{marginTop: "2vh"}}>
+        <div className="text-sm-right text-center" style={{marginTop: "2vh"}}>
         <ButtonGroup orientation="horizontal" disableElevation>
         <Button variant='outlined' size="large" style={{margin: ".5vh"}} onClick={handleCancel}>Cancel</Button>
         </ButtonGroup>
@@ -620,6 +605,8 @@ export default function Home() {
 
         </Container>
       </Dialog>
+
+      <Logout visible={showLogOutDialog} onClose={() => setShowLogOutDialog(false)}/>
 
       <Container fluid style={{ marginTop: "125px" }} onClick={() => setDrawerOpen(false)}>
         {view.mapView ? (
@@ -767,14 +754,14 @@ export default function Home() {
               Select below
             </Modal>
             <hr/>
-            <div style={{ margin: "20px 0px 0px 20px" }}>
-            <Typography variant="h5">
+            <div style={{ maxWidth: "1200px" }}>
+            <Typography variant="h5" style={{display: "flex", padding: "0px 20px"}}>
               Found{" "}
               {filteredMarkers.length}{" "}
               Match{filteredMarkers.length === 1 ? "" : "es"}
             </Typography>
             {filteredMarkers.length < markers.length && (
-            <Paper style={{marginTop: "16px", marginLeft: "-15px"}}>
+            <Paper style={{display: "inline-flex", margin: "10px 0px 5px 12px"}}>
               <Typography variant="h6" style={{padding: "12px 15px"}}>
                 Can't find what your looking for? {" "}
                 <Link style={{cursor: "pointer"}} underline="always" onClick={() => setUserDietaryProfile([])}>
@@ -783,11 +770,10 @@ export default function Home() {
                 </Typography>
               </Paper>
             )}
-            </div>
             {markers.map(
               (marker, index) =>
                 filterDC(marker) && (
-                  <Card key={index} bg="light" style={{maxWidth: "1200px"}}>
+                  <Card key={index} bg="light">
                     <Card.Body>
                       <Card.Title as="h3">{marker.name ?? "Name"}
                       <MDButton className="heart" variant="text" aria-label="like" style={{position: "absolute"}}>
@@ -841,6 +827,7 @@ export default function Home() {
                   </Card>
                 )
             )}
+            </div>
             <br />
             <br />
             <br />

@@ -12,18 +12,16 @@ import { useAuth } from "../../context/AuthContext";
 import { useHistory } from "react-router";
 import { AiOutlineMenu } from "react-icons/ai";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import Logout from './Logout';
 import SideDrawer from "./SideDrawer";
 import Navbar from "./Navbar";
 
 export default function Favourites() {
   const [contextMenu, setContextMenu] = useState(null);
+  const [showLogOutDialog, setShowLogOutDialog] = useState(false);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const auth = useAuth();
   const history = useHistory();
-
-  function logout() {
-    auth.logout().then(() => history.push("/login"));
-  }
 
   return (
     <>
@@ -71,13 +69,13 @@ export default function Favourites() {
               onClose={() => setContextMenu(null)}
             >
               <MenuItem onClick={() => { history.push("/myprofile")}}>My profile</MenuItem>
-              <MenuItem onClick={logout}>Logout</MenuItem>
+              <MenuItem onClick={() => { setContextMenu(null); setShowLogOutDialog(true)}}>Logout</MenuItem>
             </Menu>
           </div>
         </Toolbar>
       </AppBar>
-      <SideDrawer visible={isDrawerOpen} onClose={() => setDrawerOpen(false)}/>
-
+      <SideDrawer visible={isDrawerOpen} onClose={() => setDrawerOpen(false)} logout={() => { setDrawerOpen(false); setShowLogOutDialog(true)}}/>
+      <Logout visible={showLogOutDialog} onClose={() => setShowLogOutDialog(false)}/>
       <Container fluid style={{height: "100vh"}} onClick={() => setDrawerOpen(false)}>
       <Typography>*WIP*</Typography>
       </Container>

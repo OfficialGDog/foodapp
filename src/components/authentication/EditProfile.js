@@ -16,6 +16,7 @@ import {
   InputAdornment,
 } from "@material-ui/core";
 import SideDrawer from "../main/SideDrawer";
+import Logout from '../main/Logout';
 import { Visibility, VisibilityOff } from "@material-ui/icons";
 import { AiOutlineMenu } from "react-icons/ai";
 import { BsThreeDotsVertical } from "react-icons/bs";
@@ -29,6 +30,7 @@ export default function EditProfile() {
   const [isDisabled, setDisabled] = useState(false);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showLogOutDialog, setShowLogOutDialog] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const { handleSubmit, control, watch } = useForm();
   const password = useRef({});
@@ -65,10 +67,6 @@ export default function EditProfile() {
     }
 
     setLoading(false);
-  }
-
-  function logout() {
-    auth.logout().then(() => history.push("/login"));
   }
 
   return (
@@ -117,12 +115,13 @@ export default function EditProfile() {
               onClose={() => setContextMenu(null)}
             >
               <MenuItem onClick={() => setContextMenu(null)}>My profile</MenuItem>
-              <MenuItem onClick={logout}>Logout</MenuItem>
+              <MenuItem onClick={() => { setContextMenu(null); setShowLogOutDialog(true)}}>Logout</MenuItem>
             </Menu>
           </div>
         </Toolbar>
       </AppBar>
-      <SideDrawer visible={isDrawerOpen} onClose={() => setDrawerOpen(false)}/>
+      <SideDrawer visible={isDrawerOpen} onClose={() => setDrawerOpen(false)} logout={() => { setDrawerOpen(false); setShowLogOutDialog(true)}}/>
+      <Logout visible={showLogOutDialog} onClose={() => setShowLogOutDialog(false)}/>
       <Container fluid onClick={() => setDrawerOpen(false)}>
       <Card style={{ marginTop: "60px" }}>
         <Card.Body style={{ maxWidth: "800px" }}>

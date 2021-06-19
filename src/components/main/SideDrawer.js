@@ -1,6 +1,5 @@
 import React, {useState, useEffect} from 'react';
 import { useHistory } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 import { FaHeart } from "react-icons/fa";
 import { BsPersonFill, BsSearch } from "react-icons/bs";
 import {
@@ -15,11 +14,10 @@ import {
 import {ExitToApp, Info, ChevronLeft} from '@material-ui/icons';
 
 
-export default function SideDrawer({visible, onClose}) {
+export default function SideDrawer({visible, logout, onClose}) {
     const [open, setIsOpen] = useState(false);
     const [selected, setSelected] = useState(-1);
     const history = useHistory();
-    const auth = useAuth();
 
     useEffect(() => {
         switch(history.location.pathname) {
@@ -55,7 +53,7 @@ export default function SideDrawer({visible, onClose}) {
             if (history.location.pathname !== "/about") history.push("/about");
             return onClose();
         case 4:
-            return auth.logout().then(() => history.push("/login"));
+            return logout();
         default:
         return;
       }
