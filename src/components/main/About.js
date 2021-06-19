@@ -1,8 +1,7 @@
 import React from "react";
-import { Form, Card, Button, Alert, ButtonGroup } from "react-bootstrap";
+import { Card, Button } from "react-bootstrap";
 import { useHistory } from "react-router-dom";
 import Wrapper from "../authentication/Wrapper";
-import { Avatar } from "@material-ui/core";
 
 export default function About() {
   const history = useHistory();

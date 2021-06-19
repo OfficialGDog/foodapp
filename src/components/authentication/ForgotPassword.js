@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect } from "react";
-import { Form, Card, Button, Alert } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { Card, Button, Alert } from "react-bootstrap";
 import Wrapper from "./Wrapper";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useHistory } from "react-router-dom";
@@ -12,7 +12,7 @@ export default function ForgotPassword() {
   const [message, setMessage] = useState();
   const [isLoading, setLoading] = useState(false);
   const history = useHistory();
-  const { handleSubmit, control, watch } = useForm();
+  const { handleSubmit, control } = useForm();
 
   useEffect(() => {
     if (!auth.user.emailVerified) return;

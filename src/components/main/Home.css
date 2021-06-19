@@ -29,3 +29,118 @@
     width: 97vw !important;
   }
 }
+
+.gmnoprint > div[draggable="false"] {
+  position: fixed;
+  bottom: 0px;
+  margin: 0px 0px 70px 0px;
+}
+
+.gmnoprint > div[draggable="false"] > div {
+  opacity: 0 !important;
+}
+
+.gmnoprint a {
+  display: none;
+}
+
+.rangeslider__fill {
+  background-color: #009688 !important;
+}
+
+path[d='M0 0h24v24H0z']{
+  display: none;
+}
+
+#mapbutton {
+  position: fixed;
+  bottom: 45px;
+  font-size: 2rem;
+  background-color: white;
+  color: black;
+  margin: 25px 10px;
+  width: 75px;
+  height: 75px;
+}
+
+#cardbutton {
+  font-size: 32px;
+  background-color: white;
+  color: black;
+  position: fixed;
+  bottom: 45px;
+  margin: 25px 10px;
+  width: 75px;
+  height: 75px;
+}
+
+#filterbutton {
+  position: fixed;
+  bottom: 75px;
+  font-size: 1rem;
+  background-color: #0AC56B;
+  color: white;
+  left: 35px;
+  right: 0px;
+  margin: 0 auto;
+  justify-content: space-evenly;
+  width: 125px;
+  height: 65px;
+  border-radius: 40px;
+}
+
+@media (min-width: 450px) {
+  #filterbutton { 
+    width: 160px;
+    height: 70px;
+    font-size: 1.25rem;
+  }
+  #cardbutton { 
+    width: 90px;
+    height: 90px;
+  }
+  #mapbutton { 
+    width: 90px;
+    height: 90px;
+  }
+  .gmnoprint > div[draggable="false"] {
+    transform: scale(1.25);
+    margin: 0px 0px 80px -15px;
+  }
+}
+
+@media (min-width: 800px) {
+  #filterbutton {
+    font-size: 1.25rem; 
+    width: 235px;
+    height: 78px;
+  }
+
+  #cardbutton svg {
+    width: 1.2em;
+    height: 1.2em;
+  }
+
+  #mapbutton svg {
+    width: 1.4em;
+    height: 1.4em;
+  }
+
+  #cardbutton { 
+    width: 105px;
+    height: 105px;
+  }
+  #mapbutton { 
+    width: 105px;
+    height: 105px;
+  }
+  .gmnoprint > div[draggable="false"] {
+    transform: scale(1.5);
+    margin: 0px 0px 90px -20px;
+  }
+}
+
+.heart svg {
+  width: 1.25em;
+  height: 1.25em;
+}

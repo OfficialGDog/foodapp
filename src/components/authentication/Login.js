@@ -1,22 +1,14 @@
-import React, { useRef, useState, useEffect } from "react";
-import { Form, Card, Button, Alert, ButtonGroup } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { Card, Button, Alert, ButtonGroup } from "react-bootstrap";
 import Wrapper from "./Wrapper";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useHistory } from "react-router-dom";
 import StyledFirebaseAuth from "react-firebaseui/StyledFirebaseAuth";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, Controller } from "react-hook-form";
-import {
-  TextField,
-  Grid,
-  makeStyles,
-  InputAdornment,
-  IconButton,
-} from "@material-ui/core";
+import { TextField, Grid, InputAdornment, IconButton } from "@material-ui/core";
 import { Visibility, VisibilityOff } from "@material-ui/icons";
 import "./Login.css";
-
-const useStyles = makeStyles((theme) => ({}));
 
 export default function Login() {
   const auth = useAuth();

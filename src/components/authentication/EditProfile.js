@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Form, Card, Button, Alert, Container } from "react-bootstrap";
+import { Card, Button, Alert, Container } from "react-bootstrap";
 import { useHistory } from "react-router";
 import { useFood } from "../../context/FoodContext";
 import { useAuth } from "../../context/AuthContext";
@@ -15,6 +15,7 @@ import {
   IconButton,
   InputAdornment,
 } from "@material-ui/core";
+import SideDrawer from "../main/SideDrawer";
 import { Visibility, VisibilityOff } from "@material-ui/icons";
 import { AiOutlineMenu } from "react-icons/ai";
 import { BsThreeDotsVertical } from "react-icons/bs";
@@ -26,6 +27,7 @@ export default function EditProfile() {
   const [message, setMessage] = useState();
   const [isLoading, setLoading] = useState(false);
   const [isDisabled, setDisabled] = useState(false);
+  const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const { handleSubmit, control, watch } = useForm();
@@ -36,7 +38,7 @@ export default function EditProfile() {
 
   useEffect(() => {
     if (!auth.user.providerData) return;
-    if (auth.user.providerData.some((data) => data.providerData !== "password"))
+    if (!auth.user.providerData.some((data) => data.providerId === "password"))
       return setDisabled(true);
   }, [auth.user]);
 
@@ -78,9 +80,10 @@ export default function EditProfile() {
           color: "black",
           boxShadow: "0px 0px 0px 0px",
         }}
+        onClick={() => isDrawerOpen && setDrawerOpen(false)}
       >
         <Toolbar>
-          <IconButton edge="start" color="inherit" aria-label="open drawer">
+          <IconButton edge="start" color="inherit" aria-label="open drawer" onClick={() => setDrawerOpen(true)}>
             <AiOutlineMenu />
           </IconButton>
           <Typography variant="h6" noWrap style={{ flexGrow: "1" }}>
@@ -113,11 +116,14 @@ export default function EditProfile() {
               open={!!contextMenu}
               onClose={() => setContextMenu(null)}
             >
-              <MenuItem onClick={logout}>Sign Out</MenuItem>
+              <MenuItem onClick={() => setContextMenu(null)}>My profile</MenuItem>
+              <MenuItem onClick={logout}>Logout</MenuItem>
             </Menu>
           </div>
         </Toolbar>
       </AppBar>
+      <SideDrawer visible={isDrawerOpen} onClose={() => setDrawerOpen(false)}/>
+      <Container fluid onClick={() => setDrawerOpen(false)}>
       <Card style={{ marginTop: "60px" }}>
         <Card.Body style={{ maxWidth: "800px" }}>
           {error && <Alert variant="danger">{error}</Alert>}
@@ -145,6 +151,7 @@ export default function EditProfile() {
                       onChange={(e) => onChange(e.target.value.toLowerCase())}
                       inputRef={ref}
                       InputLabelProps={{ shrink: true }}
+                      placeholder={isDisabled ? "Email cannot be changed." : ""}
                       value={value}
                       disabled={isDisabled}
                     />
@@ -177,13 +184,13 @@ export default function EditProfile() {
                         error &&
                         error.message &&
                         (error.message.split(",").length !== 1 ? (
-                          <span>
+                          <>
                             <ul className="pl-3">
                               {error.message.split(",").map((item, index) => (
                                 <li key={index}>{item}</li>
                               ))}
                             </ul>
-                          </span>
+                          </>
                         ) : (
                           error.message
                         ))
@@ -192,6 +199,10 @@ export default function EditProfile() {
                       inputRef={ref}
                       InputLabelProps={{ shrink: true }}
                       value={value}
+                      disabled={isDisabled}
+                      placeholder={
+                        isDisabled ? "Password cannot be changed." : ""
+                      }
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
@@ -245,6 +256,10 @@ export default function EditProfile() {
                       inputRef={ref}
                       InputLabelProps={{ shrink: true }}
                       value={value}
+                      placeholder={
+                        isDisabled ? "Password cannot be changed." : ""
+                      }
+                      disabled={isDisabled}
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
@@ -281,7 +296,8 @@ export default function EditProfile() {
                 size="lg"
                 disabled={isLoading}
                 className="w-100"
-                type="submit"
+                type={isDisabled ? "button" : "submit"}
+                onClick={isDisabled ? onSubmit : null}
               >
                 Update Profile
               </Button>
@@ -295,11 +311,8 @@ export default function EditProfile() {
       <div className="text-center">
         <food.updateProfileButton />
       </div>
-
-      <br />
-      <br />
-      <br />
-      <br />
+      <br/><br/><br/><br/>
+      </Container>
       <Navbar item={2} />
     </>
   );

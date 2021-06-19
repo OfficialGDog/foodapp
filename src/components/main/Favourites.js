@@ -5,16 +5,19 @@ import {
   IconButton,
   Typography,
   Menu,
-  MenuItem,
+  MenuItem
 } from "@material-ui/core";
+import { Container } from "react-bootstrap";
 import { useAuth } from "../../context/AuthContext";
 import { useHistory } from "react-router";
 import { AiOutlineMenu } from "react-icons/ai";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import SideDrawer from "./SideDrawer";
 import Navbar from "./Navbar";
 
 export default function Favourites() {
   const [contextMenu, setContextMenu] = useState(null);
+  const [isDrawerOpen, setDrawerOpen] = useState(false);
   const auth = useAuth();
   const history = useHistory();
 
@@ -31,9 +34,10 @@ export default function Favourites() {
           color: "black",
           boxShadow: "0px 0px 0px 0px",
         }}
+        onClick={() => isDrawerOpen && setDrawerOpen(false)}
       >
         <Toolbar>
-          <IconButton edge="start" color="inherit" aria-label="open drawer">
+          <IconButton edge="start" color="inherit" aria-label="open drawer" onClick={() => setDrawerOpen(true)}>
             <AiOutlineMenu />
           </IconButton>
           <Typography variant="h6" noWrap style={{ flexGrow: "1" }}>
@@ -66,16 +70,17 @@ export default function Favourites() {
               open={!!contextMenu}
               onClose={() => setContextMenu(null)}
             >
-              <MenuItem onClick={logout}>Sign Out</MenuItem>
+              <MenuItem onClick={() => { history.push("/myprofile")}}>My profile</MenuItem>
+              <MenuItem onClick={logout}>Logout</MenuItem>
             </Menu>
           </div>
         </Toolbar>
       </AppBar>
-      <div className="text-center">
-        <Typography variant="h5" style={{ marginTop: "100px" }}>
-          You don't have any favourites!
-        </Typography>
-      </div>
+      <SideDrawer visible={isDrawerOpen} onClose={() => setDrawerOpen(false)}/>
+
+      <Container fluid style={{height: "100vh"}} onClick={() => setDrawerOpen(false)}>
+      <Typography>*WIP*</Typography>
+      </Container>
       <Navbar item={1} />
     </>
   );

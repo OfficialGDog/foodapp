@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Navbar as FNavBar, Nav } from "react-bootstrap";
 import { BsSearch, BsPersonFill } from "react-icons/bs";
 import { FaHeart } from "react-icons/fa";
 import { useHistory } from "react-router-dom";
@@ -23,6 +22,8 @@ export default function Navbar(props) {
         if (history.location.pathname !== "/myprofile")
           history.push("/myprofile");
         return;
+      default:
+        return;
     }
   }, [index]);
 
@@ -41,8 +42,8 @@ export default function Navbar(props) {
         }}
       >
         <BottomNavigationAction label="Search" icon={<BsSearch />} />
-        <BottomNavigationAction label="Favorites" icon={<FaHeart />} />
-        <BottomNavigationAction label="Profile" icon={<BsPersonFill />} />
+        <BottomNavigationAction label="My Favourites" icon={<FaHeart />} />
+        <BottomNavigationAction label="My Profile" icon={<BsPersonFill />} />
       </BottomNavigation>
     </>
   );

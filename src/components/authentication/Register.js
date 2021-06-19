@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Form, Card, Button, Alert } from "react-bootstrap";
+import { Card, Button, Alert } from "react-bootstrap";
 import Wrapper from "./Wrapper";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useHistory } from "react-router-dom";
@@ -130,7 +130,7 @@ export default function Register() {
                             error &&
                             error.message &&
                             (error.message.split(",").length !== 1 ? (
-                              <span>
+                              <>
                                 <ul className="pl-3">
                                   {error.message
                                     .split(",")
@@ -138,7 +138,7 @@ export default function Register() {
                                       <li key={index}>{item}</li>
                                     ))}
                                 </ul>
-                              </span>
+                              </>
                             ) : (
                               error.message
                             ))

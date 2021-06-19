@@ -14,9 +14,11 @@ import Modal from "./Modal";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { IoIosGlobe } from "react-icons/io";
 import { AiOutlineMenu } from "react-icons/ai";
-import { BiCurrentLocation, BiSearchAlt2 } from "react-icons/bi";
+import { BiCurrentLocation } from "react-icons/bi";
 import { BsCardList, BsThreeDotsVertical } from "react-icons/bs";
+import { RiBarChartHorizontalLine } from "react-icons/ri";
 import DataListInput from "react-datalist-input";
+import SideDrawer from "./SideDrawer";
 import { useHistory } from "react-router-dom";
 import {
   AppBar,
@@ -24,13 +26,22 @@ import {
   IconButton,
   Typography,
   Menu,
+  Link,
   MenuItem,
   Fab,
   Checkbox,
+  Dialog,
+  DialogTitle,
   FormControlLabel,
   withStyles,
+  Button,
+  ButtonGroup,
+  Paper
 } from "@material-ui/core";
 import { Button as MDButton } from "@material-ui/core";
+import Slider from 'react-rangeslider';
+import { Favorite as FavoriteIcon, FavoriteBorderOutlined as NotFavoriteIcon} from '@material-ui/icons';
+import 'react-rangeslider/lib/index.css'
 import "./Home.css";
 
 import {
@@ -140,17 +151,20 @@ export default function Home() {
 
   const [markers, dispatch] = useReducer(reducer, []);
   const [location, setLocation] = useState(null);
+  const [radius, setRadius] = useState(1000);
   const [selected, setSelected] = useState(null);
   const [modal, setModal] = useState(false);
-  const [filterResults, setFilterResults] = useState(false);
+  const [showFilterOptions, setShowFilterOptions] = useState(false);
   const [view, setView] = useState({ mapView: true });
   const [userDietaryProfile, setUserDietaryProfile] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
+  const [isDrawerOpen, setDrawerOpen] = useState(false);
   const foodContext = useFood();
   const history = useHistory();
   const auth = useAuth();
   const mapRef = useRef();
   const listeners = useRef([]);
+
   /* 
   const onMapClick = useCallback((event) => {
     dispatch({
@@ -273,6 +287,14 @@ export default function Home() {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const updateDietaryProfile = () => {
+    setUserDietaryProfile([
+      ...foodContext.selected.filter(
+        (item) => item.path.split("/")[0] === "dietaryconditions"
+      ),
+    ]);
   };
 
   // Returns an array of map markers for the users current location
@@ -406,23 +428,8 @@ export default function Home() {
   }, [markers]);
 
   useEffect(() => {
-    setUserDietaryProfile([
-      ...foodContext.selected.filter(
-        (item) => item.path.split("/")[0] === "dietaryconditions"
-      ),
-    ]);
+    updateDietaryProfile();
   }, [foodContext.selected]);
-
-  useEffect(() => {
-    if (!selected) return;
-    if (!userDietaryProfile) return;
-    if (!filterResults) return;
-
-    const keepSelected = userDietaryProfile.some((condition) =>
-      selected.tags.some((tag) => condition.name === tag)
-    );
-    if (!keepSelected) setSelected(null);
-  }, [filterResults, selected, userDietaryProfile]);
 
   const panTo = useCallback(({ lat, lng }) => {
     mapRef.current.panTo({ lat, lng });
@@ -454,6 +461,10 @@ export default function Home() {
     });
   }, []); */
 
+  const handleCancel = () => {
+    setShowFilterOptions(false);
+  };
+
   const hideModal = useCallback(() => {
     try {
       setModal(false);
@@ -478,12 +489,18 @@ export default function Home() {
   if (!userDietaryProfile) return "Loading...";
 
   const filterDC = (marker) => {
-    if (!filterResults) return true;
     if (marker.isNew) return true; // Shows markers created by the user
+    if(!userDietaryProfile.length) return true;
     return userDietaryProfile.some((condition) =>
-      marker.tags.some((tag) => condition.name === tag)
+      marker.tags.some((tag) => tag.toLowerCase().includes(condition.name.toLowerCase()))
     );
   };
+
+  const filteredMarkers = markers.filter((marker) => filterDC(marker));
+
+  function logout() {
+    auth.logout().then(() => history.push("/login"));
+  }
 
   return (
     <>
@@ -494,11 +511,13 @@ export default function Home() {
           color: "black",
           boxShadow: "0px 0px 0px 0px",
         }}
-      >
+        onClick={() => isDrawerOpen && setDrawerOpen(false)}>
         <Toolbar style={{ height: "125px", alignItems: "flex-start" }}>
-          <IconButton edge="start" color="inherit" aria-label="open drawer">
-            <AiOutlineMenu />
+
+          <IconButton style={{zIndex: 1}} edge="start" color="inherit" aria-label="open drawer" onClick={() => setDrawerOpen(true)}>
+            <AiOutlineMenu/>
           </IconButton>
+  
           <Typography
             variant="h6"
             noWrap
@@ -558,31 +577,51 @@ export default function Home() {
               open={!!contextMenu}
               onClose={() => setContextMenu(null)}
             >
-              <MenuItem
-                onClick={() => auth.logout().then(() => history.push("/login"))}
-              >
-                Sign Out
+              <MenuItem onClick={toggleView}>
+                {view.mapView ? "View List" : "View Map"}
+              </MenuItem>
+              <MenuItem onClick={() => { history.push("/myprofile")}}>
+                My profile
+              </MenuItem>
+              <MenuItem onClick={logout}>
+                Logout
               </MenuItem>
             </Menu>
           </div>
         </Toolbar>
       </AppBar>
 
-      <Container fluid style={{ marginTop: "125px" }}>
-        <Container className="text-center">
-          <FormControlLabel
-            label="Filter Markers"
-            style={{ position: "relative", left: "6vh" }}
-            control={
-              <CustomCheckbox
-                checked={filterResults}
-                onClick={() => setFilterResults(!filterResults)}
-              />
-            }
-          />
-          <Row>{filterResults && <foodContext.FilterDietaryConditions />}</Row>
-        </Container>
+      <SideDrawer visible={isDrawerOpen} onClose={() => setDrawerOpen(false)}/>
 
+      <Dialog onClose={handleCancel} aria-labelledby="filter-marker" open={showFilterOptions}>
+      <DialogTitle id="filter-markers">Filter Options</DialogTitle>
+      <Container style={{padding: "16px 24px"}}>
+          <foodContext.FilterDietaryConditions />
+          <hr/>
+          <Typography variant="h5">Within:</Typography>
+          <Slider
+          min={1}
+          max={20}
+          step={1}
+          value={(radius / 1000)}
+          tooltip={false}
+          format={(val) => val + " miles"}
+          onChange={(val) => { setRadius((val * 1000)) }}
+        /><Typography variant="h5">{(radius / 1000)} {(radius / 1000) === 1 ? "Mile" : "Miles"}</Typography>
+                <hr/>
+        <div className="text-sm-right" style={{marginTop: "2vh"}}>
+        <ButtonGroup orientation="horizontal" disableElevation>
+        <Button variant='outlined' size="large" style={{margin: ".5vh"}} onClick={handleCancel}>Cancel</Button>
+        </ButtonGroup>
+        <ButtonGroup orientation="horizontal" disableElevation>
+        <Button variant='outlined' size="large" color="primary" style={{margin: ".5vh"}} onClick={() => { updateDietaryProfile(); handleCancel(); }}>Confirm</Button>
+        </ButtonGroup>
+        </div>
+
+        </Container>
+      </Dialog>
+
+      <Container fluid style={{ marginTop: "125px" }} onClick={() => setDrawerOpen(false)}>
         {view.mapView ? (
           <>
             <Modal
@@ -689,19 +728,10 @@ export default function Home() {
               ) : null}
             </GoogleMap>
             <Fab
+              id="cardbutton"
               size="large"
               color="secondary"
               aria-label="cardview"
-              style={{
-                fontSize: "2rem",
-                backgroundColor: "white",
-                color: "black",
-                position: "fixed",
-                bottom: "45px",
-                margin: "25px 10px",
-                width: "65px",
-                height: "65px",
-              }}
               onClick={toggleView}
             >
               <BsCardList />
@@ -736,19 +766,34 @@ export default function Home() {
             >
               Select below
             </Modal>
-            <Typography variant="h5" style={{ margin: "20px 0px 0px 20px" }}>
+            <hr/>
+            <div style={{ margin: "20px 0px 0px 20px" }}>
+            <Typography variant="h5">
               Found{" "}
-              {filterResults
-                ? markers.filter((marker) => filterDC(marker)).length
-                : markers.length}{" "}
-              Matches
+              {filteredMarkers.length}{" "}
+              Match{filteredMarkers.length === 1 ? "" : "es"}
             </Typography>
+            {filteredMarkers.length < markers.length && (
+            <Paper style={{marginTop: "16px", marginLeft: "-15px"}}>
+              <Typography variant="h6" style={{padding: "12px 15px"}}>
+                Can't find what your looking for? {" "}
+                <Link style={{cursor: "pointer"}} underline="always" onClick={() => setUserDietaryProfile([])}>
+                  Turn off filtering.
+                  </Link>
+                </Typography>
+              </Paper>
+            )}
+            </div>
             {markers.map(
               (marker, index) =>
                 filterDC(marker) && (
-                  <Card key={index} bg="light">
+                  <Card key={index} bg="light" style={{maxWidth: "1200px"}}>
                     <Card.Body>
-                      <Card.Title as="h3">{marker.name ?? "Name"}</Card.Title>
+                      <Card.Title as="h3">{marker.name ?? "Name"}
+                      <MDButton className="heart" variant="text" aria-label="like" style={{position: "absolute"}}>
+                            { index % 2 === 0 ? <FavoriteIcon style={{color: "#ff6d75"}} /> : <NotFavoriteIcon style={{color: "#ff6d75"}} /> }
+                            </MDButton>  
+                      </Card.Title>
                       <Card.Text>
                         {marker.distance && `${marker.distance} miles away`}{" "}
                         <br />
@@ -781,7 +826,14 @@ export default function Home() {
                               >
                                 Add Tag
                               </MDButton>
+
                             </ListGroup>
+                          </Row>
+                          <Row>
+                            <MDButton size="medium" variant="outlined" style={{padding: ".75rem 1.25rem", marginTop: "10px"}} onClick={() => {
+                                  setSelected(marker);
+                                  setView({mapView: true});
+                                }}>Show on map</MDButton>
                           </Row>
                         </Container>
                       )}
@@ -789,32 +841,31 @@ export default function Home() {
                   </Card>
                 )
             )}
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
             <Fab
+              id="mapbutton"
               size="large"
               color="secondary"
               aria-label="mapview"
-              style={{
-                fontSize: "2rem",
-                backgroundColor: "white",
-                color: "black",
-                position: "fixed",
-                bottom: "45px",
-                margin: "25px 10px",
-                width: "65px",
-                height: "65px",
-              }}
               onClick={toggleView}
             >
               <IoIosGlobe />
             </Fab>
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
           </>
         )}
+        <Fab id="filterbutton" variant="extended" color="primary" aria-label="add" onClick={() => setShowFilterOptions(true)}>
+          <RiBarChartHorizontalLine strokeWidth="1" style={{color: "black"}}/>
+          Filter
+        </Fab>
       </Container>
       <Navbar item={0} />
     </>
@@ -825,7 +876,7 @@ function Search({ panTo }) {
   const {
     ready,
     value,
-    suggestions: { status, data },
+    suggestions: { data },
     setValue,
     clearSuggestions,
   } = usePlacesAutocomplete({

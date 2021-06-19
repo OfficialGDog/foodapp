@@ -155,7 +155,7 @@ function useProvideFood() {
         .filter((item) => item.path.split("/")[0] === "dietaryconditions")
         .map((item) => item.name);
 
-      const data = await setUserData(user, {
+      await setUserData(user, {
         foods: selectedFoods,
         intolerance: selectedConditions,
         isNew: false,
@@ -187,7 +187,7 @@ function useProvideFood() {
           type="button"
           onClick={handleSave}
         >
-          {props.label ? props.label : !isSaved ? "Save" : "Saved"}
+          {props.label ? props.label : !isSaved ? "Save Changes" : "Saved"}
         </Button>
       </>
     );
@@ -251,7 +251,7 @@ function useProvideFood() {
         {dietaryConditions
           .slice(0, hide ? 3 : dietaryConditions.length)
           .map((condition, index) => (
-            <Grid container item={true} key={index} xs={12} sm={3}>
+            <Grid container item={true} key={index} xs={12} sm={3} >
               <FormControlLabel
                 label={condition.name}
                 control={
@@ -268,7 +268,7 @@ function useProvideFood() {
             </Grid>
           ))}
         <Grid container item={true} xs={12} sm={3}>
-          <div style={{ alignSelf: "center" }}>
+          <div style={{ alignSelf: "center", margin: "0 auto" }}>
             <MDButton
               size="medium"
               variant="outlined"

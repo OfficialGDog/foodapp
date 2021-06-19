@@ -1,6 +1,5 @@
 import React from "react";
 import { Container } from "react-bootstrap";
-import { Link } from "react-router-dom";
 import "./Wrapper.css";
 
 export default function Wrapper({ children }) {

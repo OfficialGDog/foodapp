@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, Button, Container } from "react-bootstrap";
 import Swiper, { Navigation, Pagination } from "swiper";
 import "swiper/swiper-bundle.css";
