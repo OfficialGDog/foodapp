@@ -150,7 +150,7 @@ export default function Home() {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const foodContext = useFood();
   const history = useHistory();
-  const auth = useAuth();
+  const { user, setUserData } = useAuth();
   const mapRef = useRef();
   const listeners = useRef([]);
 
@@ -450,6 +450,15 @@ export default function Home() {
     });
   }, []); */
 
+  const setFavourite = useCallback(async (marker, value) => {
+    if(!user.favourites) user.favourites = [];
+     await setUserData(user, {
+      uid: user.uid,
+      favourites: value ? [...user.favourites, marker.g_place_id] : user.favourites.filter((prev) => prev !==  marker.g_place_id),
+      isNew: false
+    });
+  }, [user]);
+
   const handleCancel = () => {
     setShowFilterOptions(false);
   };
@@ -486,6 +495,8 @@ export default function Home() {
   };
 
   const filteredMarkers = markers.filter((marker) => filterDC(marker));
+
+  const isFavourite = (marker) => user.favourites && user.favourites.includes(marker.g_place_id);
 
   return (
     <>
@@ -776,8 +787,8 @@ export default function Home() {
                   <Card key={index} bg="light">
                     <Card.Body>
                       <Card.Title as="h3">{marker.name ?? "Name"}
-                      <MDButton className="heart" variant="text" aria-label="like" style={{position: "absolute"}}>
-                            { index % 2 === 0 ? <FavoriteIcon style={{color: "#ff6d75"}} /> : <NotFavoriteIcon style={{color: "#ff6d75"}} /> }
+                      <MDButton className="heart" variant="text" aria-label="like" style={{position: "absolute"}} onClick={() => { setFavourite(marker, !isFavourite(marker))}}>
+                            {isFavourite(marker) ? <FavoriteIcon style={{color: "#ff6d75"}} /> : <NotFavoriteIcon style={{color: "#ff6d75"}} /> }
                             </MDButton>  
                       </Card.Title>
                       <Card.Text>

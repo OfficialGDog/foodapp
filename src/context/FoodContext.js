@@ -156,6 +156,7 @@ function useProvideFood() {
         .map((item) => item.name);
 
       await setUserData(user, {
+        uid: user.uid,
         foods: selectedFoods,
         intolerance: selectedConditions,
         isNew: false,
@@ -590,7 +591,6 @@ function useProvideFood() {
     attachListener(unsubscribe3);
 
     // Cleanup subscription on unmount
-
     return () => dettachListeners();
   }, []);
 

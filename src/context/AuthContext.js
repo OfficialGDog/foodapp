@@ -118,6 +118,13 @@ function useProvideAuth() {
     }
   };
 
+  const lessThanOneHourAgo = (date) => {
+    const HOUR = 1000 * 60 * 60;
+    const anHourAgo = Date.now() - HOUR;
+
+    return date > anHourAgo;
+  }
+
   /* 
         Subscribe to user on mount
         Because this sets state in the callback it will cause any
@@ -129,6 +136,10 @@ function useProvideAuth() {
     const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
       // Is the user logged in?
       if (user) {
+
+        // Optional logout the user automatically after 1 hour. 
+        if(!lessThanOneHourAgo(new Date(user.metadata.lastSignInTime))) return logout();
+
         // Enable Facebook logins
         user.providerData.map((data) => {
           switch (data.providerId) {

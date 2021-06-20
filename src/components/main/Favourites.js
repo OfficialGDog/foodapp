@@ -1,27 +1,103 @@
-import { useState } from "react";
+import { useState, useReducer, useEffect, useRef, useCallback } from "react";
+import { geodatabase } from "../../firebase/config";
 import {
   AppBar,
   Toolbar,
   IconButton,
   Typography,
   Menu,
-  MenuItem
+  MenuItem,
+  Button as MDButton
 } from "@material-ui/core";
-import { Container } from "react-bootstrap";
+import { Favorite as FavoriteIcon, FavoriteBorderOutlined as NotFavoriteIcon} from '@material-ui/icons';
+import { Container, Card, Row, ListGroup } from "react-bootstrap";
 import { useAuth } from "../../context/AuthContext";
 import { useHistory } from "react-router";
 import { AiOutlineMenu } from "react-icons/ai";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { FaMapMarkerAlt } from "react-icons/fa";
 import Logout from './Logout';
 import SideDrawer from "./SideDrawer";
 import Navbar from "./Navbar";
 
+const ACTIONS = {
+  ADD_UPDATE_MARKER: "add-update-marker",
+  DELETE_MARKER: "delete-marker",
+  RESET_MARKERS: "reset-markers"
+};
+
+function reducer(markers, action) {
+  switch (action.type) {
+    case ACTIONS.ADD_UPDATE_MARKER:
+      if(!markers.length) return [...markers, action.payload];
+      return [...markers.filter((marker) => marker.g_place_id !== action.payload.g_place_id), action.payload];
+    case ACTIONS.DELETE_MARKER:
+      return markers.filter((marker) => marker.g_place_id !== action.payload.g_place_id);
+    case ACTIONS.RESET_MARKERS:
+      return [];
+    default:
+      return markers;
+  }
+}
+
 export default function Favourites() {
+  const [markers, dispatch] = useReducer(reducer, []);
   const [contextMenu, setContextMenu] = useState(null);
   const [showLogOutDialog, setShowLogOutDialog] = useState(false);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
-  const auth = useAuth();
+  const [isLoading, setLoading] = useState(true);
+  const listeners = useRef([]);
+  const { user, setUserData } = useAuth();
   const history = useHistory();
+
+  const attachListener = (listener) => listeners.current.push(listener);
+
+  const dettachListeners = () =>
+    listeners.current.forEach((listener) => listener());
+
+  const getUserFavourites = () => {
+      let favourites = [];
+      if (user.favourites?.length) favourites = user.favourites;
+      return favourites;
+  };
+
+  const unsetFavourite = useCallback(async (marker) => {
+    if(!user.favourites) user.favourites = [];
+     await setUserData(user, {
+      uid: user.uid,
+      favourites: user.favourites.filter((prev) => prev !==  marker.g_place_id),
+      isNew: false
+    });
+
+    return dispatch({type: ACTIONS.DELETE_MARKER, payload: marker});
+
+  }, []);
+
+  useEffect(() => {
+
+    dispatch({ type: ACTIONS.RESET_MARKERS });
+
+    console.log("Fetching Favourites...");
+
+    const favourites = getUserFavourites();
+    
+    favourites.forEach((id) => {
+      attachListener(geodatabase.restaurants.doc(id).onSnapshot((doc) => {
+        // Delete the marker if deleted in the database
+        if(!doc.exists) return dispatch({ type: ACTIONS.DELETE_MARKER, payload: doc.id });
+        // Otherwise add it to the list
+        dispatch({ type: ACTIONS.ADD_UPDATE_MARKER, payload: doc.data()});
+      },
+      (error) => console.log(error)
+      ));
+    });
+
+    setTimeout(() => setLoading(false), 500)
+
+    // Cleanup subscription on unmount
+    return () => dettachListeners();
+    
+  }, []);
 
   return (
     <>
@@ -77,7 +153,52 @@ export default function Favourites() {
       <SideDrawer visible={isDrawerOpen} onClose={() => setDrawerOpen(false)} logout={() => { setDrawerOpen(false); setShowLogOutDialog(true)}}/>
       <Logout visible={showLogOutDialog} onClose={() => setShowLogOutDialog(false)}/>
       <Container fluid style={{height: "100vh"}} onClick={() => setDrawerOpen(false)}>
-      <Typography>*WIP*</Typography>
+      <br/><br/><br/><br/>
+      <div style={{maxWidth: "1200px"}}>
+      <Typography variant="h5" style={{display: "flex", padding: "0px 20px"}}>
+      {isLoading ? "Loading Favourites..." : `Your Favourites (${markers.length}) `}
+      </Typography>
+      {markers.map(
+              (marker, index) => (
+                  <Card key={index} bg="light">
+                    <Card.Body>
+                      <Card.Title as="h3">{marker.name ?? "Name"}
+                      <MDButton className="heart" variant="text" aria-label="like" style={{position: "absolute"}} onClick={() => { unsetFavourite(marker); }}>
+                            <FavoriteIcon style={{color: "#ff6d75"}}/>
+                            </MDButton>  
+                      </Card.Title>
+                      <Card.Text>
+                        {marker.distance && `${marker.distance} miles away`}{" "}
+                        <FaMapMarkerAlt color="#3083ff" />{" "}
+                        {marker.vicinity ?? "Address"}
+                      </Card.Text>
+                      {marker.tags && (
+                        <Container fluid>
+                          <Row>
+                            <ListGroup
+                              horizontal
+                              style={{ display: "contents" }}
+                            >
+                              {marker.tags.map((tag, i) => (
+                                <ListGroup.Item
+                                  key={i}
+                                  variant="success"
+                                  className="col-auto venuetag"
+                                >
+                                  {tag}
+                                </ListGroup.Item>
+                              ))}
+
+                            </ListGroup>
+                          </Row>
+
+                        </Container>
+                      )}
+                    </Card.Body>
+                  </Card>
+                )
+            )}
+      </div>
       </Container>
       <Navbar item={1} />
     </>
