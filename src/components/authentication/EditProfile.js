@@ -16,7 +16,7 @@ import {
   InputAdornment,
 } from "@material-ui/core";
 import SideDrawer from "../main/SideDrawer";
-import Logout from '../main/Logout';
+import Logout from "../main/Logout";
 import { Visibility, VisibilityOff } from "@material-ui/icons";
 import { AiOutlineMenu } from "react-icons/ai";
 import { BsThreeDotsVertical } from "react-icons/bs";
@@ -81,7 +81,12 @@ export default function EditProfile() {
         onClick={() => isDrawerOpen && setDrawerOpen(false)}
       >
         <Toolbar>
-          <IconButton edge="start" color="inherit" aria-label="open drawer" onClick={() => setDrawerOpen(true)}>
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="open drawer"
+            onClick={() => setDrawerOpen(true)}
+          >
             <AiOutlineMenu />
           </IconButton>
           <Typography variant="h6" noWrap style={{ flexGrow: "1" }}>
@@ -114,203 +119,227 @@ export default function EditProfile() {
               open={!!contextMenu}
               onClose={() => setContextMenu(null)}
             >
-              <MenuItem onClick={() => setContextMenu(null)}>My profile</MenuItem>
-              <MenuItem onClick={() => { setContextMenu(null); setShowLogOutDialog(true)}}>Logout</MenuItem>
+              <MenuItem onClick={() => setContextMenu(null)}>
+                My profile
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  setContextMenu(null);
+                  setShowLogOutDialog(true);
+                }}
+              >
+                Logout
+              </MenuItem>
             </Menu>
           </div>
         </Toolbar>
       </AppBar>
-      <SideDrawer visible={isDrawerOpen} onClose={() => setDrawerOpen(false)} logout={() => { setDrawerOpen(false); setShowLogOutDialog(true)}}/>
-      <Logout visible={showLogOutDialog} onClose={() => setShowLogOutDialog(false)}/>
+      <SideDrawer
+        visible={isDrawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        logout={() => {
+          setDrawerOpen(false);
+          setShowLogOutDialog(true);
+        }}
+      />
+      <Logout
+        visible={showLogOutDialog}
+        onClose={() => setShowLogOutDialog(false)}
+      />
       <Container fluid onClick={() => setDrawerOpen(false)}>
-      <Card style={{ marginTop: "60px" }}>
-        <Card.Body style={{ maxWidth: "800px" }}>
-          {error && <Alert variant="danger">{error}</Alert>}
-          {message && <Alert variant="success">{message}</Alert>}
-          <form
-            style={{ margin: "20px", marginTop: "40px" }}
-            onSubmit={handleSubmit((data) => onSubmit(data))}
-          >
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Controller
-                  control={control}
-                  name="email"
-                  defaultValue={auth.user.email || ""}
-                  render={({
-                    field: { onChange, value, ref },
-                    fieldState: { invalid, error },
-                  }) => (
-                    <TextField
-                      fullWidth
-                      label="Email"
-                      variant="outlined"
-                      error={invalid}
-                      helperText={error && error.message}
-                      onChange={(e) => onChange(e.target.value.toLowerCase())}
-                      inputRef={ref}
-                      InputLabelProps={{ shrink: true }}
-                      placeholder={isDisabled ? "Email cannot be changed." : ""}
-                      value={value}
-                      disabled={isDisabled}
-                    />
-                  )}
-                  rules={{
-                    required: "Email is required",
-                    pattern: {
-                      value: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$/,
-                      message: "Invalid Email",
-                    },
-                  }}
-                />
+        <Card style={{ marginTop: "60px" }}>
+          <Card.Body style={{ maxWidth: "800px" }}>
+            {error && <Alert variant="danger">{error}</Alert>}
+            {message && <Alert variant="success">{message}</Alert>}
+            <form
+              style={{ margin: "20px", marginTop: "40px" }}
+              onSubmit={handleSubmit((data) => onSubmit(data))}
+            >
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <Controller
+                    control={control}
+                    name="email"
+                    defaultValue={auth.user.email || ""}
+                    render={({
+                      field: { onChange, value, ref },
+                      fieldState: { invalid, error },
+                    }) => (
+                      <TextField
+                        fullWidth
+                        label="Email"
+                        variant="outlined"
+                        error={invalid}
+                        helperText={error && error.message}
+                        onChange={(e) => onChange(e.target.value.toLowerCase())}
+                        inputRef={ref}
+                        InputLabelProps={{ shrink: true }}
+                        placeholder={
+                          isDisabled ? "Email cannot be changed." : ""
+                        }
+                        value={value}
+                        disabled={isDisabled}
+                      />
+                    )}
+                    rules={{
+                      required: "Email is required",
+                      pattern: {
+                        value: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$/,
+                        message: "Invalid Email",
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Controller
+                    control={control}
+                    name="password"
+                    defaultValue=""
+                    render={({
+                      field: { onChange, value, ref },
+                      fieldState: { invalid, error },
+                    }) => (
+                      <TextField
+                        fullWidth
+                        label="Password"
+                        type={showPassword ? "text" : "password"}
+                        variant="outlined"
+                        error={invalid}
+                        helperText={
+                          error &&
+                          error.message &&
+                          (error.message.split(",").length !== 1 ? (
+                            <>
+                              <ul className="pl-3">
+                                {error.message.split(",").map((item, index) => (
+                                  <li key={index}>{item}</li>
+                                ))}
+                              </ul>
+                            </>
+                          ) : (
+                            error.message
+                          ))
+                        }
+                        onChange={onChange}
+                        inputRef={ref}
+                        InputLabelProps={{ shrink: true }}
+                        value={value}
+                        disabled={isDisabled}
+                        placeholder={
+                          isDisabled ? "Password cannot be changed." : ""
+                        }
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                aria-label="toggle password visibility"
+                                onClick={() => setShowPassword(!showPassword)}
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                }}
+                                edge="end"
+                              >
+                                {showPassword ? (
+                                  <Visibility />
+                                ) : (
+                                  <VisibilityOff />
+                                )}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    )}
+                    rules={{
+                      required: "Password is required",
+                      pattern: {
+                        value:
+                          /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$/,
+                        message:
+                          "Minimum 8 characters, At least one upper case letter [A-Z], At least one lower case letter [a-z], At least one digit [0-9], At least one special character [!£$%^&*]",
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Controller
+                    control={control}
+                    name="confirmpassword"
+                    defaultValue=""
+                    render={({
+                      field: { onChange, value, ref },
+                      fieldState: { invalid, error },
+                    }) => (
+                      <TextField
+                        fullWidth
+                        label="Confirm Password"
+                        type={showPassword ? "text" : "password"}
+                        error={invalid}
+                        variant="outlined"
+                        helperText={error && error.message}
+                        onChange={onChange}
+                        inputRef={ref}
+                        InputLabelProps={{ shrink: true }}
+                        value={value}
+                        placeholder={
+                          isDisabled ? "Password cannot be changed." : ""
+                        }
+                        disabled={isDisabled}
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                aria-label="toggle password visibility"
+                                onClick={() => setShowPassword(!showPassword)}
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                }}
+                                edge="end"
+                              >
+                                {showPassword ? (
+                                  <Visibility />
+                                ) : (
+                                  <VisibilityOff />
+                                )}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    )}
+                    rules={{
+                      required: "Password is required",
+                      validate: (value) =>
+                        value === password.current ||
+                        "The passwords do not match",
+                    }}
+                  />
+                </Grid>
               </Grid>
-              <Grid item xs={12}>
-                <Controller
-                  control={control}
-                  name="password"
-                  defaultValue=""
-                  render={({
-                    field: { onChange, value, ref },
-                    fieldState: { invalid, error },
-                  }) => (
-                    <TextField
-                      fullWidth
-                      label="Password"
-                      type={showPassword ? "text" : "password"}
-                      variant="outlined"
-                      error={invalid}
-                      helperText={
-                        error &&
-                        error.message &&
-                        (error.message.split(",").length !== 1 ? (
-                          <>
-                            <ul className="pl-3">
-                              {error.message.split(",").map((item, index) => (
-                                <li key={index}>{item}</li>
-                              ))}
-                            </ul>
-                          </>
-                        ) : (
-                          error.message
-                        ))
-                      }
-                      onChange={onChange}
-                      inputRef={ref}
-                      InputLabelProps={{ shrink: true }}
-                      value={value}
-                      disabled={isDisabled}
-                      placeholder={
-                        isDisabled ? "Password cannot be changed." : ""
-                      }
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              aria-label="toggle password visibility"
-                              onClick={() => setShowPassword(!showPassword)}
-                              onMouseDown={(event) => {
-                                event.preventDefault();
-                              }}
-                              edge="end"
-                            >
-                              {showPassword ? (
-                                <Visibility />
-                              ) : (
-                                <VisibilityOff />
-                              )}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  )}
-                  rules={{
-                    required: "Password is required",
-                    pattern: {
-                      value:
-                        /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$/,
-                      message:
-                        "Minimum 8 characters, At least one upper case letter [A-Z], At least one lower case letter [a-z], At least one digit [0-9], At least one special character [!£$%^&*]",
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Controller
-                  control={control}
-                  name="confirmpassword"
-                  defaultValue=""
-                  render={({
-                    field: { onChange, value, ref },
-                    fieldState: { invalid, error },
-                  }) => (
-                    <TextField
-                      fullWidth
-                      label="Confirm Password"
-                      type={showPassword ? "text" : "password"}
-                      error={invalid}
-                      variant="outlined"
-                      helperText={error && error.message}
-                      onChange={onChange}
-                      inputRef={ref}
-                      InputLabelProps={{ shrink: true }}
-                      value={value}
-                      placeholder={
-                        isDisabled ? "Password cannot be changed." : ""
-                      }
-                      disabled={isDisabled}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              aria-label="toggle password visibility"
-                              onClick={() => setShowPassword(!showPassword)}
-                              onMouseDown={(event) => {
-                                event.preventDefault();
-                              }}
-                              edge="end"
-                            >
-                              {showPassword ? (
-                                <Visibility />
-                              ) : (
-                                <VisibilityOff />
-                              )}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  )}
-                  rules={{
-                    required: "Password is required",
-                    validate: (value) =>
-                      value === password.current ||
-                      "The passwords do not match",
-                  }}
-                />
-              </Grid>
-            </Grid>
-            <div style={{ marginTop: "20px" }}>
-              <Button
-                size="lg"
-                disabled={isLoading}
-                className="w-100"
-                type={isDisabled ? "button" : "submit"}
-                onClick={isDisabled ? onSubmit : null}
-              >
-                Update Profile
-              </Button>
-            </div>
-          </form>
-        </Card.Body>
-      </Card>
-      <Container fluid style={{ padding: "20px" }}>
-        <food.DietaryConditions />
-      </Container>
-      <div className="text-center">
-        <food.updateProfileButton />
-      </div>
-      <br/><br/><br/><br/>
+              <div style={{ marginTop: "20px" }}>
+                <Button
+                  size="lg"
+                  disabled={isLoading}
+                  className="w-100"
+                  type={isDisabled ? "button" : "submit"}
+                  onClick={isDisabled ? onSubmit : null}
+                >
+                  Update Profile
+                </Button>
+              </div>
+            </form>
+          </Card.Body>
+        </Card>
+        <Container fluid style={{ padding: "20px" }}>
+          <food.DietaryConditions />
+        </Container>
+        <div className="text-center">
+          <food.updateProfileButton />
+        </div>
+        <br />
+        <br />
+        <br />
+        <br />
       </Container>
       <Navbar item={2} />
     </>

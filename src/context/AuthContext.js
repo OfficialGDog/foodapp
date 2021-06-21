@@ -123,7 +123,7 @@ function useProvideAuth() {
     const anHourAgo = Date.now() - HOUR;
 
     return date > anHourAgo;
-  }
+  };
 
   /* 
         Subscribe to user on mount
@@ -136,9 +136,9 @@ function useProvideAuth() {
     const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
       // Is the user logged in?
       if (user) {
-
-        // Optional logout the user automatically after 1 hour. 
-        if(!lessThanOneHourAgo(new Date(user.metadata.lastSignInTime))) return logout();
+        // Optional logout the user automatically after 1 hour.
+        if (!lessThanOneHourAgo(new Date(user.metadata.lastSignInTime)))
+          return logout();
 
         // Enable Facebook logins
         user.providerData.map((data) => {

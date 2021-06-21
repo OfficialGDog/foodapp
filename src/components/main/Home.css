@@ -17,7 +17,7 @@
 
 .datalist-input > input {
   border: none !important;
-  padding: 0.75rem !important;
+  padding: 0.75rem 1.25rem;
 }
 
 .clearsearch {
@@ -48,14 +48,14 @@
   background-color: #009688 !important;
 }
 
-path[d='M0 0h24v24H0z']{
+path[d="M0 0h24v24H0z"] {
   display: none;
 }
 
 #mapbutton {
   position: fixed;
   bottom: 45px;
-  font-size: 2rem;
+  font-size: 30px;
   background-color: white;
   color: black;
   margin: 25px 10px;
@@ -74,11 +74,31 @@ path[d='M0 0h24v24H0z']{
   height: 75px;
 }
 
+#cardbutton > .MuiFab-label {
+  position: relative;
+  left: 1px;
+  flex-direction: column;
+}
+
+#cardbutton > .MuiFab-label > span {
+  font-size: x-small;
+}
+
+#mapbutton > .MuiFab-label {
+  position: relative;
+  left: 1px;
+  flex-direction: column;
+}
+
+#mapbutton > .MuiFab-label > span {
+  font-size: x-small;
+}
+
 #filterbutton {
   position: fixed;
   bottom: 75px;
   font-size: 1rem;
-  background-color: #0AC56B;
+  background-color: #0ac56b;
   color: white;
   left: 35px;
   right: 0px;
@@ -90,16 +110,16 @@ path[d='M0 0h24v24H0z']{
 }
 
 @media (min-width: 450px) {
-  #filterbutton { 
+  #filterbutton {
     width: 160px;
     height: 70px;
     font-size: 1.25rem;
   }
-  #cardbutton { 
+  #cardbutton {
     width: 90px;
     height: 90px;
   }
-  #mapbutton { 
+  #mapbutton {
     width: 90px;
     height: 90px;
   }
@@ -107,11 +127,22 @@ path[d='M0 0h24v24H0z']{
     transform: scale(1.25);
     margin: 0px 0px 80px -15px;
   }
+  .search-icon {
+    right: 45px !important;
+  }
+
+  #mapbutton > .MuiFab-label > span {
+    font-size: small;
+  }
+
+  #cardbutton > .MuiFab-label > span {
+    font-size: small;
+  }
 }
 
 @media (min-width: 800px) {
   #filterbutton {
-    font-size: 1.25rem; 
+    font-size: 1.25rem;
     width: 235px;
     height: 78px;
   }
@@ -126,11 +157,11 @@ path[d='M0 0h24v24H0z']{
     height: 1.4em;
   }
 
-  #cardbutton { 
+  #cardbutton {
     width: 105px;
     height: 105px;
   }
-  #mapbutton { 
+  #mapbutton {
     width: 105px;
     height: 105px;
   }
@@ -138,9 +169,20 @@ path[d='M0 0h24v24H0z']{
     transform: scale(1.5);
     margin: 0px 0px 90px -20px;
   }
+  .search-icon {
+    right: 60px !important;
+  }
 }
 
 .heart svg {
   width: 1.25em;
   height: 1.25em;
+}
+
+.search-icon {
+  transform: scaleX(-1);
+  position: absolute;
+  top: 77px;
+  color: rgba(0, 0, 0, 0.75);
+  right: 30px;
 }

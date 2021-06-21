@@ -15,7 +15,7 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 import { IoIosGlobe } from "react-icons/io";
 import { AiOutlineMenu } from "react-icons/ai";
 import { BiCurrentLocation } from "react-icons/bi";
-import { BsCardList, BsThreeDotsVertical } from "react-icons/bs";
+import { BsCardList, BsThreeDotsVertical, BsSearch } from "react-icons/bs";
 import { RiBarChartHorizontalLine } from "react-icons/ri";
 import DataListInput from "react-datalist-input";
 import SideDrawer from "./SideDrawer";
@@ -33,13 +33,16 @@ import {
   DialogTitle,
   Button,
   ButtonGroup,
-  Paper
+  Paper,
 } from "@material-ui/core";
 import { Button as MDButton } from "@material-ui/core";
-import Slider from 'react-rangeslider';
-import Logout from './Logout';
-import { Favorite as FavoriteIcon, FavoriteBorderOutlined as NotFavoriteIcon} from '@material-ui/icons';
-import 'react-rangeslider/lib/index.css'
+import Slider from "react-rangeslider";
+import Logout from "./Logout";
+import {
+  Favorite as FavoriteIcon,
+  FavoriteBorderOutlined as NotFavoriteIcon,
+} from "@material-ui/icons";
+import "react-rangeslider/lib/index.css";
 import "./Home.css";
 
 import {
@@ -450,14 +453,19 @@ export default function Home() {
     });
   }, []); */
 
-  const setFavourite = useCallback(async (marker, value) => {
-    if(!user.favourites) user.favourites = [];
-     await setUserData(user, {
-      uid: user.uid,
-      favourites: value ? [...user.favourites, marker.g_place_id] : user.favourites.filter((prev) => prev !==  marker.g_place_id),
-      isNew: false
-    });
-  }, [user]);
+  const setFavourite = useCallback(
+    async (marker, value) => {
+      if (!user.favourites) user.favourites = [];
+      await setUserData(user, {
+        uid: user.uid,
+        favourites: value
+          ? [...user.favourites, marker.g_place_id]
+          : user.favourites.filter((prev) => prev !== marker.g_place_id),
+        isNew: false,
+      });
+    },
+    [user]
+  );
 
   const handleCancel = () => {
     setShowFilterOptions(false);
@@ -488,15 +496,18 @@ export default function Home() {
 
   const filterDC = (marker) => {
     if (marker.isNew) return true; // Shows markers created by the user
-    if(!userDietaryProfile.length) return true;
+    if (!userDietaryProfile.length) return true;
     return userDietaryProfile.some((condition) =>
-      marker.tags.some((tag) => tag.toLowerCase().includes(condition.name.toLowerCase()))
+      marker.tags.some((tag) =>
+        tag.toLowerCase().includes(condition.name.toLowerCase())
+      )
     );
   };
 
   const filteredMarkers = markers.filter((marker) => filterDC(marker));
 
-  const isFavourite = (marker) => user.favourites && user.favourites.includes(marker.g_place_id);
+  const isFavourite = (marker) =>
+    user.favourites && user.favourites.includes(marker.g_place_id);
 
   return (
     <>
@@ -507,13 +518,19 @@ export default function Home() {
           color: "black",
           boxShadow: "0px 0px 0px 0px",
         }}
-        onClick={() => isDrawerOpen && setDrawerOpen(false)}>
+        onClick={() => isDrawerOpen && setDrawerOpen(false)}
+      >
         <Toolbar style={{ height: "125px", alignItems: "flex-start" }}>
-
-          <IconButton style={{zIndex: 1}} edge="start" color="inherit" aria-label="open drawer" onClick={() => setDrawerOpen(true)}>
-            <AiOutlineMenu/>
+          <IconButton
+            style={{ zIndex: 1 }}
+            edge="start"
+            color="inherit"
+            aria-label="open drawer"
+            onClick={() => setDrawerOpen(true)}
+          >
+            <AiOutlineMenu />
           </IconButton>
-  
+
           <Typography
             variant="h6"
             noWrap
@@ -576,10 +593,19 @@ export default function Home() {
               <MenuItem onClick={toggleView}>
                 {view.mapView ? "View List" : "View Map"}
               </MenuItem>
-              <MenuItem onClick={() => { history.push("/myprofile")}}>
+              <MenuItem
+                onClick={() => {
+                  history.push("/myprofile");
+                }}
+              >
                 My profile
               </MenuItem>
-              <MenuItem onClick={() => { setContextMenu(null); setShowLogOutDialog(true); }}>
+              <MenuItem
+                onClick={() => {
+                  setContextMenu(null);
+                  setShowLogOutDialog(true);
+                }}
+              >
                 Logout
               </MenuItem>
             </Menu>
@@ -587,13 +613,26 @@ export default function Home() {
         </Toolbar>
       </AppBar>
 
-      <SideDrawer visible={isDrawerOpen} onClose={() => setDrawerOpen(false)} logout={() => { setDrawerOpen(false); setShowLogOutDialog(true)}}/>
+      <SideDrawer
+        visible={isDrawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        logout={() => {
+          setDrawerOpen(false);
+          setShowLogOutDialog(true);
+        }}
+      />
 
-      <Dialog onClose={handleCancel} aria-labelledby="filter-marker" open={showFilterOptions}>
-      <DialogTitle id="filter-markers">Filter Options</DialogTitle>
-      <Container style={{padding: "16px 24px"}}>
+      <Dialog
+        onClose={handleCancel}
+        aria-labelledby="filter-marker"
+        open={showFilterOptions}
+      >
+        <DialogTitle id="filter-markers">Filter Options</DialogTitle>
+        <Container style={{ padding: "16px 24px" }}>
+          <hr className="d-none d-sm-block" />
           <foodContext.FilterDietaryConditions />
-          <hr/>
+
+          {/*
           <Typography variant="h5">Within:</Typography>
           <Slider
           min={1}
@@ -604,22 +643,50 @@ export default function Home() {
           format={(val) => val + " miles"}
           onChange={(val) => { setRadius((val * 1000)) }}
         /><Typography variant="h5">{(radius / 1000)} {(radius / 1000) === 1 ? "Mile" : "Miles"}</Typography>
-                <hr/>
-        <div className="text-sm-right text-center" style={{marginTop: "2vh"}}>
-        <ButtonGroup orientation="horizontal" disableElevation>
-        <Button variant='outlined' size="large" style={{margin: ".5vh"}} onClick={handleCancel}>Cancel</Button>
-        </ButtonGroup>
-        <ButtonGroup orientation="horizontal" disableElevation>
-        <Button variant='outlined' size="large" color="primary" style={{margin: ".5vh"}} onClick={() => { updateDietaryProfile(); handleCancel(); }}>Confirm</Button>
-        </ButtonGroup>
-        </div>
-
+        */}
+          <hr className="d-none d-sm-block" />
+          <div
+            className="text-sm-right text-center"
+            style={{ marginTop: "2vh" }}
+          >
+            <ButtonGroup orientation="horizontal" disableElevation>
+              <Button
+                variant="outlined"
+                size="large"
+                style={{ margin: ".5vh" }}
+                onClick={handleCancel}
+              >
+                Cancel
+              </Button>
+            </ButtonGroup>
+            <ButtonGroup orientation="horizontal" disableElevation>
+              <Button
+                variant="outlined"
+                size="large"
+                color="primary"
+                style={{ margin: ".5vh" }}
+                onClick={() => {
+                  updateDietaryProfile();
+                  handleCancel();
+                }}
+              >
+                Confirm
+              </Button>
+            </ButtonGroup>
+          </div>
         </Container>
       </Dialog>
 
-      <Logout visible={showLogOutDialog} onClose={() => setShowLogOutDialog(false)}/>
+      <Logout
+        visible={showLogOutDialog}
+        onClose={() => setShowLogOutDialog(false)}
+      />
 
-      <Container fluid style={{ marginTop: "125px" }} onClick={() => setDrawerOpen(false)}>
+      <Container
+        fluid
+        style={{ marginTop: "125px" }}
+        onClick={() => setDrawerOpen(false)}
+      >
         {view.mapView ? (
           <>
             <Modal
@@ -696,6 +763,7 @@ export default function Home() {
                   <div>
                     <h5>{selected.name ?? "Name"}</h5>
                     <p>{selected.vicinity ?? "Address"}</p>
+                    <Typography variant="p">Suitable for:</Typography>
                     {selected.tags && (
                       <Container fluid>
                         <Row>
@@ -732,6 +800,7 @@ export default function Home() {
               aria-label="cardview"
               onClick={toggleView}
             >
+              <Typography variant="caption">View List</Typography>
               <BsCardList />
             </Fab>
             <br />
@@ -764,80 +833,114 @@ export default function Home() {
             >
               Select below
             </Modal>
-            <hr/>
+            <hr />
             <div style={{ maxWidth: "1200px" }}>
-            <Typography variant="h5" style={{display: "flex", padding: "0px 20px"}}>
-              Found{" "}
-              {filteredMarkers.length}{" "}
-              Match{filteredMarkers.length === 1 ? "" : "es"}
-            </Typography>
-            {filteredMarkers.length < markers.length && (
-            <Paper style={{display: "inline-flex", margin: "10px 0px 5px 12px"}}>
-              <Typography variant="h6" style={{padding: "12px 15px"}}>
-                Can't find what your looking for? {" "}
-                <Link style={{cursor: "pointer"}} underline="always" onClick={() => setUserDietaryProfile([])}>
-                  Turn off filtering.
-                  </Link>
-                </Typography>
-              </Paper>
-            )}
-            {markers.map(
-              (marker, index) =>
-                filterDC(marker) && (
-                  <Card key={index} bg="light">
-                    <Card.Body>
-                      <Card.Title as="h3">{marker.name ?? "Name"}
-                      <MDButton className="heart" variant="text" aria-label="like" style={{position: "absolute"}} onClick={() => { setFavourite(marker, !isFavourite(marker))}}>
-                            {isFavourite(marker) ? <FavoriteIcon style={{color: "#ff6d75"}} /> : <NotFavoriteIcon style={{color: "#ff6d75"}} /> }
-                            </MDButton>  
-                      </Card.Title>
-                      <Card.Text>
-                        {marker.distance && `${marker.distance} miles away`}{" "}
-                        <br />
-                        <FaMapMarkerAlt color="#3083ff" />{" "}
-                        {marker.vicinity ?? "Address"}
-                      </Card.Text>
-                      {marker.tags && (
-                        <Container fluid>
-                          <Row>
-                            <ListGroup
-                              horizontal
-                              style={{ display: "contents" }}
-                            >
-                              {marker.tags.map((tag, i) => (
-                                <ListGroup.Item
-                                  key={i}
-                                  variant="success"
-                                  className="col-auto venuetag"
-                                >
-                                  {tag}
-                                </ListGroup.Item>
-                              ))}
+              <Typography
+                variant="h5"
+                style={{ display: "flex", padding: "0px 20px" }}
+              >
+                Found {filteredMarkers.length} Match
+                {filteredMarkers.length === 1 ? "" : "es"}
+              </Typography>
+              {filteredMarkers.length < markers.length && (
+                <Paper
+                  style={{
+                    display: "inline-flex",
+                    margin: "10px 0px 5px 12px",
+                  }}
+                >
+                  <Typography variant="h6" style={{ padding: "12px 15px" }}>
+                    Can't find what your looking for?{" "}
+                    <Link
+                      style={{ cursor: "pointer" }}
+                      underline="always"
+                      onClick={() => setUserDietaryProfile([])}
+                    >
+                      Turn off filtering.
+                    </Link>
+                  </Typography>
+                </Paper>
+              )}
+              {markers.map(
+                (marker, index) =>
+                  filterDC(marker) && (
+                    <Card key={index} bg="light">
+                      <Card.Body>
+                        <Card.Title as="h3">
+                          {marker.name ?? "Name"}
+                          <MDButton
+                            className="heart"
+                            variant="text"
+                            aria-label="like"
+                            style={{ position: "absolute" }}
+                            onClick={() => {
+                              setFavourite(marker, !isFavourite(marker));
+                            }}
+                          >
+                            {isFavourite(marker) ? (
+                              <FavoriteIcon style={{ color: "#ff6d75" }} />
+                            ) : (
+                              <NotFavoriteIcon style={{ color: "#ff6d75" }} />
+                            )}
+                          </MDButton>
+                        </Card.Title>
+                        <Card.Text>
+                          {marker.distance && `${marker.distance} miles away`}{" "}
+                          <br />
+                          <FaMapMarkerAlt color="#3083ff" />{" "}
+                          {marker.vicinity ?? "Address"}
+                        </Card.Text>
+                        <Typography variant="p">Suitable for:</Typography>
+                        {marker.tags && (
+                          <Container fluid>
+                            <Row>
+                              <ListGroup
+                                horizontal
+                                style={{ display: "contents" }}
+                              >
+                                {marker.tags.map((tag, i) => (
+                                  <ListGroup.Item
+                                    key={i}
+                                    variant="success"
+                                    className="col-auto venuetag"
+                                  >
+                                    {tag}
+                                  </ListGroup.Item>
+                                ))}
 
+                                <MDButton
+                                  variant="outlined"
+                                  onClick={() => {
+                                    setSelected(marker);
+                                    setModal(true);
+                                  }}
+                                >
+                                  Add Tag
+                                </MDButton>
+                              </ListGroup>
+                            </Row>
+                            <Row>
                               <MDButton
+                                size="medium"
                                 variant="outlined"
+                                style={{
+                                  padding: ".75rem 1.25rem",
+                                  marginTop: "10px",
+                                }}
                                 onClick={() => {
                                   setSelected(marker);
-                                  setModal(true);
+                                  setView({ mapView: true });
                                 }}
                               >
-                                Add Tag
+                                Show on map
                               </MDButton>
-
-                            </ListGroup>
-                          </Row>
-                          <Row>
-                            <MDButton size="medium" variant="outlined" style={{padding: ".75rem 1.25rem", marginTop: "10px"}} onClick={() => {
-                                  setSelected(marker);
-                                  setView({mapView: true});
-                                }}>Show on map</MDButton>
-                          </Row>
-                        </Container>
-                      )}
-                    </Card.Body>
-                  </Card>
-                )
-            )}
+                            </Row>
+                          </Container>
+                        )}
+                      </Card.Body>
+                    </Card>
+                  )
+              )}
             </div>
             <br />
             <br />
@@ -856,12 +959,22 @@ export default function Home() {
               aria-label="mapview"
               onClick={toggleView}
             >
+              <Typography variant="caption">View Map</Typography>
               <IoIosGlobe />
             </Fab>
           </>
         )}
-        <Fab id="filterbutton" variant="extended" color="primary" aria-label="add" onClick={() => setShowFilterOptions(true)}>
-          <RiBarChartHorizontalLine strokeWidth="1" style={{color: "black"}}/>
+        <Fab
+          id="filterbutton"
+          variant="extended"
+          color="primary"
+          aria-label="add"
+          onClick={() => setShowFilterOptions(true)}
+        >
+          <RiBarChartHorizontalLine
+            strokeWidth="1"
+            style={{ color: "black" }}
+          />
           Filter
         </Fab>
       </Container>
@@ -891,7 +1004,7 @@ function Search({ panTo }) {
   return (
     <div>
       <DataListInput
-        placeholder="🔎 Search"
+        placeholder="Search"
         items={data.map(({ place_id, description }) => ({
           key: place_id,
           label: description,
@@ -911,6 +1024,7 @@ function Search({ panTo }) {
           }
         }}
       />
+      <BsSearch className="search-icon" />
     </div>
   );
 }

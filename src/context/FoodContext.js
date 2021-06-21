@@ -252,7 +252,7 @@ function useProvideFood() {
         {dietaryConditions
           .slice(0, hide ? 3 : dietaryConditions.length)
           .map((condition, index) => (
-            <Grid container item={true} key={index} xs={12} sm={3} >
+            <Grid container item={true} key={index} xs={12} sm={3}>
               <FormControlLabel
                 label={condition.name}
                 control={
