@@ -15,8 +15,10 @@ export default function Login() {
   const [error, setError] = useState(false);
   const [isLoading, setLoading] = useState(false);
   const [isValidEmail, setValidEmail] = useState(true);
+  const [email, setEmail] = useState(null);
   const [isHuman, setHuman] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [resendVerification, setResendVerification] = useState(false);
   const { handleSubmit, control, watch } = useForm();
   const history = useHistory();
 
@@ -42,6 +44,7 @@ export default function Login() {
       if (!user.emailVerified) {
         setLoading(false);
         setValidEmail(false);
+        setEmail(email);
         return;
       }
 
@@ -51,6 +54,19 @@ export default function Login() {
     }
 
     setLoading(false);
+  }
+
+  function resendEmailVerification() {
+    auth
+      .verifyEmail()
+      .then(() => {
+        setResendVerification(true);
+      })
+      .catch(() =>
+        setError(
+          "An email has already been sent to this account. Please try again later."
+        )
+      );
   }
 
   return (
@@ -75,8 +91,24 @@ export default function Login() {
             {error && !error.captcha && <Alert variant="danger">{error}</Alert>}
             {!isValidEmail && (
               <Alert variant="danger">
-                Email address is not verified{" "}
-                <Alert.Link>Resend verification code</Alert.Link>
+                {resendVerification ? (
+                  <>
+                    An email has been sent to: <b>{email}</b>
+                  </>
+                ) : (
+                  <>
+                    Email address is not verified{" "}
+                    <div>
+                      <Alert.Link
+                        onClick={() => {
+                          resendEmailVerification();
+                        }}
+                      >
+                        Resend verification code
+                      </Alert.Link>
+                    </div>
+                  </>
+                )}
               </Alert>
             )}
 

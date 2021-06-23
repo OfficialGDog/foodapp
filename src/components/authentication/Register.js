@@ -13,6 +13,7 @@ export default function Register() {
   const [message, setMessage] = useState();
   const [isLoading, setLoading] = useState(false);
   const [isHuman, setHuman] = useState(false);
+  const [email, setEmail] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const { handleSubmit, control, watch } = useForm();
   const recapRef = useRef();
@@ -46,7 +47,8 @@ export default function Register() {
 
       await auth.verifyEmail();
 
-      setMessage(`An Email has been sent to: ${email}`);
+      setEmail(email);
+      setMessage(`An email has been sent to: `);
 
       // Account was created successfully
       setHuman(false);
@@ -73,7 +75,12 @@ export default function Register() {
             Sign Up
           </h2>
           {error && !error.captcha && <Alert variant="danger">{error}</Alert>}
-          {message && <Alert variant="success">{message}</Alert>}
+          {message && (
+            <Alert variant="success">
+              {message}
+              <b>{email}</b>
+            </Alert>
+          )}
           <form
             style={{ margin: "20px", marginTop: "40px" }}
             onSubmit={handleSubmit((data) => onSubmit(data))}

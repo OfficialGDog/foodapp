@@ -67,6 +67,7 @@ export default function ForgotPassword() {
                   label="Email"
                   error={invalid}
                   helperText={error && error.message}
+                  autoComplete="email"
                   onChange={(e) => onChange(e.target.value.toLowerCase())}
                   inputRef={ref}
                   InputLabelProps={{ shrink: true }}
