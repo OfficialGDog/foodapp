@@ -763,7 +763,7 @@ export default function Home() {
                   <div>
                     <h5>{selected.name ?? "Name"}</h5>
                     <p>{selected.vicinity ?? "Address"}</p>
-                    <Typography variant="p">Suitable for:</Typography>
+                    <Typography variant="subtitle1">Suitable for:</Typography>
                     {selected.tags && (
                       <Container fluid>
                         <Row>
@@ -890,7 +890,9 @@ export default function Home() {
                           <FaMapMarkerAlt color="#3083ff" />{" "}
                           {marker.vicinity ?? "Address"}
                         </Card.Text>
-                        <Typography variant="p">Suitable for:</Typography>
+                        <Typography variant="subtitle1">
+                          Suitable for:
+                        </Typography>
                         {marker.tags && (
                           <Container fluid>
                             <Row>

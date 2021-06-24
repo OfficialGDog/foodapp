@@ -65,8 +65,9 @@ export default function Favourites() {
   const dettachListeners = () =>
     listeners.current.forEach((listener) => listener());
 
-  const getUserFavourites = () => {
+  const getUserFavourites = async () => {
     let favourites = [];
+    await setUserData(user);
     if (user.favourites?.length) favourites = user.favourites;
     return favourites;
   };
@@ -87,24 +88,32 @@ export default function Favourites() {
 
     console.log("Fetching Favourites...");
 
-    const favourites = getUserFavourites();
-
-    favourites.forEach((id) => {
-      attachListener(
-        geodatabase.restaurants.doc(id).onSnapshot(
-          (doc) => {
-            // Delete the marker if deleted in the database
-            if (!doc.exists)
-              return dispatch({ type: ACTIONS.DELETE_MARKER, payload: doc.id });
-            // Otherwise add it to the list
-            dispatch({ type: ACTIONS.ADD_UPDATE_MARKER, payload: doc.data() });
-          },
-          (error) => console.log(error)
-        )
-      );
-    });
-
-    setTimeout(() => setLoading(false), 500);
+    getUserFavourites()
+      .then((data) => {
+        // Maximum number of favourites to display is 25
+        data.splice(0, 25).forEach((id) => {
+          attachListener(
+            geodatabase.restaurants.doc(id).onSnapshot(
+              (doc) => {
+                // Delete the marker if deleted in the database
+                if (!doc.exists)
+                  return dispatch({
+                    type: ACTIONS.DELETE_MARKER,
+                    payload: doc.id,
+                  });
+                // Otherwise add it to the list
+                dispatch({
+                  type: ACTIONS.ADD_UPDATE_MARKER,
+                  payload: doc.data(),
+                });
+              },
+              (error) => console.log(error)
+            )
+          );
+        });
+      })
+      .catch((error) => console.log(error))
+      .finally(() => setTimeout(() => setLoading(false), 500));
 
     // Cleanup subscription on unmount
     return () => dettachListeners();
@@ -233,7 +242,7 @@ export default function Favourites() {
                 </Card.Text>
                 {!!marker.tags.length && (
                   <>
-                    <Typography variant="p">Suitable for:</Typography>
+                    <Typography variant="subtitle1">Suitable for:</Typography>
                     <Container fluid>
                       <Row>
                         <ListGroup horizontal style={{ display: "contents" }}>
@@ -255,6 +264,16 @@ export default function Favourites() {
             </Card>
           ))}
         </div>
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
       </Container>
       <Navbar item={1} />
     </>

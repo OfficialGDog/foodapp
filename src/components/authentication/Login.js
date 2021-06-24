@@ -133,6 +133,7 @@ export default function Login() {
                             label="Email"
                             error={invalid}
                             helperText={error && error.message}
+                            autoComplete="username"
                             onChange={(e) =>
                               onChange(e.target.value.toLowerCase())
                             }
@@ -169,6 +170,7 @@ export default function Login() {
                             inputRef={ref}
                             InputLabelProps={{ shrink: true }}
                             value={value}
+                            autoComplete="current-password"
                             InputProps={{
                               endAdornment: (
                                 <InputAdornment position="end">

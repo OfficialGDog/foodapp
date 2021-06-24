@@ -102,6 +102,7 @@ export default function Register() {
                           label="Email"
                           error={invalid}
                           helperText={error && error.message}
+                          autoComplete="username"
                           onChange={(e) =>
                             onChange(e.target.value.toLowerCase())
                           }
@@ -132,6 +133,7 @@ export default function Register() {
                           fullWidth
                           label="Password"
                           type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
                           error={invalid}
                           helperText={
                             error &&
@@ -202,6 +204,7 @@ export default function Register() {
                           type={showPassword ? "text" : "password"}
                           error={invalid}
                           helperText={error && error.message}
+                          autoComplete="new-password"
                           onChange={onChange}
                           inputRef={ref}
                           InputLabelProps={{ shrink: true }}
