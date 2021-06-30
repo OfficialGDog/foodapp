@@ -416,14 +416,16 @@ export default function Home() {
       if (!markers.length) return;
       localStorage.setItem("markers", JSON.stringify(markers));
       let favouriteCache = JSON.parse(localStorage.getItem("favourites"));
-      if (typeof favouriteCache !== "array") favouriteCache = [];
+      if (!favouriteCache || typeof favouriteCache !== "object")
+        favouriteCache = [];
       localStorage.setItem(
         "favourites",
-        JSON.stringify([
-          ...favouriteCache.filter((obj) =>
-            markers.some((obj2) => obj.g_place_id !== obj2.g_place_id)
-          ),
-        ])
+        JSON.stringify(
+          favouriteCache.map(
+            (obj) =>
+              markers.find((obj2) => obj2.g_place_id === obj.g_place_id) ?? obj
+          )
+        )
       );
     } catch (error) {
       console.error(error);

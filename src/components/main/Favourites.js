@@ -75,19 +75,23 @@ export default function Favourites() {
     return favourites;
   };
 
-  const unsetFavourite = useCallback(async (marker) => {
-    if (!user.favourites) user.favourites = [];
-    await setUserData(user, {
-      uid: user.uid,
-      favourites: user.favourites.filter((prev) => prev !== marker.g_place_id),
-      isNew: false,
-    });
+  const unsetFavourite = useCallback(
+    async (marker) => {
+      await setUserData(user, {
+        uid: user.uid,
+        favourites: user.favourites.filter(
+          (prev) => prev !== marker.g_place_id
+        ),
+        isNew: false,
+      });
 
-    return dispatch({ type: ACTIONS.DELETE_MARKER, payload: marker });
-  }, []);
+      return dispatch({ type: ACTIONS.DELETE_MARKER, payload: marker });
+    },
+    [user.favourites]
+  );
 
   const isValidObject = (arr) => {
-    return arr.some((obj) => obj.name && obj.vicinity && obj.tags.length);
+    return arr.some((obj) => obj.name && obj.vicinity && obj.tags);
   };
 
   const getCache = () => {
@@ -99,6 +103,7 @@ export default function Favourites() {
           type: ACTIONS.ADD_MARKERS,
           payload: favouritesCache,
         });
+
         return true;
       }
     } catch (error) {
@@ -147,6 +152,7 @@ export default function Favourites() {
 
   useEffect(() => {
     try {
+      if (!markers.length) return;
       localStorage.setItem("favourites", JSON.stringify(markers));
     } catch (err) {
       //console.log(err);
