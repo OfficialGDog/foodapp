@@ -44,6 +44,7 @@ import Logout from "./Logout";
 import {
   Favorite as FavoriteIcon,
   FavoriteBorderOutlined as NotFavoriteIcon,
+  Close as CloseButton,
 } from "@material-ui/icons";
 import "react-rangeslider/lib/index.css";
 import "./Home.css";
@@ -152,6 +153,7 @@ export default function Home() {
   const [showLogOutDialog, setShowLogOutDialog] = useState(false);
   const [showLocationUnavailableDialog, setLocationUnavailableDialog] =
     useState(false);
+  const [showTip, setShowTip] = useState(true);
   const [view, setView] = useState({ mapView: true });
   const [userDietaryProfile, setUserDietaryProfile] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
@@ -413,6 +415,16 @@ export default function Home() {
     try {
       if (!markers.length) return;
       localStorage.setItem("markers", JSON.stringify(markers));
+      let favouriteCache = JSON.parse(localStorage.getItem("favourites"));
+      if (typeof favouriteCache !== "array") favouriteCache = [];
+      localStorage.setItem(
+        "favourites",
+        JSON.stringify([
+          ...favouriteCache.filter((obj) =>
+            markers.some((obj2) => obj.g_place_id !== obj2.g_place_id)
+          ),
+        ])
+      );
     } catch (error) {
       console.error(error);
     }
@@ -420,6 +432,7 @@ export default function Home() {
 
   useEffect(() => {
     updateDietaryProfile();
+    setShowTip(true);
   }, [foodContext.selected]);
 
   const panTo = useCallback(({ lat, lng }) => {
@@ -763,7 +776,7 @@ export default function Home() {
               This app is currently in beta testing, we're currently adding more
               information.
             </Modal>
-            {filteredMarkers.length < markers.length && (
+            {showTip && filteredMarkers.length < markers.length && (
               <div
                 style={{
                   display: "inline-flex",
@@ -780,17 +793,26 @@ export default function Home() {
                   style={{
                     width: "75%",
                     maxWidth: "fit-content",
-                    whiteSpace: "break-spaces",
                     fontSize: "1rem",
                   }}
                 >
+                  <IconButton
+                    style={{ float: "right", padding: "10px" }}
+                    onClick={() => setShowTip(false)}
+                  >
+                    <CloseButton />
+                  </IconButton>
                   <Typography
                     variant="h6"
-                    style={{ padding: "12px 15px", fontSize: "1rem" }}
+                    style={{
+                      padding: "12px 15px",
+                      fontSize: "1rem",
+                      width: "90%",
+                    }}
                   >
                     Can't find what your looking for?{" "}
                     <Link
-                      style={{ cursor: "pointer" }}
+                      style={{ cursor: "pointer", whiteSpace: "nowrap" }}
                       underline="always"
                       onClick={() => setUserDietaryProfile([])}
                     >
@@ -942,7 +964,7 @@ export default function Home() {
                 Found {filteredMarkers.length} Match
                 {filteredMarkers.length === 1 ? "" : "es"}
               </Typography>
-              {filteredMarkers.length < markers.length && (
+              {showTip && filteredMarkers.length < markers.length && (
                 <Paper
                   style={{
                     display: "inline-flex",
@@ -959,6 +981,12 @@ export default function Home() {
                       Turn off filtering
                     </Link>
                   </Typography>
+                  <IconButton
+                    style={{ float: "right", padding: "10px" }}
+                    onClick={() => setShowTip(false)}
+                  >
+                    <CloseButton />
+                  </IconButton>
                 </Paper>
               )}
               {markers.map(
