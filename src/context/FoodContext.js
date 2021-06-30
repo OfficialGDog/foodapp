@@ -447,9 +447,9 @@ function useProvideFood() {
     dispatchDC({ type: ACTIONS.CLEAR });
     dispatchSelect({ type: ACTIONS.CLEAR });
 
-    if (getCache()) return console.log(`Serving dietary data from cache`);
+    if (getCache()) return; //console.log(`Serving dietary data from cache`);
 
-    console.log("Fetching Dietary Data");
+    //console.log("Fetching Dietary Data");
 
     const unsubscribe1 = firestore
       .collection("foods")

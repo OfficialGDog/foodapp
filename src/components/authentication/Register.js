@@ -204,7 +204,7 @@ export default function Register() {
                           type={showPassword ? "text" : "password"}
                           error={invalid}
                           helperText={error && error.message}
-                          autoComplete="new-password"
+                          autoComplete="off"
                           onChange={onChange}
                           inputRef={ref}
                           InputLabelProps={{ shrink: true }}

@@ -24,6 +24,7 @@ import SideDrawer from "./SideDrawer";
 import Navbar from "./Navbar";
 
 const ACTIONS = {
+  ADD_MARKERS: "add-markers",
   ADD_UPDATE_MARKER: "add-update-marker",
   DELETE_MARKER: "delete-marker",
   RESET_MARKERS: "reset-markers",
@@ -31,6 +32,8 @@ const ACTIONS = {
 
 function reducer(markers, action) {
   switch (action.type) {
+    case ACTIONS.ADD_MARKERS:
+      return [...markers, ...action.payload];
     case ACTIONS.ADD_UPDATE_MARKER:
       if (!markers.length) return [...markers, action.payload];
       return [
@@ -83,15 +86,39 @@ export default function Favourites() {
     return dispatch({ type: ACTIONS.DELETE_MARKER, payload: marker });
   }, []);
 
+  const isValidObject = (arr) => {
+    return arr.some((obj) => obj.name && obj.vicinity && obj.tags.length);
+  };
+
+  const getCache = () => {
+    try {
+      let favouritesCache = JSON.parse(localStorage.getItem("favourites"));
+
+      if (favouritesCache.length && isValidObject(favouritesCache)) {
+        dispatch({
+          type: ACTIONS.ADD_MARKERS,
+          payload: favouritesCache,
+        });
+        return true;
+      }
+    } catch (error) {
+      //console.error(error);
+    }
+
+    return false;
+  };
+
   useEffect(() => {
     dispatch({ type: ACTIONS.RESET_MARKERS });
+    setTimeout(() => setLoading(false), 500);
+    if (getCache()) return;
 
-    console.log("Fetching Favourites...");
+    //console.log("Fetching Favourites...");
 
     getUserFavourites()
       .then((data) => {
-        // Maximum number of favourites to display is 25
-        data.splice(0, 25).forEach((id) => {
+        // Maximum number of favourites to display (20)
+        data.splice(0, 20).forEach((id) => {
           attachListener(
             geodatabase.restaurants.doc(id).onSnapshot(
               (doc) => {
@@ -112,12 +139,19 @@ export default function Favourites() {
           );
         });
       })
-      .catch((error) => console.log(error))
-      .finally(() => setTimeout(() => setLoading(false), 500));
+      .catch((error) => console.log(error));
 
     // Cleanup subscription on unmount
     return () => dettachListeners();
   }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("favourites", JSON.stringify(markers));
+    } catch (err) {
+      //console.log(err);
+    }
+  }, [markers]);
 
   return (
     <>

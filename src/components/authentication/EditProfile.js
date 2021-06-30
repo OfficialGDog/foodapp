@@ -170,6 +170,7 @@ export default function EditProfile() {
                         label="Email"
                         variant="outlined"
                         error={invalid}
+                        autoComplete="username"
                         helperText={error && error.message}
                         onChange={(e) => onChange(e.target.value.toLowerCase())}
                         inputRef={ref}
@@ -201,7 +202,7 @@ export default function EditProfile() {
                     }) => (
                       <TextField
                         fullWidth
-                        label="Password"
+                        label="New Password"
                         type={showPassword ? "text" : "password"}
                         variant="outlined"
                         error={invalid}
@@ -224,6 +225,7 @@ export default function EditProfile() {
                         inputRef={ref}
                         InputLabelProps={{ shrink: true }}
                         value={value}
+                        autoComplete="new-password"
                         disabled={isDisabled}
                         placeholder={
                           isDisabled ? "Password cannot be changed." : ""
@@ -276,6 +278,7 @@ export default function EditProfile() {
                         type={showPassword ? "text" : "password"}
                         error={invalid}
                         variant="outlined"
+                        autoComplete="off"
                         helperText={error && error.message}
                         onChange={onChange}
                         inputRef={ref}

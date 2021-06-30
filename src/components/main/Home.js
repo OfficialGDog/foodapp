@@ -31,6 +31,9 @@ import {
   Fab,
   Dialog,
   DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
   Button,
   ButtonGroup,
   Paper,
@@ -147,6 +150,8 @@ export default function Home() {
   const [modal, setModal] = useState(false);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const [showLogOutDialog, setShowLogOutDialog] = useState(false);
+  const [showLocationUnavailableDialog, setLocationUnavailableDialog] =
+    useState(false);
   const [view, setView] = useState({ mapView: true });
   const [userDietaryProfile, setUserDietaryProfile] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
@@ -157,44 +162,30 @@ export default function Home() {
   const mapRef = useRef();
   const listeners = useRef([]);
 
-  /* 
-  const onMapClick = useCallback((event) => {
-    dispatch({
-      type: ACTIONS.ADD_MARKER,
-      payload: {
-        coordinates: {
-          latitude: event.latLng.lat(),
-          longitude: event.latLng.lng(),
-        },
-        tags: [],
-        isNew: true,
-      },
-    });
-  }, []); */
+  const isValidLatLng = (obj) => {
+    return !!(
+      /^(-?[1-8]?\d(?:\.\d{1,18})?|90(?:\.0{1,18})?)$/.test(obj.lat) &&
+      /^(-?(?:1[0-7]|[1-9])?\d(?:\.\d{1,18})?|180(?:\.0{1,18})?)$/.test(obj.lng)
+    );
+  };
 
   const onMapLoad = useCallback((map) => {
     mapRef.current = map;
-    // Optional try to get the users current location
 
-    let prevLoc = localStorage.getItem("latlng");
-
-    if (prevLoc) {
-      try {
-        prevLoc = JSON.parse(prevLoc);
-        if (
-          /^(-?[1-8]?\d(?:\.\d{1,18})?|90(?:\.0{1,18})?)$/.test(prevLoc.lat) &&
-          /^(-?(?:1[0-7]|[1-9])?\d(?:\.\d{1,18})?|180(?:\.0{1,18})?)$/.test(
-            prevLoc.lng
-          )
-        )
-          return setLocation({
-            lat: prevLoc.lat,
-            lng: prevLoc.lng,
-            radius: 1000,
-          });
-      } catch (error) {
-        console.log("Invalid latlng object!");
-      }
+    try {
+      let prevLocation = JSON.parse(localStorage.getItem("latlng"));
+      if (
+        "lat" in prevLocation &&
+        "lng" in prevLocation &&
+        isValidLatLng(prevLocation)
+      )
+        return setLocation({
+          lat: prevLocation.lat,
+          lng: prevLocation.lng,
+          radius: 1000,
+        });
+    } catch (error) {
+      //console.error(error);
     }
 
     getUserLocation()
@@ -209,7 +200,11 @@ export default function Home() {
           setLocation(center);
         }
       })
-      .catch(() => console.log("Unable to locate, geolocation is disabled!"));
+      .catch(() =>
+        console.log(
+          "Request for the user location has been blocked by the browser"
+        )
+      );
   }, []);
 
   const fetchGoogleMarkers = ({ lat, lng, radius }) => {
@@ -251,26 +246,30 @@ export default function Home() {
     return date > oneHourAgo;
   };
 
+  const isValidMarkers = (arr) => {
+    return arr.some((obj) => obj.name && obj.vicinity);
+  };
+
   const getCache = () => {
     try {
       let markerCache = JSON.parse(localStorage.getItem("markers"));
 
       const lastupdated = localStorage.getItem("updated");
 
-      if (!markerCache) markerCache = [];
-
       if (!isDateLessThanOneHourAgo(new Date(lastupdated))) {
         localStorage.clear();
         return false;
       }
 
-      if (typeof markerCache === "object")
+      if (markerCache.length && isValidMarkers(markerCache)) {
         dispatch({ type: ACTIONS.ADD_MARKERS, payload: markerCache });
-
-      return markerCache.length ? true : false;
+        return true;
+      }
     } catch (error) {
-      console.error(error);
+      //console.error(error);
     }
+
+    return false;
   };
 
   const updateLastUpdated = () => {
@@ -301,7 +300,7 @@ export default function Home() {
       const prevLoc = localStorage.getItem("latlng");
 
       if (prevLoc === JSON.stringify(location)) {
-        if (getCache()) return console.log(`Serving markers from cache`);
+        if (getCache()) return; // console.log(`Serving markers from cache`);
       }
 
       localStorage.setItem("latlng", JSON.stringify({ ...location }));
@@ -309,7 +308,7 @@ export default function Home() {
       console.error(error);
     }
 
-    console.log("Fetching Map Markers ...", location);
+    //console.log("Fetching Map Markers ...", location);
 
     const obj = {
       lat: location.lat,
@@ -455,6 +454,30 @@ export default function Home() {
 
   const setFavourite = useCallback(
     async (marker, value) => {
+      try {
+        const favouritesCache = JSON.parse(localStorage.getItem("favourites"));
+        if (!favouritesCache || !favouritesCache.length) favouritesCache = [];
+        switch (value) {
+          case true:
+            localStorage.setItem(
+              "favourites",
+              JSON.stringify([...favouritesCache, marker])
+            );
+            break;
+          default:
+            localStorage.setItem(
+              "favourites",
+              JSON.stringify(
+                favouritesCache.filter(
+                  (prev) => prev.g_place_id !== marker.g_place_id
+                )
+              )
+            );
+            break;
+        }
+      } catch (error) {
+        //console.log(error);
+      }
       if (!user.favourites) user.favourites = [];
       await setUserData(user, {
         uid: user.uid,
@@ -483,7 +506,6 @@ export default function Home() {
   const toggleView = useCallback(() => {
     if (!view) return;
     setView((prevState) => ({ mapView: !prevState.mapView }));
-    setSelected(null);
   }, [view]);
 
   const interact = useLongPress({
@@ -557,9 +579,7 @@ export default function Home() {
                     });
                   }
                 })
-                .catch(() =>
-                  console.log("Unable to locate, geolocation is disabled!")
-                );
+                .catch(() => setLocationUnavailableDialog(true));
             }}
           >
             <BiCurrentLocation />
@@ -682,6 +702,30 @@ export default function Home() {
         onClose={() => setShowLogOutDialog(false)}
       />
 
+      <Dialog
+        onClose={() => setLocationUnavailableDialog(false)}
+        aria-labelledby="location-dialog"
+        open={showLocationUnavailableDialog}
+      >
+        <DialogTitle>Location unavailable</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Sorry, but we are unable to find your location, please turn on /
+            allow location access in your browser.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          {" "}
+          <Button
+            onClick={() => setLocationUnavailableDialog(false)}
+            color="primary"
+            autoFocus
+          >
+            Ok
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Container
         fluid
         style={{ marginTop: "125px" }}
@@ -719,6 +763,43 @@ export default function Home() {
               This app is currently in beta testing, we're currently adding more
               information.
             </Modal>
+            {filteredMarkers.length < markers.length && (
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: ".75rem",
+                  position: "fixed",
+                  zIndex: "1250",
+                  left: 0,
+                  right: 0,
+                }}
+              >
+                <Paper
+                  style={{
+                    width: "75%",
+                    maxWidth: "fit-content",
+                    whiteSpace: "break-spaces",
+                    fontSize: "1rem",
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    style={{ padding: "12px 15px", fontSize: "1rem" }}
+                  >
+                    Can't find what your looking for?{" "}
+                    <Link
+                      style={{ cursor: "pointer" }}
+                      underline="always"
+                      onClick={() => setUserDietaryProfile([])}
+                    >
+                      Turn off filtering
+                    </Link>
+                  </Typography>
+                </Paper>
+              </div>
+            )}
             <GoogleMap
               {...interact}
               mapContainerStyle={mapContainerStyle}
@@ -761,7 +842,26 @@ export default function Home() {
                   }}
                 >
                   <div>
-                    <h5>{selected.name ?? "Name"}</h5>
+                    <div
+                      style={{ display: "inline-flex", alignItems: "center" }}
+                    >
+                      <h5>{selected.name ?? "Name"}</h5>
+                      <MDButton
+                        className="heart"
+                        variant="text"
+                        aria-label="like"
+                        style={{ top: "-4px" }}
+                        onClick={() => {
+                          setFavourite(selected, !isFavourite(selected));
+                        }}
+                      >
+                        {isFavourite(selected) ? (
+                          <FavoriteIcon style={{ color: "#ff6d75" }} />
+                        ) : (
+                          <NotFavoriteIcon style={{ color: "#ff6d75" }} />
+                        )}
+                      </MDButton>
+                    </div>
                     <p>{selected.vicinity ?? "Address"}</p>
                     <Typography variant="subtitle1">Suitable for:</Typography>
                     {selected.tags && (
@@ -846,7 +946,7 @@ export default function Home() {
                 <Paper
                   style={{
                     display: "inline-flex",
-                    margin: "10px 0px 5px 12px",
+                    margin: ".75rem",
                   }}
                 >
                   <Typography variant="h6" style={{ padding: "12px 15px" }}>
@@ -856,7 +956,7 @@ export default function Home() {
                       underline="always"
                       onClick={() => setUserDietaryProfile([])}
                     >
-                      Turn off filtering.
+                      Turn off filtering
                     </Link>
                   </Typography>
                 </Paper>
