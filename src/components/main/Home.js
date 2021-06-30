@@ -335,7 +335,7 @@ export default function Home() {
 
         dispatch({ type: ACTIONS.ADD_MARKERS, payload: data });
 
-        console.log(`Fetching Google Markers`);
+        //console.log(`Fetching Google Markers`);
         // Get the rest of the map marker data from Google
         fetchGoogleMarkers(obj)
           .then((response) => {
