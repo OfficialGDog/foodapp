@@ -64,7 +64,11 @@ export default function Welcome() {
                 type="button"
                 variant="success"
                 onClick={() => mySwiper.slideNext()}
-                style={{ width: "25%", minWidth: "140px", maxHeight: "65px" }}
+                style={{
+                  minWidth: "140px",
+                  maxHeight: "65px",
+                  padding: "12px 75px",
+                }}
               >
                 Next
               </Button>
@@ -94,7 +98,11 @@ export default function Welcome() {
                 type="button"
                 variant="success"
                 onClick={() => mySwiper.slideNext()}
-                style={{ width: "25%", minWidth: "140px", maxHeight: "65px" }}
+                style={{
+                  padding: "12px 75px",
+                  minWidth: "140px",
+                  maxHeight: "65px",
+                }}
               >
                 Next
               </Button>
@@ -118,7 +126,7 @@ export default function Welcome() {
                     variant="success"
                     className="btn btn-success btn-lg"
                     style={{
-                      width: "25%",
+                      padding: "12px 75px",
                       minWidth: "140px",
                       maxHeight: "65px",
                     }}
@@ -140,7 +148,14 @@ export default function Welcome() {
               >
                 <food.DietaryConditions />
 
-                <food.updateProfileButton label="Finish" />
+                <div
+                  style={{
+                    display: "contents",
+                    padding: "12px 75px 12px 75px",
+                  }}
+                >
+                  <food.updateProfileButton label="Finish" />
+                </div>
               </Card.Body>
             </Card>
             <br />

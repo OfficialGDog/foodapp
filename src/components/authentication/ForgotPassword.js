@@ -93,7 +93,7 @@ export default function ForgotPassword() {
               Reset Password
             </Button>
           </form>
-          <div className="text-center mt-3" style={{ whiteSpace: "nowrap" }}>
+          <div className="text-center mt-3">
             Already have an account? <Link to="/login">Log In</Link>
           </div>
           <div className="text-center p-2">

@@ -187,6 +187,7 @@ function useProvideFood() {
           size="lg"
           type="button"
           onClick={handleSave}
+          style={{ padding: "inherit" }}
         >
           {props.label ? props.label : !isSaved ? "Save Changes" : "Saved"}
         </Button>

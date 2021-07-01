@@ -277,8 +277,10 @@ export default function Favourites() {
                 </Card.Title>
                 <Card.Text>
                   {marker.distance && `${marker.distance} miles away`}{" "}
-                  <FaMapMarkerAlt color="#3083ff" />{" "}
-                  {marker.vicinity ?? "Address"}
+                  <div>
+                    <FaMapMarkerAlt color="#3083ff" />{" "}
+                    {marker.vicinity ?? "Address"}
+                  </div>
                 </Card.Text>
                 {!!marker.tags.length && (
                   <>

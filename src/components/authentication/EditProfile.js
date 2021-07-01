@@ -333,10 +333,10 @@ export default function EditProfile() {
             </form>
           </Card.Body>
         </Card>
-        <Container fluid style={{ padding: "20px" }}>
+        <Container fluid style={{ padding: "20px", maxWidth: "800px" }}>
           <food.DietaryConditions />
         </Container>
-        <div className="text-center">
+        <div className="text-center" style={{ padding: "12px 75px" }}>
           <food.updateProfileButton />
         </div>
         <br />

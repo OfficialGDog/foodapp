@@ -268,7 +268,7 @@ export default function Register() {
             >
               Sign Up
             </Button>
-            <div className="text-center mt-3" style={{ whiteSpace: "nowrap" }}>
+            <div className="text-center mt-3">
               Already have an account? <Link to="/login">Log In</Link>
             </div>
           </form>
