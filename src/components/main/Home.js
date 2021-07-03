@@ -45,6 +45,7 @@ import {
   Favorite as FavoriteIcon,
   FavoriteBorderOutlined as NotFavoriteIcon,
   Close as CloseButton,
+  Delete as DeleteIcon,
 } from "@material-ui/icons";
 import "react-rangeslider/lib/index.css";
 import "./Home.css";
@@ -148,6 +149,7 @@ export default function Home() {
   const [location, setLocation] = useState(null);
   const [radius, setRadius] = useState(1000);
   const [selected, setSelected] = useState(null);
+  const [autoSelect, setAutoSelect] = useState(null);
   const [modal, setModal] = useState(false);
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const [showLogOutDialog, setShowLogOutDialog] = useState(false);
@@ -225,6 +227,10 @@ export default function Home() {
     });
   };
 
+  const fetchMarkerbyID = (id) => {
+    return geodatabase.restaurants.doc(id);
+  };
+
   const fetchDatabaseMarkers = ({ lat, lng, radius }) => {
     return geodatabase.restaurants
       .near({ center: geoPoint(lat, lng), radius: (radius / 1000) * 1.6 })
@@ -291,23 +297,25 @@ export default function Home() {
   };
 
   // Returns an array of map markers for the users current location
-  useEffect(() => {
+  useEffect(async () => {
     if (!location) return;
     if (!location.lat && !location.lng) return;
+    let data = [],
+      newMarkers = [];
+
     center = { ...location, zoom: 14 };
 
     // Reset markers when the user changes location
     dispatch({ type: ACTIONS.RESET_MARKERS });
+
     try {
-      const prevLoc = localStorage.getItem("latlng");
+      const { lat, lng, radius } = JSON.parse(localStorage.getItem("latlng"));
 
-      if (prevLoc === JSON.stringify(location)) {
-        if (getCache()) return; // console.log(`Serving markers from cache`);
+      if (JSON.stringify({ lat, lng, radius }) === JSON.stringify(location)) {
+        if (getCache()) return;
       }
-
-      localStorage.setItem("latlng", JSON.stringify({ ...location }));
     } catch (error) {
-      console.error(error);
+      //console.error(error);
     }
 
     //console.log("Fetching Map Markers ...", location);
@@ -318,98 +326,141 @@ export default function Home() {
       radius: location.radius,
     };
 
-    // On inital load get Firestore Map Markers near the users location
-    fetchDatabaseMarkers(obj)
-      .get()
-      .then((querySnapshot) => {
-        let data = [];
+    // Logic for when a user selects a food establishment which doesn't exist in the database
+    if (location.place && location.place.length) {
+      const { exists } = await fetchMarkerbyID(
+        location.place[0].g_place_id
+      ).get();
 
-        querySnapshot.forEach((doc) => {
-          // doc.data() is never undefined for query doc snapshots
-          data.push({
-            ...doc.data(),
-            distance: parseFloat(doc.distance / 1.6).toFixed(1),
-            id: doc.id,
-          });
-        });
-
-        dispatch({ type: ACTIONS.ADD_MARKERS, payload: data });
-
-        //console.log(`Fetching Google Markers`);
-        // Get the rest of the map marker data from Google
-        fetchGoogleMarkers(obj)
-          .then((response) => {
-            // Filter Google Map Markers not in the database
-            const newMarkers = response.filter(
-              (location) =>
-                !data.some((item) => item.g_place_id === location.place_id)
-            );
-
-            // Are there any new map markers? If so add them to the database.
-            if (newMarkers.length)
-              newMarkers.forEach((marker) => {
-                //console.warn(`Adding Google Marker with id: ${marker.place_id} to the database`);
-                geodatabase.restaurants.doc(marker.place_id).set({
-                  coordinates: geoPoint(
-                    marker.geometry.location.lat(),
-                    marker.geometry.location.lng()
-                  ),
-                  g_place_id: marker.place_id,
-                  name: marker.name,
-                  tags: [],
-                  vicinity: marker.vicinity,
-                });
-              });
-          })
-          .catch((error) => console.error(error));
-
-        const unsubscribe = fetchDatabaseMarkers(obj).onSnapshot(
-          (snapshot) => {
-            snapshot.docChanges().forEach((change) => {
-              updateLastUpdated();
-
-              if (change.type === "removed")
-                return dispatch({
-                  type: ACTIONS.DELETE_MARKER,
-                  payload: { id: change.doc.id },
-                });
-
-              const changedata = {
-                ...change.doc.data(),
-                distance: parseFloat(change.doc.distance / 1.6).toFixed(1),
-                id: change.doc.id,
-              };
-
-              if (change.type === "modified")
-                return dispatch({
-                  type: ACTIONS.UPDATE_MARKER,
-                  payload: { ...changedata },
-                });
-
-              if (change.type === "added")
-                return dispatch({
-                  type:
-                    !data.some((item) => item.id === changedata.id) &&
-                    ACTIONS.ADD_MARKER,
-                  payload: { ...changedata },
-                }); //CHECK IF ALREADY EXISTS
-            });
+      if (!exists) {
+        newMarkers.push({
+          ...location.place[0],
+          place_id: location.place[0].g_place_id,
+          geometry: {
+            location: {
+              lat: () => location.place[0].lat,
+              lng: () => location.place[0].lng,
+            },
           },
-          (error) => console.log(error)
-        );
+        });
+      }
+    }
 
-        attachListener(unsubscribe);
-      })
-      .catch((error) => console.error(error));
+    // Get Map Markers near the users location
+    const { docs } = await fetchDatabaseMarkers(obj).get();
+
+    docs.forEach((doc) => {
+      // doc.data() is never undefined for query doc snapshots
+      data.push({
+        ...doc.data(),
+        distance: parseFloat(doc.distance / 1.6).toFixed(1),
+        id: doc.id,
+      });
+    });
+
+    // If the user selected a particular restauraunt display it at top of list
+    if (location.place && location.place.length) {
+      const found = data.filter(
+        (marker) => marker.g_place_id === location.place[0].g_place_id
+      );
+      if (found.length) {
+        setAutoSelect(location.place[0]);
+        data = [
+          ...found,
+          ...data.filter(
+            (marker) => marker.g_place_id !== location.place[0].g_place_id
+          ),
+        ];
+      }
+    }
+
+    dispatch({ type: ACTIONS.ADD_MARKERS, payload: data });
+
+    //console.log(`Fetching Google Markers`);
+    // Get the rest of the map marker data from Google
+    const GoogleMarkers = await fetchGoogleMarkers(obj);
+
+    // Filter Google Map Markers not in the database
+    newMarkers.push(
+      ...GoogleMarkers.filter(
+        (location) =>
+          !data.some((item) => item.g_place_id === location.place_id)
+      )
+    );
+
+    // Are there any new map markers? If so add them to the database.
+    if (newMarkers.length)
+      newMarkers.forEach((marker) => {
+        //console.warn(`Adding Google Marker with id: ${marker.place_id} to the database`);
+        geodatabase.restaurants.doc(marker.place_id).set({
+          coordinates: geoPoint(
+            marker.geometry.location.lat(),
+            marker.geometry.location.lng()
+          ),
+          g_place_id: marker.place_id,
+          name: marker.name,
+          tags: [],
+          vicinity: marker.vicinity,
+        });
+      });
+
+    try {
+      localStorage.setItem("latlng", JSON.stringify({ ...location }));
+    } catch (error) {
+      //console.log(error);
+    }
+
+    const unsubscribe = fetchDatabaseMarkers(obj).onSnapshot(
+      (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          updateLastUpdated();
+
+          if (change.type === "removed")
+            return dispatch({
+              type: ACTIONS.DELETE_MARKER,
+              payload: { id: change.doc.id },
+            });
+
+          const changedata = {
+            ...change.doc.data(),
+            distance: parseFloat(change.doc.distance / 1.6).toFixed(1),
+            id: change.doc.id,
+          };
+
+          if (change.type === "modified")
+            return dispatch({
+              type: ACTIONS.UPDATE_MARKER,
+              payload: { ...changedata },
+            });
+
+          if (change.type === "added")
+            return dispatch({
+              type:
+                !data.some((item) => item.id === changedata.id) &&
+                ACTIONS.ADD_MARKER,
+              payload: { ...changedata },
+            }); //CHECK IF ALREADY EXISTS
+        });
+      },
+      (error) => console.log(error)
+    );
+
+    attachListener(unsubscribe);
 
     // Cleanup subscription on unmount
     return () => dettachListeners();
   }, [location]);
 
   useEffect(() => {
-    if (!selected) return;
-    setSelected(markers.find((item) => item.id === selected.id));
-  }, [selected, markers]);
+    if (!markers.length) return;
+    if (!autoSelect) return;
+
+    setSelected(
+      markers.find((marker) => marker.g_place_id === autoSelect.g_place_id)
+    );
+
+    setAutoSelect(null);
+  }, [markers, autoSelect]);
 
   useEffect(() => {
     try {
@@ -437,10 +488,11 @@ export default function Home() {
     setShowTip(true);
   }, [foodContext.selected]);
 
-  const panTo = useCallback(({ lat, lng }) => {
+  const panTo = useCallback(({ lat, lng, place }) => {
     mapRef.current.panTo({ lat, lng });
     mapRef.current.setZoom(14);
-    setLocation({ lat, lng, radius: 1000 });
+    // Optional 4th parameter for showing a particular food establishment
+    setLocation({ lat, lng, radius: 1000, place });
   }, []);
 
   useEffect(() => {
@@ -991,88 +1043,111 @@ export default function Home() {
                   </IconButton>
                 </Paper>
               )}
-              {markers.map(
-                (marker, index) =>
-                  filterDC(marker) && (
-                    <Card key={index} bg="light">
-                      <Card.Body>
-                        <Card.Title as="h3">
-                          {marker.name ?? "Name"}
-                          <MDButton
-                            className="heart"
-                            variant="text"
-                            aria-label="like"
-                            style={{ position: "absolute" }}
-                            onClick={() => {
-                              setFavourite(marker, !isFavourite(marker));
-                            }}
-                          >
-                            {isFavourite(marker) ? (
-                              <FavoriteIcon style={{ color: "#ff6d75" }} />
-                            ) : (
-                              <NotFavoriteIcon style={{ color: "#ff6d75" }} />
-                            )}
-                          </MDButton>
-                        </Card.Title>
-                        <Card.Text>
-                          {marker.distance && `${marker.distance} miles away`}{" "}
-                          <br />
-                          <FaMapMarkerAlt color="#3083ff" />{" "}
-                          {marker.vicinity ?? "Address"}
-                        </Card.Text>
-                        <Typography variant="subtitle1">
-                          Suitable for:
-                        </Typography>
-                        {marker.tags && (
-                          <Container fluid>
-                            <Row>
-                              <ListGroup
-                                horizontal
-                                style={{ display: "contents" }}
-                              >
-                                {marker.tags.map((tag, i) => (
-                                  <ListGroup.Item
-                                    key={i}
-                                    variant="success"
-                                    className="col-auto venuetag"
-                                  >
-                                    {tag}
-                                  </ListGroup.Item>
-                                ))}
+              {markers
+                .sort((a, b) => a.distance - b.distance)
+                .map(
+                  (marker, index) =>
+                    filterDC(marker) && (
+                      <Card key={index} bg="light">
+                        <Card.Body>
+                          <Card.Title as="h3">
+                            {marker.name ?? "Name"}
+                            <MDButton
+                              className="heart"
+                              variant="text"
+                              aria-label="like"
+                              style={{ position: "absolute" }}
+                              onClick={() => {
+                                setFavourite(marker, !isFavourite(marker));
+                              }}
+                            >
+                              {isFavourite(marker) ? (
+                                <FavoriteIcon style={{ color: "#ff6d75" }} />
+                              ) : (
+                                <NotFavoriteIcon style={{ color: "#ff6d75" }} />
+                              )}
+                            </MDButton>
+                          </Card.Title>
+                          <Card.Text>
+                            {marker.distance && `${marker.distance} miles away`}{" "}
+                            <br />
+                            <FaMapMarkerAlt color="#3083ff" />{" "}
+                            {marker.vicinity ?? "Address"}
+                          </Card.Text>
+                          <Typography variant="subtitle1">
+                            Suitable for:
+                          </Typography>
+                          {marker.tags && (
+                            <Container fluid>
+                              <Row>
+                                <ListGroup
+                                  horizontal
+                                  style={{ display: "contents" }}
+                                >
+                                  {marker.tags.map((tag, i) => (
+                                    <ListGroup.Item
+                                      key={i}
+                                      variant="success"
+                                      className="col-auto venuetag"
+                                    >
+                                      {tag}
+                                    </ListGroup.Item>
+                                  ))}
 
+                                  <MDButton
+                                    variant="outlined"
+                                    onClick={() => {
+                                      setSelected(marker);
+                                      setModal(true);
+                                    }}
+                                  >
+                                    Add Tag
+                                  </MDButton>
+                                </ListGroup>
+                              </Row>
+                              <Row>
                                 <MDButton
+                                  size="medium"
                                   variant="outlined"
+                                  style={{
+                                    padding: ".75rem 1.25rem",
+                                    marginTop: "10px",
+                                  }}
                                   onClick={() => {
                                     setSelected(marker);
-                                    setModal(true);
+                                    setView({ mapView: true });
                                   }}
                                 >
-                                  Add Tag
+                                  Show on map
                                 </MDButton>
-                              </ListGroup>
-                            </Row>
-                            <Row>
-                              <MDButton
-                                size="medium"
-                                variant="outlined"
-                                style={{
-                                  padding: ".75rem 1.25rem",
-                                  marginTop: "10px",
-                                }}
-                                onClick={() => {
-                                  setSelected(marker);
-                                  setView({ mapView: true });
-                                }}
-                              >
-                                Show on map
-                              </MDButton>
-                            </Row>
-                          </Container>
-                        )}
-                      </Card.Body>
-                    </Card>
-                  )
-              )}
+                                {/*    <MDButton
+                                  startIcon={<DeleteIcon />}
+                                  color="secondary"
+                                  size="medium"
+                                  variant="contained"
+                                  style={{
+                                    padding: "0.75rem 1.25rem",
+                                    marginTop: "10px",
+                                  }}
+                                  onClick={() => {
+                                    dispatch({
+                                      type: ACTIONS.DELETE_MARKER,
+                                      payload: marker,
+                                    });
+                                    return geodatabase.restaurants
+                                      .doc(marker.g_place_id)
+                                      .delete();
+                                  }}
+                                >
+                                  Delete
+                                </MDButton> */}
+                              </Row>
+                            </Container>
+                          )}
+                        </Card.Body>
+                      </Card>
+                    )
+                )}
             </div>
             <br />
             <br />
@@ -1149,8 +1224,29 @@ function Search({ panTo }) {
           clearSuggestions();
           try {
             const results = await getGeocode({ address: label });
+            const { types } = results[0];
             const { lat, lng } = await getLatLng(results[0]);
-            panTo({ lat, lng });
+            const place = [];
+            // Below checks if the selected result is a food establishment (place)
+            if (
+              types.filter((v) =>
+                [
+                  "bar",
+                  "restaurant",
+                  "meal_takeaway",
+                  "meal_delivery",
+                ].includes(v)
+              ).length
+            )
+              place[0] = {
+                name: label.split(",")[0] || "name",
+                vicinity: results[0].formatted_address || "address",
+                g_place_id: results[0].place_id,
+                lat,
+                lng,
+              };
+
+            panTo({ lat, lng, place });
           } catch (error) {
             console.error(error);
           }
