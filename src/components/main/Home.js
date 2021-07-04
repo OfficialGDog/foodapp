@@ -255,23 +255,29 @@ export default function Home() {
   };
 
   const isValidMarkers = (arr) => {
-    return arr.some((obj) => obj.name && obj.vicinity);
+    return arr.some((obj) => obj.name && obj.vicinity && !!obj.tags);
   };
 
   const getCache = () => {
     try {
-      let markerCache = JSON.parse(localStorage.getItem("markers"));
+      const { lat, lng, radius } = JSON.parse(localStorage.getItem("latlng"));
 
-      const lastupdated = localStorage.getItem("updated");
+      if (JSON.stringify({ lat, lng, radius }) === JSON.stringify(location)) {
+        let markerCache = JSON.parse(localStorage.getItem("markers"));
 
-      if (!isDateLessThanOneHourAgo(new Date(lastupdated))) {
-        localStorage.clear();
-        return false;
-      }
+        const lastupdated = localStorage.getItem("updated");
 
-      if (markerCache.length && isValidMarkers(markerCache)) {
-        dispatch({ type: ACTIONS.ADD_MARKERS, payload: markerCache });
-        return true;
+        if (!isDateLessThanOneHourAgo(new Date(lastupdated))) {
+          localStorage.clear();
+          return false;
+        }
+
+        if (markers.length) return true;
+
+        if (markerCache.length && isValidMarkers(markerCache)) {
+          dispatch({ type: ACTIONS.ADD_MARKERS, payload: markerCache });
+          return true;
+        }
       }
     } catch (error) {
       //console.error(error);
@@ -298,154 +304,145 @@ export default function Home() {
 
   // Returns an array of map markers for the users current location
   useEffect(async () => {
-    if (!location) return;
-    if (!location.lat && !location.lng) return;
-    let data = [],
-      newMarkers = [];
-
-    center = { ...location, zoom: 14 };
-
-    // Reset markers when the user changes location
-    dispatch({ type: ACTIONS.RESET_MARKERS });
-
     try {
-      const { lat, lng, radius } = JSON.parse(localStorage.getItem("latlng"));
+      if (!location) return;
+      if (!location.lat && !location.lng) return;
+      let data = [],
+        newMarkers = [];
 
-      if (JSON.stringify({ lat, lng, radius }) === JSON.stringify(location)) {
-        if (getCache()) return;
-      }
-    } catch (error) {
-      //console.error(error);
-    }
+      center = { ...location, zoom: 14 };
 
-    //console.log("Fetching Map Markers ...", location);
+      if (getCache()) return;
 
-    const obj = {
-      lat: location.lat,
-      lng: location.lng,
-      radius: location.radius,
-    };
+      dispatch({ type: ACTIONS.RESET_MARKERS });
 
-    // Logic for when a user selects a food establishment which doesn't exist in the database
-    if (location.place && location.place.length) {
-      const { exists } = await fetchMarkerbyID(
-        location.place[0].g_place_id
-      ).get();
+      //console.log("Fetching Map Markers ...", location);
 
-      if (!exists) {
-        newMarkers.push({
-          ...location.place[0],
-          place_id: location.place[0].g_place_id,
-          geometry: {
-            location: {
-              lat: () => location.place[0].lat,
-              lng: () => location.place[0].lng,
+      const obj = {
+        lat: location.lat,
+        lng: location.lng,
+        radius: location.radius,
+      };
+
+      // Logic for when a user selects a food establishment which doesn't exist in the database
+      if (location.place && location.place.length) {
+        const { exists } = await fetchMarkerbyID(
+          location.place[0].g_place_id
+        ).get();
+
+        if (!exists) {
+          newMarkers.push({
+            ...location.place[0],
+            place_id: location.place[0].g_place_id,
+            geometry: {
+              location: {
+                lat: () => location.place[0].lat,
+                lng: () => location.place[0].lng,
+              },
             },
-          },
-        });
+          });
+        }
       }
-    }
 
-    // Get Map Markers near the users location
-    const { docs } = await fetchDatabaseMarkers(obj).get();
+      // Get Map Markers near the users location
+      const { docs } = await fetchDatabaseMarkers(obj).get();
 
-    docs.forEach((doc) => {
-      // doc.data() is never undefined for query doc snapshots
-      data.push({
-        ...doc.data(),
-        distance: parseFloat(doc.distance / 1.6).toFixed(1),
-        id: doc.id,
+      docs.forEach((doc) => {
+        // doc.data() is never undefined for query doc snapshots
+        data.push({
+          ...doc.data(),
+          distance: parseFloat(doc.distance / 1.6).toFixed(1),
+          id: doc.id,
+        });
       });
-    });
 
-    // If the user selected a particular restauraunt display it at top of list
-    if (location.place && location.place.length) {
-      const found = data.filter(
-        (marker) => marker.g_place_id === location.place[0].g_place_id
+      // If the user selected a particular restauraunt display it at top of list
+      if (location.place && location.place.length) {
+        const found = data.filter(
+          (marker) => marker.g_place_id === location.place[0].g_place_id
+        );
+        if (found.length) {
+          setAutoSelect(location.place[0]);
+          data = [
+            ...found,
+            ...data.filter(
+              (marker) => marker.g_place_id !== location.place[0].g_place_id
+            ),
+          ];
+        }
+      }
+
+      dispatch({ type: ACTIONS.ADD_MARKERS, payload: data });
+
+      //console.log(`Fetching Google Markers`);
+      // Get the rest of the map marker data from Google
+      const GoogleMarkers = await fetchGoogleMarkers(obj);
+
+      // Filter Google Map Markers not in the database
+      newMarkers.push(
+        ...GoogleMarkers.filter(
+          (location) =>
+            !data.some((item) => item.g_place_id === location.place_id)
+        )
       );
-      if (found.length) {
-        setAutoSelect(location.place[0]);
-        data = [
-          ...found,
-          ...data.filter(
-            (marker) => marker.g_place_id !== location.place[0].g_place_id
-          ),
-        ];
-      }
-    }
 
-    dispatch({ type: ACTIONS.ADD_MARKERS, payload: data });
-
-    //console.log(`Fetching Google Markers`);
-    // Get the rest of the map marker data from Google
-    const GoogleMarkers = await fetchGoogleMarkers(obj);
-
-    // Filter Google Map Markers not in the database
-    newMarkers.push(
-      ...GoogleMarkers.filter(
-        (location) =>
-          !data.some((item) => item.g_place_id === location.place_id)
-      )
-    );
-
-    // Are there any new map markers? If so add them to the database.
-    if (newMarkers.length)
-      newMarkers.forEach((marker) => {
-        //console.warn(`Adding Google Marker with id: ${marker.place_id} to the database`);
-        geodatabase.restaurants.doc(marker.place_id).set({
-          coordinates: geoPoint(
-            marker.geometry.location.lat(),
-            marker.geometry.location.lng()
-          ),
-          g_place_id: marker.place_id,
-          name: marker.name,
-          tags: [],
-          vicinity: marker.vicinity,
+      // Are there any new map markers? If so add them to the database.
+      if (newMarkers.length)
+        newMarkers.forEach((marker) => {
+          //console.warn(`Adding Google Marker with id: ${marker.place_id} to the database`);
+          geodatabase.restaurants.doc(marker.place_id).set({
+            coordinates: geoPoint(
+              marker.geometry.location.lat(),
+              marker.geometry.location.lng()
+            ),
+            g_place_id: marker.place_id,
+            name: marker.name,
+            tags: [],
+            vicinity: marker.vicinity,
+          });
         });
-      });
 
-    try {
+      const unsubscribe = fetchDatabaseMarkers(obj).onSnapshot(
+        (snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+            updateLastUpdated();
+
+            if (change.type === "removed")
+              return dispatch({
+                type: ACTIONS.DELETE_MARKER,
+                payload: { id: change.doc.id },
+              });
+
+            const changedata = {
+              ...change.doc.data(),
+              distance: parseFloat(change.doc.distance / 1.6).toFixed(1),
+              id: change.doc.id,
+            };
+
+            if (change.type === "modified")
+              return dispatch({
+                type: ACTIONS.UPDATE_MARKER,
+                payload: { ...changedata },
+              });
+
+            if (change.type === "added")
+              return dispatch({
+                type:
+                  !data.some((item) => item.id === changedata.id) &&
+                  ACTIONS.ADD_MARKER,
+                payload: { ...changedata },
+              }); //CHECK IF ALREADY EXISTS
+          });
+        },
+        (error) => console.log(error)
+      );
+
+      attachListener(unsubscribe);
+
       localStorage.setItem("latlng", JSON.stringify({ ...location }));
     } catch (error) {
-      //console.log(error);
+      console.log(error);
     }
-
-    const unsubscribe = fetchDatabaseMarkers(obj).onSnapshot(
-      (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-          updateLastUpdated();
-
-          if (change.type === "removed")
-            return dispatch({
-              type: ACTIONS.DELETE_MARKER,
-              payload: { id: change.doc.id },
-            });
-
-          const changedata = {
-            ...change.doc.data(),
-            distance: parseFloat(change.doc.distance / 1.6).toFixed(1),
-            id: change.doc.id,
-          };
-
-          if (change.type === "modified")
-            return dispatch({
-              type: ACTIONS.UPDATE_MARKER,
-              payload: { ...changedata },
-            });
-
-          if (change.type === "added")
-            return dispatch({
-              type:
-                !data.some((item) => item.id === changedata.id) &&
-                ACTIONS.ADD_MARKER,
-              payload: { ...changedata },
-            }); //CHECK IF ALREADY EXISTS
-        });
-      },
-      (error) => console.log(error)
-    );
-
-    attachListener(unsubscribe);
 
     // Cleanup subscription on unmount
     return () => dettachListeners();
@@ -810,6 +807,16 @@ export default function Home() {
                   ? (e) => {
                       !setModal(false) &&
                         e.target.tagName === "SPAN" &&
+                        setSelected({
+                          ...selected,
+                          tags: [
+                            ...e.target
+                              .closest("div.MuiPaper-root")
+                              .querySelectorAll(".Mui-checked"),
+                          ]
+                            .map((item) => item.parentElement)
+                            .map((tag) => tag.innerText),
+                        }) &&
                         dispatch({
                           type: ACTIONS.UPDATE_MARKER,
                           payload: {
@@ -838,7 +845,7 @@ export default function Home() {
                   justifyContent: "center",
                   margin: ".75rem",
                   position: "fixed",
-                  zIndex: "1250",
+                  zIndex: "98",
                   left: 0,
                   right: 0,
                 }}
