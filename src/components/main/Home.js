@@ -425,13 +425,29 @@ export default function Home() {
                 payload: { ...changedata },
               });
 
-            if (change.type === "added")
+            if (change.type === "added") {
+              if (
+                location.place &&
+                location.place.length &&
+                changedata.g_place_id === location.place[0].g_place_id
+              )
+                setSelected({
+                  ...changedata,
+                  geometry: {
+                    location: {
+                      lat: () => changedata.coordinates.latitude,
+                      lng: () => changedata.coordinates.longitude,
+                    },
+                  },
+                });
+
               return dispatch({
                 type:
                   !data.some((item) => item.id === changedata.id) &&
                   ACTIONS.ADD_MARKER,
                 payload: { ...changedata },
-              }); //CHECK IF ALREADY EXISTS
+              });
+            }
           });
         },
         (error) => console.log(error)
