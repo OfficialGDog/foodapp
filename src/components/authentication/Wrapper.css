@@ -1,38 +1,40 @@
-
 /* Small devices (landscape phones, 576px and up) */
-@media (max-height: 525px) and (orientation:landscape) { 
-    .wrapper {
-        max-width: none !important;
-        padding: 0px !important;
-        width: 100%;
-    }
+@media (max-height: 525px) and (orientation: landscape) {
+  .wrapper {
+    max-width: none !important;
+    padding: 0px !important;
+    width: 100%;
+  }
 
-    .title {
-        margin: 0px !important;
-    }
+  .title {
+    margin: 0px !important;
+  }
 
-    #login {
-        display: inline-block;
-    }
+  #login {
+    display: inline-block;
+  }
 
-    #social {
-        display: inline-block;
-        float: right;
-    }
+  .container {
+    max-width: none !important;
+  }
+}
 
-    .container {
-        max-width: none !important;
-    }
- }
-
- .form-control {
-    border-radius: unset !important;
-    border: none !important;
-    border-bottom: 1px solid #495057 !important;
+.form-control {
+  border-radius: unset !important;
+  border: none !important;
+  border-bottom: 1px solid #495057 !important;
 }
 
 .form-control:focus {
-    outline: none;
-    border-bottom: 1px solid cornflowerblue !important;
-    box-shadow: 0 4px 2px -2px cornflowerblue !important;
+  outline: none;
+  border-bottom: 1px solid cornflowerblue !important;
+  box-shadow: 0 4px 2px -2px cornflowerblue !important;
+}
+
+.topleft {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  margin: 20px;
 }

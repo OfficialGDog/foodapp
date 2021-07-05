@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import { FaHeart } from "react-icons/fa";
-import { BsPersonFill, BsSearch } from "react-icons/bs";
+import { VscFeedback } from "react-icons/vsc";
+import { RiLogoutCircleLine } from "react-icons/ri";
+import { IoPersonOutline } from "react-icons/io5";
+import { BsSearch, BsInfoCircle, BsHeart } from "react-icons/bs";
 import {
   Typography,
   Drawer,
@@ -11,7 +14,9 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@material-ui/core";
-import { ExitToApp, Info, ChevronLeft } from "@material-ui/icons";
+import { ChevronLeft } from "@material-ui/icons";
+import { Image } from "react-bootstrap";
+import logo from "../../logo.jpg";
 
 export default function SideDrawer({ visible, logout, onClose }) {
   const [open, setIsOpen] = useState(false);
@@ -54,6 +59,8 @@ export default function SideDrawer({ visible, logout, onClose }) {
         if (history.location.pathname !== "/about") history.push("/about");
         return onClose();
       case 4:
+        return window.open("https://grapesoftware.co.uk/contact/", "_blank");
+      case 5:
         return logout();
       default:
         return;
@@ -80,34 +87,71 @@ export default function SideDrawer({ visible, logout, onClose }) {
           <ChevronLeft />
         </IconButton>
       </div>
-
-      <div role="presentation" style={{ width: "250px" }}>
+      <Typography
+        variant="subtitle1"
+        style={{
+          width: "75%",
+          maxWidth: "200px",
+          margin: "8px 0px 0px 38px",
+          lineHeight: "1",
+        }}
+      >
+        <sup>Find places that cater for you!</sup>
+      </Typography>
+      <div role="presentation" style={{ width: "265px", height: "100vh" }}>
         <List>
-          {["Search", "Favourites", "My Profile", "Developer", "Logout"].map(
-            (text, index) => (
-              <ListItem
-                className={index === selected ? "selected" : ""}
-                button
-                key={text}
-                onClick={() => {
-                  handleNavigation(index);
-                }}
-                style={{ padding: "8px 16px" }}
+          {[
+            "Search",
+            "Favourites",
+            "My Profile",
+            "Developer",
+            "Feedback",
+            "Logout",
+          ].map((text, index) => (
+            <ListItem
+              className={index === selected ? "selected" : ""}
+              button
+              key={text}
+              onClick={() => {
+                handleNavigation(index);
+              }}
+              style={{ padding: "8px 16px" }}
+            >
+              <ListItemIcon
+                style={{ justifyContent: "center", color: "inherit" }}
               >
-                <ListItemIcon
-                  style={{ justifyContent: "center", color: "inherit" }}
-                >
-                  {index === 0 && <BsSearch />}
-                  {index === 1 && <FaHeart />}
-                  {index === 2 && <BsPersonFill />}
-                  {index === 4 && <ExitToApp />}
-                  {index === 3 && <Info />}
-                </ListItemIcon>
-                <ListItemText primary={text} />
-              </ListItem>
-            )
-          )}
+                {index === 0 && <BsSearch />}
+                {index === 1 && <BsHeart />}
+                {index === 2 && <IoPersonOutline />}
+                {index === 3 && <BsInfoCircle />}
+                {index === 4 && <VscFeedback />}
+                {index === 5 && <RiLogoutCircleLine />}
+              </ListItemIcon>
+              <ListItemText primary={text} />
+            </ListItem>
+          ))}
         </List>
+      </div>
+      <div
+        style={{
+          width: "265px",
+        }}
+      >
+        <a
+          className="anchorlogo"
+          href="https://grapesoftware.co.uk/"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Visit Grape Software"
+        >
+          <Image
+            alt="Company Logo"
+            draggable={false}
+            width="50%"
+            src={logo}
+            style={{ margin: "20px" }}
+          />
+        </a>
       </div>
     </Drawer>
   );

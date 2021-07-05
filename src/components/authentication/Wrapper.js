@@ -1,6 +1,8 @@
 import React from "react";
 import { Container } from "react-bootstrap";
 import "./Wrapper.css";
+import { Image } from "react-bootstrap";
+import logo from "../../logo-transparent.png";
 
 export default function Wrapper({ children }) {
   return (
@@ -14,6 +16,21 @@ export default function Wrapper({ children }) {
       >
         {children}
       </div>
+      <a
+        className="anchorlogo topleft"
+        href="https://grapesoftware.co.uk/"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Visit Grape Software"
+      >
+        <Image
+          alt="Company Logo"
+          draggable={false}
+          width="125px"
+          src={logo}
+          style={{ background: "#fafafa" }}
+        />
+      </a>
     </Container>
   );
 }

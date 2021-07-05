@@ -32,6 +32,67 @@
   color: #3f51b5 !important;
 }
 
+.selected .MuiListItemText-primary {
+  font-weight: 500;
+}
+
+.Mui-selected {
+  font-weight: 500;
+}
+
 body {
   min-width: 320px;
+  overflow-x: hidden; /* Hide horizontal scrollbar */
+}
+
+#register-captcha > div > div > div {
+  margin: 0 auto;
+}
+
+#title {
+  margin: 40px 20px 0px;
+}
+
+.authbuttons {
+  margin: 0;
+}
+
+@media screen and (max-height: 524px) and (orientation: landscape) {
+  .rounded.card {
+    box-shadow: none !important;
+  }
+
+  #title {
+    margin: 20px;
+  }
+
+  #register-form {
+    margin: 0 auto !important;
+    max-width: 400px !important;
+  }
+
+  #reset-form {
+    margin: 0 auto !important;
+    max-width: 400px !important;
+  }
+
+  .authbuttons {
+    display: inline-flex;
+    float: right;
+    margin: 1.25rem;
+  }
+
+  .pwdreset {
+    margin-top: 10vh;
+  }
+}
+
+.firebaseui-container {
+  max-width: 100% !important;
+}
+
+.anchorlogo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

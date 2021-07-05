@@ -210,7 +210,7 @@ function useProvideFood() {
           className="text-center"
           style={{ paddingTop: "0px", maxWidth: "800px" }}
         >
-          Tell us about your dietary conditions.
+          Tell us about your dietary conditions to filter your search results.
           <Form className="mt-4">
             <Grid container spacing={1}>
               {dietaryConditions.map((condition, index) => (

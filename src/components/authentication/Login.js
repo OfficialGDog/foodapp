@@ -82,10 +82,7 @@ export default function Login() {
           }}
         >
           <Card.Body>
-            <h2
-              className="text-center mb-4 title"
-              style={{ margin: "40px 20px 0" }}
-            >
+            <h2 id="title" className="text-center mb-4">
               Log In
             </h2>
             {error && !error.captcha && <Alert variant="danger">{error}</Alert>}
@@ -113,6 +110,7 @@ export default function Login() {
             )}
 
             <form
+              id="login-form"
               style={{ margin: "20px", marginTop: "40px" }}
               onSubmit={handleSubmit((data) => onSubmit(data))}
             >
@@ -205,11 +203,17 @@ export default function Login() {
               </Grid>
 
               {error && error.captcha && (
-                <small className="text-danger font-weight-bold">
-                  Please tick the box below
-                </small>
+                <div>
+                  <small className="text-danger font-weight-bold">
+                    Please tick the box below
+                  </small>
+                </div>
               )}
-              <div id="captcha" style={{ margin: "15px 0px 5px" }}>
+              <div
+                id="captcha"
+                className="d-sm-inline-flex mb-lg-1"
+                style={{ margin: `${error.captcha ? "5px 0px" : "15px 0px"}` }}
+              >
                 <ReCAPTCHA
                   sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}
                   size="normal"
@@ -220,7 +224,7 @@ export default function Login() {
                   }}
                 />
               </div>
-              <ButtonGroup>
+              <ButtonGroup className="authbuttons">
                 <div className="text-center p-2">
                   <Button
                     className="text-truncate float-right"
@@ -255,11 +259,17 @@ export default function Login() {
                   </Button>
                 </div>
               </ButtonGroup>
-              <div className="mt-1 text-center">
+              <div
+                className="d-inline-flex d-md-block text-center pwdreset"
+                style={{
+                  width: "100%",
+                  flexDirection: "column",
+                }}
+              >
                 <Link to="/reset/password">Forgot Password?</Link>
               </div>
 
-              <div id="social" className="col-sm-6 col-lg-12 text-center">
+              <div id="social" className="col-12 text-center">
                 <StyledFirebaseAuth
                   uiConfig={auth.uiConfig}
                   firebaseAuth={auth.singleSignIn()}
@@ -267,7 +277,7 @@ export default function Login() {
               </div>
             </form>
             <div className="text-center">
-              <Link to="/about">Developer Info</Link>
+              <Link to="/about">Developer Info 👨‍💻</Link>
             </div>
           </Card.Body>
         </Card>

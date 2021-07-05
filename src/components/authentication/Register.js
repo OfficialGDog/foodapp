@@ -71,7 +71,7 @@ export default function Register() {
         }}
       >
         <Card.Body>
-          <h2 className="text-center mb-4" style={{ margin: "40px 20px 0" }}>
+          <h2 id="title" className="text-center mb-4">
             Sign Up
           </h2>
           {error && !error.captcha && <Alert variant="danger">{error}</Alert>}
@@ -82,6 +82,7 @@ export default function Register() {
             </Alert>
           )}
           <form
+            id="register-form"
             style={{ margin: "20px", marginTop: "40px" }}
             onSubmit={handleSubmit((data) => onSubmit(data))}
           >
@@ -247,7 +248,7 @@ export default function Register() {
                 Please tick the box below
               </small>
             )}
-            <div style={{ margin: "15px 0px 15px" }} id="captcha">
+            <div style={{ margin: "15px 0px 15px" }} id="register-captcha">
               <ReCAPTCHA
                 ref={recapRef}
                 sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}
@@ -273,7 +274,7 @@ export default function Register() {
             </div>
           </form>
           <div className="text-center">
-            <Link to="/about">Developer Info</Link>
+            <Link to="/about">Developer Info 👨‍💻</Link>
           </div>
         </Card.Body>
       </Card>

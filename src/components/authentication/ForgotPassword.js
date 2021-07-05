@@ -45,12 +45,13 @@ export default function ForgotPassword() {
         }}
       >
         <Card.Body>
-          <h2 className="text-center mb-4" style={{ margin: "40px 20px 0" }}>
+          <h2 id="title" className="text-center mb-4">
             Reset Password
           </h2>
           {error && <Alert variant="danger">{error}</Alert>}
           {message && <Alert variant="success">{message}</Alert>}
           <form
+            id="reset-form"
             onSubmit={handleSubmit((data) => onSubmit(data))}
             style={{ padding: "10px" }}
           >
@@ -97,7 +98,7 @@ export default function ForgotPassword() {
             Already have an account? <Link to="/login">Log In</Link>
           </div>
           <div className="text-center p-2">
-            <Link to="/about">Developer Info</Link>
+            <Link to="/about">Developer Info 👨‍💻</Link>
           </div>
         </Card.Body>
       </Card>

@@ -37,6 +37,7 @@ import {
   Button,
   ButtonGroup,
   Paper,
+  CircularProgress,
 } from "@material-ui/core";
 import { Button as MDButton } from "@material-ui/core";
 import Slider from "react-rangeslider";
@@ -160,6 +161,7 @@ export default function Home() {
   const [userDietaryProfile, setUserDietaryProfile] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
+  const [showProgress, setShowProgress] = useState(true);
   const foodContext = useFood();
   const history = useHistory();
   const { user, setUserData } = useAuth();
@@ -272,6 +274,8 @@ export default function Home() {
           return false;
         }
 
+        setShowProgress(false);
+
         if (markers.length) return true;
 
         if (markerCache.length && isValidMarkers(markerCache)) {
@@ -307,6 +311,7 @@ export default function Home() {
     try {
       if (!location) return;
       if (!location.lat && !location.lng) return;
+
       let data = [],
         newMarkers = [];
 
@@ -460,9 +465,15 @@ export default function Home() {
       console.log(error);
     }
 
+    setShowProgress(false);
+
     // Cleanup subscription on unmount
     return () => dettachListeners();
   }, [location]);
+
+  /*   useEffect(() => {
+    document.body.style.overflow = showProgress ? "hidden" : "auto";
+  }, [showProgress]); */
 
   useEffect(() => {
     if (!markers.length) return;
@@ -504,6 +515,7 @@ export default function Home() {
   const panTo = useCallback(({ lat, lng, place }) => {
     mapRef.current.panTo({ lat, lng });
     mapRef.current.setZoom(14);
+    setShowProgress(true);
     // Optional 4th parameter for showing a particular food establishment
     setLocation({ lat, lng, radius: 1000, place });
   }, []);
@@ -613,6 +625,9 @@ export default function Home() {
 
   return (
     <>
+      <div className={`overlay ${!showProgress ? "d-none" : ""}`}>
+        <CircularProgress className="progress" />
+      </div>
       <AppBar
         position="fixed"
         style={{
@@ -636,13 +651,18 @@ export default function Home() {
           <Typography
             variant="h6"
             noWrap
-            style={{ position: "absolute", top: "8px", paddingLeft: "2.5rem" }}
+            style={{
+              position: "absolute",
+              top: "8px",
+              paddingLeft: "2.5rem",
+            }}
           >
             {view.mapView ? "Map View 🗺" : "Card View 🗃"}
           </Typography>
           <div style={{ alignSelf: "flex-end", width: "100%" }}>
             <Search panTo={panTo} />
           </div>
+
           <IconButton
             aria-label="User account"
             edge="end"
@@ -723,11 +743,17 @@ export default function Home() {
       />
 
       <Dialog
+        id="filter-dialog"
         onClose={handleCancel}
         aria-labelledby="filter-marker"
         open={showFilterOptions}
       >
-        <DialogTitle id="filter-markers">Filter Options</DialogTitle>
+        <DialogTitle id="fitler-dialog-title">Filter Options</DialogTitle>
+        <DialogContent style={{ paddingBottom: "0px", minWidth: "160px" }}>
+          <Typography variant="subtitle1">
+            Tell us about your dietary conditions to filter your search results.
+          </Typography>
+        </DialogContent>
         <Container style={{ padding: "16px 24px" }}>
           <hr className="d-none d-sm-block" />
           <foodContext.FilterDietaryConditions />
@@ -808,7 +834,7 @@ export default function Home() {
 
       <Container
         fluid
-        style={{ marginTop: "125px" }}
+        style={{ marginTop: "125px", padding: "0" }}
         onClick={() => setDrawerOpen(false)}
       >
         {view.mapView ? (
@@ -962,6 +988,9 @@ export default function Home() {
                       </MDButton>
                     </div>
                     <p>{selected.vicinity ?? "Address"}</p>
+                    <Typography variant="subtitle2">
+                      You can add/remove dietary tags for this venue.
+                    </Typography>
                     <Typography variant="subtitle1">Suitable for:</Typography>
                     {selected.tags && (
                       <Container fluid>
@@ -1096,6 +1125,9 @@ export default function Home() {
                             <br />
                             <FaMapMarkerAlt color="#3083ff" />{" "}
                             {marker.vicinity ?? "Address"}
+                            <Typography variant="subtitle2">
+                              You can add/remove dietary tags for this venue.
+                            </Typography>
                           </Card.Text>
                           <Typography variant="subtitle1">
                             Suitable for:
@@ -1234,7 +1266,7 @@ function Search({ panTo }) {
   return (
     <div>
       <DataListInput
-        placeholder="Search"
+        placeholder="Search a location or food business"
         items={data.map(({ place_id, description }) => ({
           key: place_id,
           label: description,

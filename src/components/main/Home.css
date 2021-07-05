@@ -186,3 +186,26 @@ path[d="M0 0h24v24H0z"] {
   color: rgba(0, 0, 0, 0.75);
   right: 30px;
 }
+
+.progress {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  background: white !important;
+  border-radius: 100px;
+  z-index: 1350;
+}
+
+.overlay {
+  margin: 0 auto;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  z-index: 1320;
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.5);
+}
