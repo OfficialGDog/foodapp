@@ -110,7 +110,7 @@ export default function Welcome() {
           </Card>
           <br />
         </div>
-        <div className="swiper-slide">
+        {/* <div className="swiper-slide">
           <Container fluid style={{ padding: "25px" }}>
             <Card>
               <Card.Body
@@ -138,7 +138,7 @@ export default function Welcome() {
               </Card.Body>
             </Card>
           </Container>
-        </div>
+        </div> */}
         <div className="swiper-slide">
           <Container fluid style={{ padding: "25px" }}>
             <Card>

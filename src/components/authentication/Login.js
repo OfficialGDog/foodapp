@@ -87,10 +87,11 @@ export default function Login() {
             </h2>
             {error && !error.captcha && <Alert variant="danger">{error}</Alert>}
             {!isValidEmail && (
-              <Alert variant="danger">
+              <Alert variant={resendVerification ? "success" : "danger"}>
                 {resendVerification ? (
                   <>
                     An email has been sent to: <b>{email}</b>
+                    <div>Please check your email to complete signing up.</div>
                   </>
                 ) : (
                   <>

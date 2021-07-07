@@ -11,6 +11,7 @@ export default function ForgotPassword() {
   const [error, setError] = useState();
   const [message, setMessage] = useState();
   const [isLoading, setLoading] = useState(false);
+  const [email, setEmail] = useState(null);
   const history = useHistory();
   const { handleSubmit, control } = useForm();
 
@@ -25,7 +26,8 @@ export default function ForgotPassword() {
       setMessage(false);
       setLoading(true);
       await auth.resetPassword(email);
-      setMessage(`Instructions sent to: ${email}`);
+      setEmail(email);
+      setMessage(`Instructions sent to: `);
     } catch (error) {
       setError(error.message);
     }
@@ -49,7 +51,12 @@ export default function ForgotPassword() {
             Reset Password
           </h2>
           {error && <Alert variant="danger">{error}</Alert>}
-          {message && <Alert variant="success">{message}</Alert>}
+          {message && (
+            <Alert variant="success">
+              {message}
+              <b>{email}</b>
+            </Alert>
+          )}
           <form
             id="reset-form"
             onSubmit={handleSubmit((data) => onSubmit(data))}

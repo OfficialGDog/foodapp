@@ -79,6 +79,7 @@ export default function Register() {
             <Alert variant="success">
               {message}
               <b>{email}</b>
+              <div>Please check your email to complete signing up.</div>
             </Alert>
           )}
           <form
@@ -248,7 +249,11 @@ export default function Register() {
                 Please tick the box below
               </small>
             )}
-            <div style={{ margin: "15px 0px 15px" }} id="register-captcha">
+            <div
+              style={{ margin: "15px 0px 15px" }}
+              id="captcha"
+              className="centercaptcha"
+            >
               <ReCAPTCHA
                 ref={recapRef}
                 sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}

@@ -45,7 +45,7 @@ body {
   overflow-x: hidden; /* Hide horizontal scrollbar */
 }
 
-#register-captcha > div > div > div {
+.centercaptcha > div > div > div {
   margin: 0 auto;
 }
 
