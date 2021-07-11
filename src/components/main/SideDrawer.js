@@ -18,7 +18,7 @@ import { ChevronLeft } from "@material-ui/icons";
 import { Image } from "react-bootstrap";
 import logo from "../../logo.jpg";
 
-export default function SideDrawer({ visible, logout, onClose }) {
+export default function SideDrawer({ value, visible, logout, onClose }) {
   const [open, setIsOpen] = useState(false);
   const [selected, setSelected] = useState(-1);
   const history = useHistory();
@@ -37,6 +37,10 @@ export default function SideDrawer({ visible, logout, onClose }) {
         return;
     }
   }, []);
+
+  useEffect(() => {
+    if (value != null) return setSelected(value);
+  }, [value]);
 
   useEffect(() => {
     setIsOpen(!!visible);
@@ -102,7 +106,7 @@ export default function SideDrawer({ visible, logout, onClose }) {
         <List>
           {[
             "Search",
-            "Favourites",
+            "My Favourites",
             "My Profile",
             "Developer",
             "Feedback",

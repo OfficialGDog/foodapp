@@ -47,6 +47,7 @@ import {
   FavoriteBorderOutlined as NotFavoriteIcon,
   Close as CloseButton,
   Delete as DeleteIcon,
+  ArrowDropDown,
 } from "@material-ui/icons";
 import "react-rangeslider/lib/index.css";
 import "./Home.css";
@@ -629,12 +630,8 @@ export default function Home() {
         <CircularProgress className="progress" />
       </div>
       <AppBar
+        id="navbar"
         position="fixed"
-        style={{
-          backgroundColor: "white",
-          color: "black",
-          boxShadow: "0px 0px 0px 0px",
-        }}
         onClick={() => isDrawerOpen && setDrawerOpen(false)}
       >
         <Toolbar style={{ height: "125px", alignItems: "flex-start" }}>
@@ -731,6 +728,22 @@ export default function Home() {
             </Menu>
           </div>
         </Toolbar>
+        <div
+          style={{
+            position: "relative",
+            top: "-5px",
+            marginBottom: "5px",
+            marginLeft: "20px",
+          }}
+        >
+          <MDButton
+            variant="outlined"
+            size="large"
+            onClick={() => setShowFilterOptions(true)}
+          >
+            Filter <ArrowDropDown />
+          </MDButton>
+        </div>
       </AppBar>
 
       <SideDrawer
@@ -834,7 +847,7 @@ export default function Home() {
 
       <Container
         fluid
-        style={{ marginTop: "125px", padding: "0" }}
+        style={{ marginTop: "170px", padding: "0" }}
         onClick={() => setDrawerOpen(false)}
       >
         {view.mapView ? (

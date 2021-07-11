@@ -7,7 +7,24 @@ import "./Navbar.css";
 
 export default function Navbar(props) {
   const history = useHistory();
-  const [index, setIndex] = useState(null);
+  const [index, setIndex] = useState(-1);
+
+  useEffect(() => {
+    switch (history.location.pathname) {
+      case "/":
+        return setIndex(0);
+      case "/myfavourites":
+        return setIndex(1);
+      case "/myprofile":
+        return setIndex(2);
+      default:
+        return;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (props.item != null) return setIndex(props.item);
+  }, [props.item]);
 
   useEffect(() => {
     switch (index) {
@@ -30,7 +47,7 @@ export default function Navbar(props) {
   return (
     <>
       <BottomNavigation
-        value={index || props.item}
+        value={index}
         onChange={(event, newValue) => {
           setIndex(newValue);
         }}
@@ -41,9 +58,21 @@ export default function Navbar(props) {
           width: "100%",
         }}
       >
-        <BottomNavigationAction label="Search" icon={<BsSearch />} />
-        <BottomNavigationAction label="My Favourites" icon={<FaHeart />} />
-        <BottomNavigationAction label="My Profile" icon={<BsPersonFill />} />
+        {["Search", "My Favourites", "My Profile"].map((text, index) => (
+          <BottomNavigationAction
+            key={text}
+            label={text}
+            icon={
+              index === 0 ? (
+                <BsSearch />
+              ) : index === 1 ? (
+                <FaHeart />
+              ) : (
+                index === 2 && <BsPersonFill />
+              )
+            }
+          />
+        ))}
       </BottomNavigation>
     </>
   );

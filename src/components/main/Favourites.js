@@ -162,12 +162,8 @@ export default function Favourites() {
   return (
     <>
       <AppBar
+        id="navbar"
         position="fixed"
-        style={{
-          backgroundColor: "white",
-          color: "black",
-          boxShadow: "0px 0px 0px 0px",
-        }}
         onClick={() => isDrawerOpen && setDrawerOpen(false)}
       >
         <Toolbar>

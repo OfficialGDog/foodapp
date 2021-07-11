@@ -110,35 +110,6 @@ export default function Welcome() {
           </Card>
           <br />
         </div>
-        {/* <div className="swiper-slide">
-          <Container fluid style={{ padding: "25px" }}>
-            <Card>
-              <Card.Body
-                className="mt-2 text-center"
-                style={{ maxWidth: "800px", padding: "0px" }}
-              >
-                <food.FoodCategories />
-                <div className="m-4">
-                  <Button
-                    onClick={() => mySwiper.slideNext()}
-                    size="lg"
-                    type="button"
-                    variant="success"
-                    className="btn btn-success btn-lg"
-                    style={{
-                      padding: "12px 75px",
-                      minWidth: "140px",
-                      maxHeight: "65px",
-                    }}
-                  >
-                    Next
-                  </Button>
-                </div>
-                <br />
-              </Card.Body>
-            </Card>
-          </Container>
-        </div> */}
         <div className="swiper-slide">
           <Container fluid style={{ padding: "25px" }}>
             <Card>
