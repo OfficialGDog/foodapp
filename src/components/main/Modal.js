@@ -20,6 +20,7 @@ export default function Modal({
   marker,
   children,
   onClose,
+  onCancel,
 }) {
   const [markerRef, setMarkerRef] = useState(null);
   const [selected, setSelected] = useState([]);
@@ -119,6 +120,10 @@ export default function Modal({
           )}
         </DialogContent>
         <DialogActions>
+          <Button onClick={onCancel} color="primary">
+            Cancel
+          </Button>
+
           <div onClick={saveMarkerTags}>
             <Button onClick={onClose} color="primary" autoFocus>
               Ok

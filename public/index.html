@@ -41,11 +41,27 @@
       body {
         background-color: #fafafa !important;
       }
+      .no-script {
+        width: 100%;
+        height: 100vh;
+      }
+
+      .no-script h1 {
+        height: inherit;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+      }
     </style>
   </head>
 
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <noscript>
+      <div class="no-script">
+        <h1>You need to enable JavaScript to run this app!</h1>
+      </div>
+    </noscript>
     <div id="root"></div>
     <!--
       This HTML file is a template.

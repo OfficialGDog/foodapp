@@ -766,54 +766,41 @@ export default function Home() {
           <Typography variant="subtitle1">
             Tell us about your dietary conditions to filter your search results.
           </Typography>
+          <Container style={{ padding: "16px 5px" }}>
+            <foodContext.FilterDietaryConditions />
+            {/*  <Typography variant="h5">Within:</Typography>
+            <Slider
+              min={1}
+              max={20}
+              step={1}
+              value={radius / 1000}
+              tooltip={false}
+              format={(val) => val + " miles"}
+              onChange={(val) => {
+                setRadius(val * 1000);
+              }}
+            />
+            <Typography variant="h5">
+              {radius / 1000} {radius / 1000 === 1 ? "Mile" : "Miles"}
+            </Typography> */}
+          </Container>
         </DialogContent>
-        <Container style={{ padding: "16px 24px" }}>
-          <hr className="d-none d-sm-block" />
-          <foodContext.FilterDietaryConditions />
 
-          {/*
-          <Typography variant="h5">Within:</Typography>
-          <Slider
-          min={1}
-          max={20}
-          step={1}
-          value={(radius / 1000)}
-          tooltip={false}
-          format={(val) => val + " miles"}
-          onChange={(val) => { setRadius((val * 1000)) }}
-        /><Typography variant="h5">{(radius / 1000)} {(radius / 1000) === 1 ? "Mile" : "Miles"}</Typography>
-        */}
-          <hr className="d-none d-sm-block" />
-          <div
-            className="text-sm-right text-center"
-            style={{ marginTop: "2vh" }}
+        <DialogActions>
+          <Button onClick={handleCancel} color="primary">
+            Cancel
+          </Button>
+          <Button
+            autoFocus
+            onClick={() => {
+              updateDietaryProfile();
+              handleCancel();
+            }}
+            color="primary"
           >
-            <ButtonGroup orientation="horizontal" disableElevation>
-              <Button
-                variant="outlined"
-                size="large"
-                style={{ margin: ".5vh" }}
-                onClick={handleCancel}
-              >
-                Cancel
-              </Button>
-            </ButtonGroup>
-            <ButtonGroup orientation="horizontal" disableElevation>
-              <Button
-                variant="outlined"
-                size="large"
-                color="primary"
-                style={{ margin: ".5vh" }}
-                onClick={() => {
-                  updateDietaryProfile();
-                  handleCancel();
-                }}
-              >
-                Confirm
-              </Button>
-            </ButtonGroup>
-          </div>
-        </Container>
+            Ok
+          </Button>
+        </DialogActions>
       </Dialog>
 
       <Logout
@@ -888,6 +875,7 @@ export default function Home() {
                     }
                   : hideModal
               }
+              onCancel={() => setModal(false)}
             >
               This app is currently in beta testing, we're currently adding more
               information.
@@ -1071,6 +1059,7 @@ export default function Home() {
                     },
                   });
               }}
+              onCancel={() => setModal(false)}
             >
               Select below
             </Modal>
